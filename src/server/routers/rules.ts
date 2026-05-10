@@ -95,6 +95,7 @@ export const rulesRouter = router({
           severity: z.enum(["block", "warn", "suggest", "log"]).optional(),
           action: z.enum(["block", "rewrite", "flag"]).optional(),
           channelScope: z.array(z.string()).optional(),
+          patternType: z.enum(["phrase", "regex"]).optional(),
           enabled: z.boolean().optional(),
         }),
       }),
