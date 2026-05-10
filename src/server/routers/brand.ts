@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
 import { brands, brandBriefs } from "@/db/schema";
@@ -8,15 +9,17 @@ export const brandRouter = router({
   get: protectedProcedure
     .input(z.object({ brandId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const { db, scope } = ctx.scoped;
+      const { db, scopeAnd } = ctx.scoped;
 
       const [brand] = await db
         .select()
         .from(brands)
-        .where(scope(brands.workspaceId))
-        .then((rows) => rows.filter((r) => r.id === input.brandId));
+        .where(scopeAnd(brands.workspaceId, eq(brands.id, input.brandId)))
+        .limit(1);
 
-      if (!brand) return null;
+      if (!brand) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Brand not found" });
+      }
 
       const [latestBrief] = await db
         .select()

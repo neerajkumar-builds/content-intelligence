@@ -39,10 +39,12 @@ export const scheduleRouter = router({
         .where(condition)
         .orderBy(schedules.scheduledAt);
 
-      return rows.map((r) => ({
-        ...r.schedule,
-        title: r.draftTitle,
-        status: r.draftStatus,
-      }));
+      return rows
+        .filter((r) => r.draftTitle !== null)
+        .map((r) => ({
+          ...r.schedule,
+          title: r.draftTitle!,
+          status: r.draftStatus!,
+        }));
     }),
 });

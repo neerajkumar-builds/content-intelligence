@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
 import { drafts, draftGrades, draftAntiAiHits } from "@/db/schema";
@@ -58,15 +59,17 @@ export const draftsRouter = router({
   get: protectedProcedure
     .input(z.object({ draftId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const { db, scope } = ctx.scoped;
+      const { db, scopeAnd } = ctx.scoped;
 
       const [draft] = await db
         .select()
         .from(drafts)
-        .where(scope(drafts.workspaceId))
-        .then((rows) => rows.filter((r) => r.id === input.draftId));
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .limit(1);
 
-      if (!draft) return null;
+      if (!draft) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      }
 
       const grades = await db
         .select()
