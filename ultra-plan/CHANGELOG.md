@@ -84,3 +84,27 @@
   - Branch: `claude/refine-local-plan-0mbkl`
   - Files: +9,744 lines across `src/app/`, `src/components/`
   - Impact: Foundation for all UI work. No backend yet.
+
+### Phase 0+1 Merge (PR #1)
+- Merged `ultra-plan/foundation` → `main` (91 files, +29,912 lines)
+- Both Phase 0 and Phase 1 now on `main`
+
+### Phase 2: Data Model (Session 3)
+
+- **2.1-2.4** tRPC v11 infrastructure
+  - Files: `src/server/context.ts`, `trpc.ts`, `middleware.ts`, `src/server/routers/_app.ts`, `src/app/api/trpc/[trpc]/route.ts`, `src/lib/trpc/client.tsx`, `query-client.ts`, `server.ts`
+  - Why: Bridge UI (Phase 1) and DB (Phase 0). Every subsequent phase depends on tRPC.
+  - Impact: Full tRPC stack — context (Clerk auth + scopedDb + traceId), middleware chain (auth → workspace → trace), API route handler, client provider with React Query, server-side caller for RSC.
+
+- **2.5-2.12** Domain routers (7 routers merged into appRouter)
+  - Files: `src/server/routers/brand.ts`, `rules.ts`, `connectors.ts`, `ideas.ts`, `drafts.ts`, `schedule.ts`, `audit.ts`
+  - Why: One router per domain, all workspace-scoped via scopedDb.
+  - Impact: brand.get/list/update, rules.list/create/update, connectors.list, ideas.list (paginated), drafts.list/get (with grades), schedule.list (with joins), audit.list (paginated).
+  - Bug fixed: rules.ts category enum had wrong values (structure/hedge/adverb → matched DB enum: punctuation/transition/filler/corporate/cliche/custom).
+
+- **2.13** Dev seed data
+  - Files: `src/db/seed.ts`, seeded via Supabase MCP (local DNS can't reach Supabase)
+  - Why: Fixture data for UI rendering. Shapes match design handoff JSX files.
+  - Impact: 1 workspace, 2 brands, 1 member, 12 rules, 5 connectors, 6 ideas, 3 drafts (2 graded), 4 schedules, 9 audit entries.
+
+- **Deps added:** superjson, zod v4, server-only, pg (dev), tsx (dev)

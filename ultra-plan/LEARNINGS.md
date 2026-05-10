@@ -78,6 +78,8 @@
 1. **brands.ts imports**: `check` imported but unused, `unique` used but not imported. Fixed in Task 0.4 (a327bf2).
 2. **connectors.ts imports**: `unique` imported but unused (`.unique()` is column method, not named constraint), `boolean` used but not imported. Fixed in Task 0.5 (3017437). Pattern: always verify reference imports against actual usage before pasting.
 3. **Drizzle 0.45.2 strict generics**: `PgTableWithColumns<any>` can't be passed directly to `.from()` — Drizzle's `TableLikeHasEmptySelection` conditional type rejects it. Fixed scopedDb by using composable `scope(column)` pattern instead of wrapping `.from()`. (Task 0.16, 82a2a12)
+4. **rules.ts Zod enum mismatch**: Zod category enum had values not in DB (structure/hedge/adverb). DB ruleCategoryEnum has: punctuation/transition/filler/corporate/cliche/custom. Always check `src/db/schema/enums.ts` before writing Zod validators. (Task 2.6, e5636b5)
+5. **@neondatabase/serverless neon() HTTP mode**: Does NOT work from local Node.js against Supabase. The `neon()` function makes HTTP requests to a Neon-specific `/sql` endpoint that Supabase doesn't provide. For local scripts (seed, ad-hoc), use `pg` with `drizzle-orm/node-postgres` and `DATABASE_URL_DIRECT`. (Task 2.13, 006d8f0)
 
 ---
 

@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-11 (Session 2)
-> Current phase: Phase 0 (Foundation) — DONE
-> Next action: Phase 2 (Data Model — tRPC skeleton, first queries)
+> Last updated: 2026-05-11 (Session 3)
+> Current phase: Phase 2 (Data Model) — DONE
+> Next action: Phase 3 (Brand Brief + Anti-AI Rules)
 
 ---
 
@@ -10,9 +10,9 @@
 
 | Phase | Status | Branch | PR |
 |-------|--------|--------|----|
-| 0 — Foundation | DONE | `ultra-plan/foundation` | Pending |
-| 1 — Scaffolding | DONE | `claude/refine-local-plan-0mbkl` | Pending |
-| 2 — Data Model | NOT STARTED | — | — |
+| 0 — Foundation | DONE | `ultra-plan/foundation` | Merged (PR #1) |
+| 1 — Scaffolding | DONE | `claude/refine-local-plan-0mbkl` | Merged (PR #1) |
+| 2 — Data Model | DONE | `phase-2/data-model` | Pending |
 | 3 — Brand Brief + Rules | NOT STARTED | — | — |
 | 4 — Connectors | NOT STARTED | — | — |
 | 5 — Idea Wall | NOT STARTED | — | — |
@@ -58,6 +58,25 @@
 | 1.5 | 17+ route stubs | DONE | all resolve | Web |
 | 1.6 | Fonts (Montserrat, JetBrains Mono, Lora) | DONE | render correct | Web |
 | 1.7 | Build + push to GitHub | DONE | +9,744 lines | Web |
+
+## Phase 2: Data Model (DONE)
+
+| # | Task | Files | Status | Verified | Committed | Session |
+|---|------|-------|--------|----------|-----------|---------|
+| 2.1 | tRPC init + context + base procedures | `src/server/context.ts`, `src/server/trpc.ts` | DONE | pnpm build OK | 483ff85 | 2026-05-11 |
+| 2.2 | tRPC middleware (auth, workspace, trace) | `src/server/middleware.ts` | DONE | pnpm build OK | 483ff85 | 2026-05-11 |
+| 2.3 | API route handler | `src/app/api/trpc/[trpc]/route.ts` | DONE | pnpm build OK | 483ff85 | 2026-05-11 |
+| 2.4 | Client provider + hooks | `src/lib/trpc/client.tsx`, `query-client.ts`, `server.ts` | DONE | pnpm build OK | 483ff85 | 2026-05-11 |
+| 2.5 | Brand router | `src/server/routers/brand.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
+| 2.6 | Rules router | `src/server/routers/rules.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
+| 2.7 | Connectors router | `src/server/routers/connectors.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
+| 2.8 | Ideas router | `src/server/routers/ideas.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
+| 2.9 | Drafts router | `src/server/routers/drafts.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
+| 2.10 | Schedule router | `src/server/routers/schedule.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
+| 2.11 | Audit router | `src/server/routers/audit.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
+| 2.12 | App router (merge all) | `src/server/routers/_app.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
+| 2.13 | Dev seed data | `src/db/seed.ts` + Supabase MCP | DONE | 45 rows seeded | 006d8f0 | 2026-05-11 |
+| 2.14 | Build verify + tracking | — | DONE | pnpm build OK | — | 2026-05-11 |
 
 ---
 

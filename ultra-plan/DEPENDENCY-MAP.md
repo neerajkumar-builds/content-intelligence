@@ -102,9 +102,37 @@ src/db/index.ts
 drizzle.config.ts
   └── Uses: src/db/schema/index.ts, DATABASE_URL env var
   └── Used by: drizzle-kit CLI (generate, migrate, push, studio)
+
+src/server/context.ts
+  └── Uses: @clerk/nextjs/server (auth), src/db/index.ts, src/lib/security/scoped-db.ts, src/lib/logging/index.ts
+  └── Used by: src/app/api/trpc/[trpc]/route.ts, src/lib/trpc/server.ts
+
+src/server/trpc.ts
+  └── Uses: @trpc/server, superjson, src/server/context.ts, src/lib/errors/app-error.ts
+  └── Used by: ALL routers, src/server/middleware.ts, src/lib/trpc/server.ts
+
+src/server/middleware.ts
+  └── Uses: src/server/trpc.ts, src/lib/security/scoped-db.ts, src/lib/logging/index.ts
+  └── Used by: ALL domain routers (protectedProcedure)
+
+src/server/routers/_app.ts
+  └── Uses: src/server/trpc.ts, ALL 7 domain routers
+  └── Used by: src/app/api/trpc/[trpc]/route.ts, src/lib/trpc/client.tsx (type), src/lib/trpc/server.ts
+
+src/lib/trpc/client.tsx
+  └── Uses: @trpc/react-query, @tanstack/react-query, superjson, src/server/routers/_app.ts (type)
+  └── Used by: src/app/(app)/layout.tsx, ALL client components using tRPC hooks
+
+src/lib/trpc/server.ts
+  └── Uses: server-only, src/server/context.ts, src/server/routers/_app.ts, src/server/trpc.ts
+  └── Used by: React Server Components needing tRPC data
+
+src/db/seed.ts
+  └── Uses: pg, drizzle-orm/node-postgres, src/db/schema/index.ts
+  └── Used by: pnpm db:seed (dev only)
 ```
 
-## UI → Backend Dependencies
+## UI → Backend Dependencies (Phase 2: NOW WIRED)
 
 ```
 /govern/brand       → tRPC: brand.get, brand.update → brand_briefs table
@@ -123,6 +151,8 @@ drizzle.config.ts
 3. `src/lib/security/scoped-db.ts` — Missing scope = cross-tenant data leak
 4. `src/lib/errors/app-error.ts` — Every error handler depends on error classification
 5. `CLAUDE.md` — Auto-loaded every session, wrong info = wrong decisions
+6. `src/server/trpc.ts` — initTRPC + error formatter, every router depends on it
+7. `src/server/routers/_app.ts` — Merged router, client type inference depends on it
 
 ---
 
