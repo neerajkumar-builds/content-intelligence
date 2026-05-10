@@ -57,3 +57,15 @@ If FAIL:
 ```markdown
 | 0.5 Connectors | `pnpm build` | FAIL | Type error: `vector` not found in drizzle-orm. Fix: import from `drizzle-orm/pg-core`. |
 ```
+
+## Phase 2: Data Model — 2026-05-11 (Session 3)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| 2.1 tRPC init | `pnpm build` | PASS | context.ts + trpc.ts compile clean |
+| 2.2 Middleware | `pnpm build` | PASS | Auth → workspace → trace chain compiles |
+| 2.3 Route handler | `pnpm build` | PASS | /api/trpc/[trpc] route registered |
+| 2.4 Client setup | `pnpm build` | PASS | TRPCProvider wraps app layout |
+| 2.5-2.12 Routers | `pnpm build` | PASS after fix | rules.ts: category enum mismatch (structure/hedge/adverb not in DB). Fixed to match DB enum. |
+| 2.13 Seed | Supabase MCP | PASS | 45 rows across 9 tables. Counts verified via SQL. |
+| 2.14 Final build | `pnpm build` | PASS | Compiled in 1990ms, 21/21 pages generated |

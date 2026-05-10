@@ -31,10 +31,10 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 
 ## Current Build State
 
-- **Phase 0 (Foundation):** COMPLETE. Branch `ultra-plan/foundation`. 14 commits, 20/20 tasks. 27 tables live in Supabase.
-- **Phase 1 (Scaffolding):** COMPLETE. Branch `claude/refine-local-plan-0mbkl`. +9,744 lines.
-- **Phase 2 (Data Model):** NOT STARTED. Next: tRPC skeleton, first queries.
-- **Phases 3-8:** Not started
+- **Phase 0 (Foundation):** COMPLETE. Merged to `main` via PR #1. 27 tables live in Supabase.
+- **Phase 1 (Scaffolding):** COMPLETE. Merged to `main` via PR #1. +9,744 lines.
+- **Phase 2 (Data Model):** COMPLETE. Branch `phase-2/data-model`. tRPC v11, 7 routers, seed data.
+- **Phases 3-8:** Not started. Next: Phase 3 (Brand Brief + Anti-AI Rules)
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
 
@@ -43,7 +43,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 1. Read `ultra-plan/PROGRESS.md` for current state and next task
 2. Read `ultra-plan/LEARNINGS.md` for mistakes NOT to repeat
 3. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
-4. Check git branches: `main`, `claude/refine-local-plan-0mbkl` (Phase 1), `ultra-plan/foundation` (Phase 0)
+4. Check git branches: `main` (Phase 0+1 merged), `phase-2/data-model` (Phase 2)
 5. Agent artifacts in `ultra-plan/reference/` have all code ready to paste
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
 
@@ -98,6 +98,14 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Feature flags | `src/lib/feature-flags/index.ts` (3-level scoping) |
 | Audit log | `src/lib/audit/index.ts` (append-only) |
 | Health endpoint | `src/app/api/health/route.ts` |
+| tRPC init + context | `src/server/context.ts`, `src/server/trpc.ts` |
+| tRPC middleware | `src/server/middleware.ts` (auth → workspace → trace) |
+| tRPC routers (7) | `src/server/routers/*.ts` (brand, rules, connectors, ideas, drafts, schedule, audit) |
+| tRPC app router | `src/server/routers/_app.ts` |
+| tRPC API route | `src/app/api/trpc/[trpc]/route.ts` |
+| tRPC client hooks | `src/lib/trpc/client.tsx` |
+| tRPC server caller | `src/lib/trpc/server.ts` |
+| Dev seed script | `src/db/seed.ts` (uses pg, not neon HTTP) |
 | Reference code (paste-ready) | `ultra-plan/reference/01-06*.md` |
 | n8n workflow code (ready) | `ultra-plan/n8n-workflows/` |
 | Blotato references | `knowledge_base/blotato_references/` |
@@ -135,7 +143,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 |-------|------|--------|
 | 0 | Foundation (errors, logging, audit, feature flags, health, scopedDb) | DONE |
 | 1 | Scaffolding (Next.js, design system, shell, routes) | DONE |
-| 2 | Data Model (27 Drizzle tables, tRPC skeleton, first migration) | NOT STARTED |
+| 2 | Data Model (tRPC v11, 7 routers, seed data) | DONE |
 | 3 | Brand Brief + Anti-AI Rules (CRUD, versioning, strict mode) | NOT STARTED |
 | 4 | Connectors (15 adapters, circuit breaker, contract tests) | NOT STARTED |
 | 5 | Idea Wall (n8n ingestion, pgvector ranking) | NOT STARTED |
