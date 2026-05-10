@@ -108,3 +108,30 @@
   - Impact: 1 workspace, 2 brands, 1 member, 12 rules, 5 connectors, 6 ideas, 3 drafts (2 graded), 4 schedules, 9 audit entries.
 
 - **Deps added:** superjson, zod v4, server-only, pg (dev), tsx (dev)
+
+### Phase 3: Brand Brief + Anti-AI Rules (Session 4)
+
+- **3.1** Schema changes
+  - Files: `src/db/schema/brands.ts`, `drizzle/0001_sparkling_red_wolf.sql`
+  - Added: brands.strictMode (boolean), brandBriefs.changelog (text), antiAiRules.patternType (phrase/regex)
+  - Changed: brandCorpus.embedding made nullable (for Phase 3 corpus upload without embeddings)
+
+- **3.2** Production bug fixes
+  - Files: `src/lib/logging/index.ts`, `src/lib/security/scoped-db.ts`, `src/server/routers/brand.ts`, `src/server/routers/rules.ts`
+  - Fixed: 2x `as any` in logging → proper type guards, generic Error in scopedDb → TRPCError FORBIDDEN, brand.update + rules.update null → NOT_FOUND
+
+- **3.3-3.6** Backend routers (12 new procedures)
+  - brand.create, brand.toggleStrictMode
+  - brief.create (versioned), brief.get, brief.list, brief.diff
+  - corpus.add, corpus.list, corpus.delete
+  - rules.get, rules.delete, patternType in rules.create
+  - Registered brief + corpus in _app.ts
+
+- **3.7** Seed data (via Supabase MCP)
+  - 2 brand briefs (v1, v2 for FullFunnel.co)
+  - 3 corpus items (LinkedIn posts, no embeddings)
+  - 3 regex-type anti-AI rules
+
+- **3.8-3.9** UI pages
+  - Brand Brief page: 2-column grid, version tabs, brief cards, voice fidelity, fed-into, versioning
+  - Anti-AI Rules page: KPI strip, strict mode toggle, rules table with type/action/severity pills

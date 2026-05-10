@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-11 (Session 3)
-> Current phase: Phase 2 (Data Model) — DONE
-> Next action: Phase 3 (Brand Brief + Anti-AI Rules)
+> Last updated: 2026-05-11 (Session 4)
+> Current phase: Phase 3 (Brand Brief + Anti-AI Rules) — DONE
+> Next action: Phase 3.5 (Onboarding Wizard)
 
 ---
 
@@ -13,7 +13,7 @@
 | 0 — Foundation | DONE | `ultra-plan/foundation` | Merged (PR #1) |
 | 1 — Scaffolding | DONE | `claude/refine-local-plan-0mbkl` | Merged (PR #1) |
 | 2 — Data Model | DONE | `phase-2/data-model` | Pending |
-| 3 — Brand Brief + Rules | NOT STARTED | — | — |
+| 3 — Brand Brief + Rules | DONE | `phase-3/brand-brief-rules` | Pending |
 | 4 — Connectors | NOT STARTED | — | — |
 | 5 — Idea Wall | NOT STARTED | — | — |
 | 6 — Drafts + Grading | NOT STARTED | — | — |
@@ -77,6 +77,20 @@
 | 2.12 | App router (merge all) | `src/server/routers/_app.ts` | DONE | pnpm build OK | e5636b5 | 2026-05-11 |
 | 2.13 | Dev seed data | `src/db/seed.ts` + Supabase MCP | DONE | 45 rows seeded | 006d8f0 | 2026-05-11 |
 | 2.14 | Build verify + tracking | — | DONE | pnpm build OK | — | 2026-05-11 |
+
+## Phase 3: Brand Brief + Anti-AI Rules (DONE)
+
+| # | Task | Status | Verified | Committed |
+|---|------|--------|----------|-----------|
+| 3.1 | Schema changes (strictMode, changelog, patternType, nullable embedding) | DONE | pnpm build OK + migration applied | 32818ed |
+| 3.2 | Fix logging as any, scopedDb TRPCError, mutation NOT_FOUND | DONE | pnpm build OK | bcee700 |
+| 3.3 | brand.create + toggleStrictMode | DONE | pnpm build OK | 73acb7d |
+| 3.4 | Brief router (create, get, list, diff) | DONE | pnpm build OK | 0356bd0 |
+| 3.5 | Corpus router (add, list, delete) | DONE | pnpm build OK | 7d5ddcf |
+| 3.6 | Rules get + delete + patternType + router registration | DONE | pnpm build OK | 936212c |
+| 3.7 | Seed brand briefs, corpus, regex rules | DONE | counts verified | via MCP |
+| 3.8 | Brand Brief page UI | DONE | pnpm build OK | 8a74f4e |
+| 3.9 | Anti-AI Rules page UI | DONE | pnpm build OK | 3c3e175 |
 
 ---
 

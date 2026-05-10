@@ -69,3 +69,18 @@ If FAIL:
 | 2.5-2.12 Routers | `pnpm build` | PASS after fix | rules.ts: category enum mismatch (structure/hedge/adverb not in DB). Fixed to match DB enum. |
 | 2.13 Seed | Supabase MCP | PASS | 45 rows across 9 tables. Counts verified via SQL. |
 | 2.14 Final build | `pnpm build` | PASS | Compiled in 1990ms, 21/21 pages generated |
+
+## Phase 3: Brand Brief + Anti-AI Rules — 2026-05-11 (Session 4)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| 3.1 Schema | pnpm build + MCP migration | PASS | 4 ALTER statements applied |
+| 3.2 Bug fixes | pnpm build | PASS | 0 `as any` remaining |
+| 3.3 brand procedures | pnpm build | PASS | create + toggleStrictMode |
+| 3.4 Brief router | pnpm build | PASS | 4 procedures, versioned create |
+| 3.5 Corpus router | pnpm build | PASS | 3 procedures |
+| 3.6 Rules + _app.ts | pnpm build | PASS | get, delete, patternType |
+| 3.7 Seed data | Supabase MCP | PASS | briefs=2, corpus=3, regex_rules=3 |
+| 3.8 Brand Brief page | pnpm build | PASS | Static render OK |
+| 3.9 Anti-AI Rules page | pnpm build | PASS | Static render OK |
+| Final build | pnpm build | PASS | Compiled 1281ms, 21/21 pages |
