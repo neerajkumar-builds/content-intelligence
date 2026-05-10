@@ -24,6 +24,10 @@ export const workspaces = pgTable("workspaces", {
   currentMonthSpendCents: integer("current_month_spend_cents")
     .notNull()
     .default(0),
+  onboardingStep: integer("onboarding_step").notNull().default(0),
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
+  industry: text("industry"),
+  voiceStyle: text("voice_style"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
