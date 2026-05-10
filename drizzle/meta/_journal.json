@@ -8,6 +8,13 @@
       "when": 1778445866074,
       "tag": "0000_great_jocasta",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778453761509,
+      "tag": "0001_sparkling_red_wolf",
+      "breakpoints": true
     }
   ]
 }
