@@ -24,6 +24,7 @@ export const brands = pgTable(
     name: text("name").notNull(),
     voiceScore: numeric("voice_score", { precision: 5, scale: 2 }),
     active: boolean("active").notNull().default(true),
+    strictMode: boolean("strict_mode").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -53,6 +54,7 @@ export const brandBriefs = pgTable(
     voiceTraits: text("voice_traits").notNull(),
     antiPositioning: text("anti_positioning").notNull(),
     editorClerkId: text("editor_clerk_id").notNull(),
+    changelog: text("changelog"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -72,7 +74,7 @@ export const brandCorpus = pgTable(
       .references(() => brands.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
     sourceUrl: text("source_url"),
-    embedding: vector("embedding", { dimensions: 1536 }).notNull(),
+    embedding: vector("embedding", { dimensions: 1536 }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -97,6 +99,7 @@ export const antiAiRules = pgTable(
     category: ruleCategoryEnum("category").notNull(),
     severity: severityEnum("severity").notNull(),
     action: text("action", { enum: ["block", "rewrite", "flag"] }).notNull(),
+    patternType: text("pattern_type", { enum: ["phrase", "regex"] }).notNull().default("phrase"),
     channelScope: text("channel_scope").array(),
     hits30d: integer("hits_30d").notNull().default(0),
     lastTrippedAt: timestamp("last_tripped_at", { withTimezone: true }),

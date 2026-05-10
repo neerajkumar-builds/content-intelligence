@@ -34,7 +34,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Phase 0 (Foundation):** COMPLETE. Merged to `main` via PR #1. 27 tables live in Supabase.
 - **Phase 1 (Scaffolding):** COMPLETE. Merged to `main` via PR #1. +9,744 lines.
 - **Phase 2 (Data Model):** COMPLETE. Branch `phase-2/data-model`. tRPC v11, 7 routers, seed data.
-- **Phases 3-8:** Not started. Next: Phase 3 (Brand Brief + Anti-AI Rules)
+- **Phase 3 (Brand Brief + Anti-AI Rules):** COMPLETE. Branch `phase-3/brand-brief-rules`. 12 new tRPC procedures, 2 UI pages.
+- **Phases 4-8:** Not started. Next: Phase 3.5 (Onboarding Wizard)
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
 
@@ -43,7 +44,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 1. Read `ultra-plan/PROGRESS.md` for current state and next task
 2. Read `ultra-plan/LEARNINGS.md` for mistakes NOT to repeat
 3. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
-4. Check git branches: `main` (Phase 0+1 merged), `phase-2/data-model` (Phase 2)
+4. Check git branches: `main` (Phase 0+1 merged), `phase-2/data-model` (Phase 2), `phase-3/brand-brief-rules` (Phase 3)
 5. Agent artifacts in `ultra-plan/reference/` have all code ready to paste
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
 
@@ -105,6 +106,10 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | tRPC API route | `src/app/api/trpc/[trpc]/route.ts` |
 | tRPC client hooks | `src/lib/trpc/client.tsx` |
 | tRPC server caller | `src/lib/trpc/server.ts` |
+| Brief router | `src/server/routers/brief.ts` (create, get, list, diff) |
+| Corpus router | `src/server/routers/corpus.ts` (add, list, delete) |
+| Brand Brief page | `src/app/(app)/govern/brand/page.tsx` |
+| Anti-AI Rules page | `src/app/(app)/govern/rules/page.tsx` |
 | Dev seed script | `src/db/seed.ts` (uses pg, not neon HTTP) |
 | Reference code (paste-ready) | `ultra-plan/reference/01-06*.md` |
 | n8n workflow code (ready) | `ultra-plan/n8n-workflows/` |
@@ -144,7 +149,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | 0 | Foundation (errors, logging, audit, feature flags, health, scopedDb) | DONE |
 | 1 | Scaffolding (Next.js, design system, shell, routes) | DONE |
 | 2 | Data Model (tRPC v11, 7 routers, seed data) | DONE |
-| 3 | Brand Brief + Anti-AI Rules (CRUD, versioning, strict mode) | NOT STARTED |
+| 3 | Brand Brief + Anti-AI Rules (CRUD, versioning, strict mode) | DONE |
 | 4 | Connectors (15 adapters, circuit breaker, contract tests) | NOT STARTED |
 | 5 | Idea Wall (n8n ingestion, pgvector ranking) | NOT STARTED |
 | 6 | Drafts + 7-Dim Grading (core surface, glass-box) | NOT STARTED |

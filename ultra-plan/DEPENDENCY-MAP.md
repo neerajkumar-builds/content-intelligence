@@ -130,6 +130,14 @@ src/lib/trpc/server.ts
 src/db/seed.ts
   └── Uses: pg, drizzle-orm/node-postgres, src/db/schema/index.ts
   └── Used by: pnpm db:seed (dev only)
+
+src/server/routers/brief.ts
+  └── Uses: src/server/trpc.ts, src/server/middleware.ts, src/db/schema (brandBriefs, brands)
+  └── Used by: src/server/routers/_app.ts, Brand Brief page
+
+src/server/routers/corpus.ts
+  └── Uses: src/server/trpc.ts, src/server/middleware.ts, src/db/schema (brandCorpus, brands)
+  └── Used by: src/server/routers/_app.ts, Brand Brief page (corpus section)
 ```
 
 ## UI → Backend Dependencies (Phase 2: NOW WIRED)

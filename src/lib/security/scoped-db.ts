@@ -1,4 +1,5 @@
 import { eq, and, type SQL, type Column } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { db } from "@/db";
 
 export function workspaceScope(
@@ -18,7 +19,10 @@ export function workspaceScopeAnd(
 
 export function scopedDb(workspaceId: string) {
   if (!workspaceId) {
-    throw new Error("workspaceId is required for scoped database access");
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "workspaceId is required for scoped database access",
+    });
   }
 
   return {
