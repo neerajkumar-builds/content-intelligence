@@ -1,0 +1,17 @@
+export enum Platform {
+  LinkedIn = "linkedin",
+  Twitter = "twitter",
+  Instagram = "instagram",
+  Threads = "threads",
+  Facebook = "facebook",
+  TikTok = "tiktok",
+  YouTube = "youtube",
+  Reddit = "reddit",
+  Bluesky = "bluesky",
+  Beehiiv = "beehiiv",
+  Substack = "substack",
+  HubSpot = "hubspot",
+  Pinterest = "pinterest",
+  Medium = "medium",
+  Mastodon = "mastodon",
+}
