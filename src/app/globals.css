@@ -1,0 +1,490 @@
+@import "tailwindcss";
+
+/* ─── CIA Design Tokens ─── ported from design_handoff tokens.css ─── */
+
+:root,
+[data-theme="light"] {
+  /* surfaces */
+  --bg-canvas: #fafaf9;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-muted: #f4f4f2;
+  --bg-sunken: #efefec;
+  --bg-hover: rgba(10, 10, 10, 0.04);
+  --bg-active: rgba(10, 10, 10, 0.07);
+
+  /* borders */
+  --border-subtle: #ececea;
+  --border-default: #ddddd9;
+  --border-strong: #bfbfbc;
+
+  /* text */
+  --ink-primary: #0a0a0a;
+  --ink-secondary: #4a4a48;
+  --ink-tertiary: #8a8a86;
+  --ink-quaternary: #b0b0ac;
+  --ink-inverse: #ffffff;
+
+  /* accent — FullFunnel electric blue */
+  --accent: #146dfa;
+  --accent-hover: #0f58d0;
+  --accent-press: #0b47a8;
+  --accent-soft: #e8f0ff;
+  --accent-softer: #f2f6ff;
+  --accent-ring: rgba(20, 109, 250, 0.2);
+  --on-accent: #ffffff;
+
+  /* semantic */
+  --success: #1f7a3a;
+  --success-soft: #e6f2ec;
+  --success-ring: rgba(31, 122, 58, 0.18);
+  --warn: #b8821f;
+  --warn-soft: #f7efd8;
+  --warn-ring: rgba(184, 130, 31, 0.18);
+  --danger: #a03a52;
+  --danger-soft: #f8e5ea;
+  --danger-ring: rgba(160, 58, 82, 0.18);
+  --neutral: #3d4a55;
+  --neutral-soft: #e8ecf0;
+
+  /* meter / data */
+  --meter-track: #ececea;
+  --meter-fill: var(--accent);
+  --score-good: #1f7a3a;
+  --score-mid: #b8821f;
+  --score-bad: #a03a52;
+
+  /* shadows */
+  --shadow-sm: 0 1px 2px rgba(10, 10, 10, 0.04);
+  --shadow-md: 0 2px 8px rgba(10, 10, 10, 0.06), 0 1px 2px rgba(10, 10, 10, 0.04);
+  --shadow-lg: 0 8px 32px rgba(10, 10, 10, 0.08), 0 2px 8px rgba(10, 10, 10, 0.04);
+  --shadow-pop: 0 16px 48px rgba(10, 10, 10, 0.12), 0 4px 12px rgba(10, 10, 10, 0.06);
+
+  /* focus */
+  --focus-ring: 0 0 0 3px var(--accent-ring);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg-canvas: #0a0b0e;
+  --bg-surface: #121419;
+  --bg-elevated: #181b22;
+  --bg-muted: #1e2129;
+  --bg-sunken: #08090c;
+  --bg-hover: rgba(255, 255, 255, 0.045);
+  --bg-active: rgba(255, 255, 255, 0.08);
+
+  --border-subtle: #21242c;
+  --border-default: #2c3038;
+  --border-strong: #3d424c;
+
+  --ink-primary: #f2f2f0;
+  --ink-secondary: #b5b6ba;
+  --ink-tertiary: #7a7c84;
+  --ink-quaternary: #4f5159;
+  --ink-inverse: #0a0a0a;
+
+  --accent: #4d8ffc;
+  --accent-hover: #6ba1fd;
+  --accent-press: #2f7af6;
+  --accent-soft: rgba(77, 143, 252, 0.14);
+  --accent-softer: rgba(77, 143, 252, 0.06);
+  --accent-ring: rgba(77, 143, 252, 0.3);
+  --on-accent: #ffffff;
+
+  --success: #4ade80;
+  --success-soft: rgba(74, 222, 128, 0.12);
+  --success-ring: rgba(74, 222, 128, 0.22);
+  --warn: #f4b73c;
+  --warn-soft: rgba(244, 183, 60, 0.12);
+  --warn-ring: rgba(244, 183, 60, 0.22);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.12);
+  --danger-ring: rgba(248, 113, 113, 0.22);
+  --neutral: #9da3ab;
+  --neutral-soft: rgba(157, 163, 171, 0.12);
+
+  --meter-track: #2c3038;
+  --score-good: #4ade80;
+  --score-mid: #f4b73c;
+  --score-bad: #f87171;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
+}
+
+/* ─── Tailwind v4 theme bindings ─── */
+@theme inline {
+  --color-bg-canvas: var(--bg-canvas);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-muted: var(--bg-muted);
+  --color-bg-sunken: var(--bg-sunken);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-ink-primary: var(--ink-primary);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-tertiary: var(--ink-tertiary);
+  --font-sans: var(--font-montserrat), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-body: var(--font-lora), Georgia, serif;
+}
+
+/* ─── Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-montserrat), system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-primary);
+  background: var(--bg-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv01", "cv11";
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink-primary);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+  border: 2px solid var(--bg-canvas);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* ─── Typography primitives ─── */
+.mono {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-feature-settings: "calt" 0;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.eyebrow {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  font-weight: 500;
+}
+
+.display {
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  line-height: 1.08;
+}
+
+/* ─── Pill / chip ─── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 500;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.4;
+  font-feature-settings: "tnum";
+}
+
+.pill .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pill.accent {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.pill.success,
+.pill.good {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.pill.warn,
+.pill.mid {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.pill.danger,
+.pill.bad {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.pill.neutral {
+  background: var(--neutral-soft);
+  color: var(--neutral);
+}
+.pill.muted {
+  background: var(--bg-muted);
+  color: var(--ink-secondary);
+}
+.pill.outline {
+  border: 1px solid var(--border-default);
+  color: var(--ink-secondary);
+  background: transparent;
+}
+
+/* ─── Button ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-primary);
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease,
+    transform 0.06s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(0.5px);
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.btn.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.btn.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.btn.secondary {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  color: var(--ink-primary);
+}
+.btn.secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+.btn.ghost {
+  background: transparent;
+  color: var(--ink-secondary);
+}
+.btn.ghost:hover {
+  background: var(--bg-hover);
+  color: var(--ink-primary);
+}
+.btn.danger-btn {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+.btn.sm {
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+.btn.lg {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: 7px;
+}
+.btn.icon-btn {
+  padding: 6px;
+  width: 28px;
+  height: 28px;
+}
+.btn.icon-btn.sm {
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+}
+
+/* ─── Card ─── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+/* ─── Input ─── */
+.input {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  color: var(--ink-primary);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.input::placeholder {
+  color: var(--ink-quaternary);
+}
+
+/* ─── Dividers ─── */
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  border: 0;
+  margin: 0;
+}
+
+.vdivider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border-subtle);
+}
+
+/* ─── Meter ─── */
+.meter {
+  height: 4px;
+  background: var(--meter-track);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.meter > .fill {
+  height: 100%;
+  background: var(--meter-fill);
+  transition: width 0.4s ease;
+}
+
+.meter.good > .fill {
+  background: var(--score-good);
+}
+.meter.mid > .fill {
+  background: var(--score-mid);
+}
+.meter.bad > .fill {
+  background: var(--score-bad);
+}
+
+/* ─── Skeleton loader ─── */
+@keyframes skel {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.skel {
+  background: linear-gradient(
+    90deg,
+    var(--bg-muted) 25%,
+    var(--bg-sunken) 37%,
+    var(--bg-muted) 63%
+  );
+  background-size: 400% 100%;
+  border-radius: 4px;
+  animation: skel 1.4s ease-in-out infinite;
+}
+
+/* ─── Fade in ─── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.18s ease-out;
+}
+
+/* ─── KVP labels ─── */
+.kvp {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.kvp .k {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kvp .v {
+  color: var(--ink-secondary);
+}
