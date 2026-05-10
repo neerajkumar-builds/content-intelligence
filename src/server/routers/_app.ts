@@ -1,5 +1,7 @@
 import { router } from "../trpc";
 import { brandRouter } from "./brand";
+import { briefRouter } from "./brief";
+import { corpusRouter } from "./corpus";
 import { rulesRouter } from "./rules";
 import { connectorsRouter } from "./connectors";
 import { ideasRouter } from "./ideas";
@@ -9,6 +11,8 @@ import { auditRouter } from "./audit";
 
 export const appRouter = router({
   brand: brandRouter,
+  brief: briefRouter,
+  corpus: corpusRouter,
   rules: rulesRouter,
   connectors: connectorsRouter,
   ideas: ideasRouter,

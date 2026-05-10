@@ -32,6 +32,29 @@ export const rulesRouter = router({
         .orderBy(desc(antiAiRules.hits30d));
     }),
 
+  get: protectedProcedure
+    .input(z.object({ ruleId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+      const [rule] = await db
+        .select()
+        .from(antiAiRules)
+        .where(
+          scopeAnd(
+            antiAiRules.workspaceId,
+            eq(antiAiRules.id, input.ruleId),
+          ),
+        )
+        .limit(1);
+      if (!rule) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Rule not found",
+        });
+      }
+      return rule;
+    }),
+
   create: protectedProcedure
     .input(
       z.object({
@@ -47,6 +70,7 @@ export const rulesRouter = router({
         severity: z.enum(["block", "warn", "suggest", "log"]),
         action: z.enum(["block", "rewrite", "flag"]),
         channelScope: z.array(z.string()).optional(),
+        patternType: z.enum(["phrase", "regex"]).default("phrase"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -93,5 +117,27 @@ export const rulesRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Rule not found" });
       }
       return updated;
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ ruleId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+      const [deleted] = await db
+        .delete(antiAiRules)
+        .where(
+          scopeAnd(
+            antiAiRules.workspaceId,
+            eq(antiAiRules.id, input.ruleId),
+          ),
+        )
+        .returning({ id: antiAiRules.id });
+      if (!deleted) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Rule not found",
+        });
+      }
+      return { deleted: true };
     }),
 });
