@@ -8,6 +8,7 @@ import { ideasRouter } from "./ideas";
 import { draftsRouter } from "./drafts";
 import { scheduleRouter } from "./schedule";
 import { auditRouter } from "./audit";
+import { onboardingRouter } from "./onboarding";
 
 export const appRouter = router({
   brand: brandRouter,
@@ -19,6 +20,7 @@ export const appRouter = router({
   drafts: draftsRouter,
   schedule: scheduleRouter,
   audit: auditRouter,
+  onboarding: onboardingRouter,
 });
 
 export type AppRouter = typeof appRouter;
