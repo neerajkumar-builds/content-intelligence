@@ -84,27 +84,28 @@ export function createLogger(defaults?: {
       log("info", msg, meta),
     warn: (msg: string, meta?: Record<string, unknown>) =>
       log("warn", msg, meta),
-    error: (msg: string, error?: Error, meta?: Record<string, unknown>) =>
+    error: (msg: string, error?: unknown, meta?: Record<string, unknown>) =>
       log("error", msg, {
         ...meta,
-        error: error
+        error: error instanceof Error
           ? {
-              code: (error as any).code ?? "UNKNOWN",
+              code: "code" in error ? String((error as Record<string, unknown>).code) : "UNKNOWN",
               message: error.message,
               stack:
                 process.env.NODE_ENV === "development"
                   ? error.stack
                   : undefined,
             }
-          : undefined,
+          : error
+            ? { code: "UNKNOWN", message: String(error) }
+            : undefined,
       }),
-    child: (childDefaults: Record<string, unknown>) =>
+    child: (childDefaults: { workspaceId?: string; platform?: string }) =>
       createLogger({
         traceId,
-        workspaceId: defaults?.workspaceId,
-        platform: defaults?.platform,
-        ...childDefaults,
-      } as any),
+        workspaceId: childDefaults.workspaceId ?? defaults?.workspaceId,
+        platform: childDefaults.platform ?? defaults?.platform,
+      }),
   };
 }
 

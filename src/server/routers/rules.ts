@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
 import { antiAiRules } from "@/db/schema";
@@ -88,6 +89,9 @@ export const rulesRouter = router({
         )
         .returning();
 
-      return updated ?? null;
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Rule not found" });
+      }
+      return updated;
     }),
 });

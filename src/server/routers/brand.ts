@@ -55,6 +55,9 @@ export const brandRouter = router({
         .where(scopeAnd(brands.workspaceId, eq(brands.id, input.brandId)))
         .returning();
 
-      return updated ?? null;
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Brand not found" });
+      }
+      return updated;
     }),
 });
