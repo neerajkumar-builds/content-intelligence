@@ -66,7 +66,10 @@ export const rulesRouter = router({
         ruleId: z.string().uuid(),
         data: z.object({
           phraseOrPattern: z.string().min(1).optional(),
+          category: z.enum(["punctuation", "transition", "filler", "corporate", "cliche", "custom"]).optional(),
+          severity: z.enum(["block", "warn", "suggest", "log"]).optional(),
           action: z.enum(["block", "rewrite", "flag"]).optional(),
+          channelScope: z.array(z.string()).optional(),
           enabled: z.boolean().optional(),
         }),
       }),
