@@ -18,7 +18,15 @@
 
 ## Results Log
 
-### 2026-05-11
+### 2026-05-11 (Session 7)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| SCOPE-FIX | `npx tsc --noEmit` | PASS | Zero type errors after async scopedDb change |
+| SCOPE-FIX | `pnpm build` | PASS | All routes compile, all routers registered |
+| SCOPE-FIX | Self-review agent | PASS (1 bug found + fixed) | corpus.delete cross-tenant vuln caught and fixed |
+
+### 2026-05-11 (Session 6)
 
 | Task | Command | Result | Notes |
 |------|---------|--------|-------|

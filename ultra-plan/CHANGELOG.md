@@ -4,7 +4,29 @@
 
 ---
 
-## 2026-05-11
+## 2026-05-11 (Session 7)
+
+### SCOPE-FIX: Workspace UUID Retrofit
+
+- **[SECURITY] Systemic workspace scoping bug fixed** — `scopedDb()` now async, resolves Clerk orgId→UUID — 8 routers (24 procedures) were silently returning empty results
+  - Files: `src/lib/security/scoped-db.ts`, `src/server/context.ts`, `src/server/middleware.ts`
+  - Impact: brand, brief, corpus, rules, connectors, drafts, schedule, audit routers ALL now return correct data
+  - Commit: `d6c88cc`
+
+- **[CLEANUP] Duplicate getWorkspaceUuid removed** — ideas.ts and signals.ts had local copies, now use ctx.scoped
+  - Files: `src/server/routers/ideas.ts`, `src/server/routers/signals.ts`
+  - Impact: DRY, single source of truth for workspace resolution
+
+- **[SECURITY] corpus.delete cross-tenant vulnerability fixed** — was deleting by ID only, now verifies workspace ownership via brand join
+  - Files: `src/server/routers/corpus.ts`
+  - Impact: Prevents cross-workspace corpus item deletion
+
+- **[CLEANUP] Dead code removed** — standalone `workspaceScope()` and `workspaceScopeAnd()` exports removed from scoped-db.ts, manual ws lookup removed from corpus.ts
+  - Impact: Less dead code, cleaner API surface
+
+---
+
+## 2026-05-11 (Session 6)
 
 ### Planning Session (Ultra Plan)
 

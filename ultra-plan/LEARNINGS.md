@@ -105,8 +105,8 @@
 ### Inngest Local Dev
 14. **Inngest local dev requires INNGEST_DEV=1**: Without this env var, Inngest client tries to connect to Inngest Cloud and fails. Set `INNGEST_DEV=1` in `.env.local` for local development. The Inngest dev server runs separately via `npx inngest-cli dev`. (Session 6)
 
-### Clerk orgId Systemic Issue
-15. **Clerk orgId != workspace UUID is systemic**: This isn't a one-off bug (Session 5 found it in antiAiRules). EVERY router that uses `ctx.scoped.workspaceId` and needs to insert/query tables with UUID `workspaceId` FK must look up the internal workspace UUID first. New pattern: `getWorkspaceUuid()` helper that does `WHERE clerkOrgId = ctx.workspaceId` and returns `ws.id`. All Phase 5 routers use this pattern. Audit older routers (brand, rules, connectors, etc.) for this issue. (Session 6)
+### Clerk orgId Systemic Issue — RESOLVED in Session 7
+15. **Clerk orgId != workspace UUID — FIXED AT SOURCE**: `scopedDb()` is now async and resolves Clerk orgId→UUID internally. All 11 routers get the correct UUID via `ctx.scoped.workspaceId` without any per-router changes. Fix was Approach A (fix the utility) rather than Approach B (fix each router). This eliminated duplicate `getWorkspaceUuid()` helpers in ideas.ts and signals.ts. (Session 7, commit d6c88cc)
 
 ---
 

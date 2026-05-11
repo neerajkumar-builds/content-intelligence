@@ -63,9 +63,11 @@ src/lib/errors/circuit-breaker.ts
   └── Uses: rate_limit_windows table (ops.ts schema)
   └── Used by: connector adapters (publish calls wrapped in circuit breaker)
 
-src/lib/security/scoped-db.ts
-  └── Uses: Drizzle client (src/db/index.ts)
-  └── Used by: ALL tRPC procedures (every query must go through scopedDb)
+src/lib/security/scoped-db.ts (ASYNC since Session 7)
+  └── Uses: Drizzle client (src/db/index.ts), workspaces schema (resolves Clerk orgId→UUID)
+  └── Used by: src/server/middleware.ts (awaited in workspace middleware)
+  └── Provides: ctx.scoped.workspaceId (UUID), scope(), scopeAnd() — all use resolved UUID
+  └── NOTE: ctx.workspaceId is still Clerk orgId (needed for OAuth state). ctx.scoped.workspaceId is the UUID.
 
 src/lib/security/token-manager.ts
   └── Uses: oauth_credentials table (connectors.ts schema), OAUTH_ENCRYPTION_KEY env var

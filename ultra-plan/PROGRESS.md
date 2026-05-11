@@ -1,7 +1,7 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-11 (Session 6)
-> Current phase: Phase 5 (Signal Ingestion / Learn) — 5A-5D DONE, 5E NOT STARTED
+> Last updated: 2026-05-11 (Session 7)
+> Current phase: Scope Fix DONE, Phase 5E NOT STARTED
 > Next action: Phase 5E (n8n workflow deployment) then Phase 4B (Connector Publishing)
 
 ---
@@ -21,6 +21,7 @@
 | 5B — Schema Migration + Corpus Backfill | DONE | `main` | Session 6 |
 | 5C — Webhook + Signal Processing | DONE | `main` | Session 6 |
 | 5D — Routers + Idea Wall UI | DONE | `main` | Session 6 |
+| SCOPE-FIX — Workspace UUID Retrofit | DONE | `main` | Session 7 |
 | 5E — n8n Workflow Deployment | NOT STARTED | — | — |
 | 4B — Connector Publishing | NOT STARTED | — | — |
 | 6 — Drafts + Grading | NOT STARTED | — | — |
