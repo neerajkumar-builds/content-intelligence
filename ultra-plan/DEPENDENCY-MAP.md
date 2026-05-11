@@ -274,6 +274,48 @@ src/middleware.ts (Clerk Auth)
   └── Used by: All route protection + the excluded API routes above
 ```
 
+## Session 8 New Files
+
+```
+src/lib/connectors/adapter.ts
+  └── Uses: src/lib/connectors/types.ts (PublishInput, CHARACTER_LIMITS, MEDIA_CONSTRAINTS)
+  └── Uses: src/lib/errors/app-error.ts (mapPlatformError)
+  └── Used by: ALL 15 platform adapters (implement ConnectorAdapter interface)
+  └── Used by: publish-post.ts, verify-post.ts (Inngest functions)
+
+src/lib/connectors/registry.ts
+  └── Uses: src/lib/connectors/adapter.ts (ConnectorAdapter type)
+  └── Used by: publish-post.ts, verify-post.ts (getAdapter(platform))
+  └── Used by: Platform adapters (registerAdapter on import)
+
+src/server/inngest/functions/publish-post.ts
+  └── Uses: events.ts (PostPublish, PostVerify), registry.ts (getAdapter)
+  └── Uses: schema/publishing.ts (posts, postResults), schema/ops.ts (auditLog)
+  └── Uses: schema/content.ts (drafts), schema/connectors.ts (connectors)
+  └── Used by: Inngest serve route (registered in functions/index.ts)
+  └── Triggered by: PostPublish event (from drafts.publish tRPC mutation)
+
+src/server/inngest/functions/verify-post.ts
+  └── Uses: events.ts (PostVerify), registry.ts (getAdapter)
+  └── Uses: schema/publishing.ts (posts, postResults), schema/ops.ts (auditLog)
+  └── Used by: Inngest serve route (registered in functions/index.ts)
+  └── Triggered by: PostVerify event (from publish-post.ts after 10min delay)
+
+src/components/ideas/add-source-dialog.tsx
+  └── Uses: src/lib/trpc/client.tsx (signals.addSource mutation)
+  └── Used by: src/components/ideas/source-rail.tsx
+
+src/components/ideas/source-rail.tsx (REWRITTEN Session 8)
+  └── Uses: src/lib/trpc/client.tsx (signals.listSources, toggleSource, deleteSource)
+  └── Uses: add-source-dialog.tsx
+  └── Used by: src/app/(app)/ideas/page.tsx
+
+Inngest Cloud (Updated Session 8)
+  └── 5 functions synced (was 3): + publish-post, verify-post
+  └── Free plan: 5 concurrency per function, 5 active functions limit — AT CAPACITY
+  └── NOTE: Adding more functions requires Inngest plan upgrade or consolidation
+```
+
 ## Critical: Files That Break Everything If Wrong
 
 1. `src/db/schema/enums.ts` — Every other schema file imports from here

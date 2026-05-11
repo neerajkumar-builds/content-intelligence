@@ -18,6 +18,24 @@
 
 ## Results Log
 
+### 2026-05-12 (Session 8)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| CP1.1 Error taxonomy | `npx tsc --noEmit` | PASS | +2 error codes, mapPlatformError utility |
+| CP1.2 Adapter interface | `npx tsc --noEmit` | PASS | ConnectorAdapter + BaseAdapter compile clean |
+| CP1.3 Adapter registry | `npx tsc --noEmit` | PASS | getAdapter/registerAdapter |
+| CP1.4 Inngest events | `npx tsc --noEmit` | PASS | 3 new events: PostPublish, PostVerify, TokenRefreshDue |
+| CP1.5 publish-post fn | `npx tsc --noEmit` | PASS | 10-step pipeline compiles, registered in index |
+| CP1.6 verify-post fn | `npx tsc --noEmit` | PASS | Ghost detection function |
+| CP1.7 tRPC mutations | `npx tsc --noEmit` | PASS | publish, publishMulti, getPublishStatus |
+| CP1 full build | `pnpm build` | PASS | 23 routes, zero errors |
+| Add Source dialog | Browser | PASS | Dialog opens, fields render, RSS selected by default |
+| Add "Sam Altman Blog" | Browser + Supabase | PASS | Row created in signal_source_configs, SourceRail shows 3 sources |
+| Toggle source | Browser | PASS | Sam Altman Blog toggled live→paused→live |
+| SourceRail layout | Browser | PASS | + button, toggle badges, delete x all visible |
+| Full build | `pnpm build` | PASS | 23 routes after Add Source feature |
+
 ### 2026-05-11 (Session 7)
 
 | Task | Command | Result | Notes |

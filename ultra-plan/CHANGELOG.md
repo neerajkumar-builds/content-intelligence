@@ -4,6 +4,46 @@
 
 ---
 
+## 2026-05-12 (Session 8)
+
+### Checkpoint 1: Publishing Foundation
+
+- **[INFRA] Error taxonomy extended** — Added `ACCOUNT_RESTRICTED`, `ACCOUNT_WARMUP_REQUIRED` to ErrorCodes. Added `mapPlatformError()` with per-platform parsers (LinkedIn `serviceErrorCode`, X error arrays, Meta `error.code`/`error_subcode`, Reddit `json.errors` tuples, TikTok error codes).
+  - Files: `src/lib/errors/app-error.ts` (+156 lines)
+  - Impact: Every future adapter calls `mapPlatformError()` instead of parsing raw responses
+
+- **[INFRA] ConnectorAdapter interface + BaseAdapter** — 8-method interface with content validation (char/byte/grapheme limits), media validation, platform error mapping. Token passed IN by Inngest function (adapter never touches TokenManager directly).
+  - Files: `src/lib/connectors/adapter.ts` (new, 149 lines)
+  - Impact: All 15 platform adapters implement this interface
+
+- **[INFRA] Adapter registry** — `getAdapter(platform)` lookup, `registerAdapter()` for platform self-registration.
+  - Files: `src/lib/connectors/registry.ts` (new, 27 lines)
+
+- **[INFRA] 3 new Inngest events** — `PostPublish` (single platform), `PostVerify` (ghost detection), `TokenRefreshDue` (batch refresh)
+  - Files: `src/server/inngest/events.ts` (+35 lines)
+
+- **[FEATURE] publish-post Inngest function** — 10-step pipeline: fetch-post → fetch-draft → fetch-connector → validate-content → publish → record-result → audit → ghost-check-delay (10min) → schedule-verify. Concurrency: 5 per workspace.
+  - Files: `src/server/inngest/functions/publish-post.ts` (new, 155 lines)
+
+- **[FEATURE] verify-post Inngest function** — Ghost detection at +10 min. Calls `adapter.verify()`, marks post as failed with `PUBLISH_GHOST` if invisible.
+  - Files: `src/server/inngest/functions/verify-post.ts` (new, 75 lines)
+
+- **[FEATURE] 3 new tRPC mutations** — `publish` (single), `publishMulti` (fan-out), `getPublishStatus` (polling). Idempotency keys: `idem_{draftId}_v{version}_{channel}_{yyyymmdd}`. Dedup check before insert.
+  - Files: `src/server/routers/drafts.ts` (+206 lines)
+  - Commit: `ee88a9a`
+
+### Add Source UI
+
+- **[FEATURE] Add Source dialog** — Modal with 6 source types (RSS active, others "coming soon"). Dynamic input fields per type: URL label, placeholder, hint all adapt. URL validation. Toast on success.
+  - Files: `src/components/ideas/add-source-dialog.tsx` (new, 194 lines)
+
+- **[FEATURE] SourceRail actions** — "+" button opens dialog. Each source row has toggle (live/paused) and delete (with confirm). All wired to `signals.toggleSource` and `signals.deleteSource` mutations.
+  - Files: `src/components/ideas/source-rail.tsx` (rewritten, 148 lines)
+  - Commit: `04ea302`
+  - E2E verified: added "Sam Altman Blog" RSS → appeared in SourceRail + confirmed in Supabase
+
+---
+
 ## 2026-05-11 (Session 7)
 
 ### SCOPE-FIX: Workspace UUID Retrofit

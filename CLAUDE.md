@@ -45,7 +45,9 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Clerk Middleware Fix (Session 7):** Excluded `/api/webhooks(.*)`, `/api/health`, `/api/inngest` from Clerk matcher — without this, Clerk blocks n8n webhooks, Inngest Cloud, and health probes.
 - **Inngest Cloud (Session 7):** 3 functions synced via Vercel integration (auto-injects INNGEST_SIGNING_KEY + INNGEST_EVENT_KEY). process-signal concurrency = 5 (reduced from 20 plan limit after Supabase connection saturation).
 - **E2E Pipeline Verified (Session 7):** n8n RSS -> webhook -> Inngest Cloud -> Gemini embed -> rank -> idea. 1.7s per signal. 121 signals ingested, 12+ processed to ideas.
-- **Next:** Phase 4B (Connector Publishing) — Checkpoint 1 (Publishing Foundation) first
+- **Checkpoint 1 (Session 8):** Publishing Foundation DONE. ConnectorAdapter interface, BaseAdapter, adapter registry, 3 Inngest events (PostPublish, PostVerify, TokenRefreshDue), publish-post function (10-step pipeline + ghost detection), verify-post function, 3 tRPC mutations (publish, publishMulti, getPublishStatus). 5 Inngest functions total (was 3). Idempotency keys: `idem_{draftId}_v{version}_{channel}_{yyyymmdd}`.
+- **Add Source UI (Session 8):** Add Source dialog with 6 source types (RSS active, others "coming soon"). SourceRail + button, toggle live/paused, delete with confirm. E2E tested: "Sam Altman Blog" RSS added successfully.
+- **Next:** Checkpoint 2 (LinkedIn Adapter) — OAuth already done, adapter plugs into CP1 interface
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
@@ -59,7 +61,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 4. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
 5. All work on `main` branch (all PRs merged). No stale branches.
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
-7. **FIRST TASK next session:** Checkpoint 1 (Publishing Foundation: error taxonomy, adapter interface, Inngest publish function) → then Phase 4B LinkedIn adapter
+7. **FIRST TASK next session:** Checkpoint 2 (LinkedIn Adapter: implement ConnectorAdapter, 2-phase media upload, token refresh cron, E2E test) → then expand to other platforms
 8. **Key context:** `ctx.workspaceId` = Clerk orgId (for OAuth). `ctx.scoped.workspaceId` = UUID (for DB). Never confuse them.
 9. **Production is LIVE:** content-intelligence-eight.vercel.app auto-deploys from main. Inngest Cloud + n8n workflow are active. Test locally before pushing.
 10. **Connector strategy plan:** Read `/Users/neerajkumar/.claude/plans/unified-sniffing-island.md` for the 13-part deep research plan before starting Phase 4B.
@@ -143,6 +145,12 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Webhook utilities | `src/lib/webhooks/verify-hmac.ts`, `schemas.ts` |
 | Signals router | `src/server/routers/signals.ts` (source config CRUD + backfill) |
 | Idea Wall page | `src/app/(app)/ideas/page.tsx` + `src/components/ideas/*.tsx` |
+| Connector adapter interface | `src/lib/connectors/adapter.ts` (ConnectorAdapter + BaseAdapter) |
+| Adapter registry | `src/lib/connectors/registry.ts` (getAdapter/registerAdapter) |
+| Adapters directory | `src/lib/connectors/adapters/` (empty, ready for LinkedIn in CP2) |
+| Inngest publish function | `src/server/inngest/functions/publish-post.ts` (10-step pipeline) |
+| Inngest verify function | `src/server/inngest/functions/verify-post.ts` (ghost detection) |
+| Add Source dialog | `src/components/ideas/add-source-dialog.tsx` |
 | Supabase RPC functions | `match_brand_corpus()`, `match_signal_ideas()` (in DB, not files) |
 | Dev seed script | `src/db/seed.ts` (uses pg, not neon HTTP) |
 | Reference code (paste-ready) | `ultra-plan/reference/01-06*.md` |
@@ -192,7 +200,9 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | 5 (5A-5E) | Signal Ingestion (Inngest, Gemini embed, webhook, pipeline, Idea Wall, n8n workflow) | DONE |
 | SCOPE-FIX | Workspace UUID retrofit (scopedDb async, 8 routers fixed, cross-tenant vuln fixed) | DONE |
 | CP0 | Checkpoint 0: Vercel deploy, Inngest Cloud, n8n activated, E2E verified (1.7s/signal) | DONE |
-| 4B | Connector Publishing Adapters (publish, verify, ghost detect per platform) | NEXT |
+| CP1 | Checkpoint 1: Publishing Foundation (adapter interface, publish pipeline, tRPC mutations) | DONE |
+| Add Source | Add Source dialog + SourceRail actions (toggle, delete) — E2E tested | DONE |
+| 4B | Connector Publishing Adapters (publish, verify, ghost detect per platform) | NEXT (CP2: LinkedIn first) |
 | 6 | Drafts + 7-Dim Grading (core surface, glass-box) | NOT STARTED |
 | 7 | Schedule + Publish (idempotency, fan-out, ghost detection) | NOT STARTED |
 | 8 | Insights + Remaining (home, competitors, prompt studio) | NOT STARTED |

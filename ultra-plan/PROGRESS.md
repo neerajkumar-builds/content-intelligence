@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-11 (Session 7)
-> Current phase: Checkpoint 0 DONE (Vercel deploy + Inngest Cloud + n8n activated)
-> Next action: Checkpoint 1 (Publishing Foundation) then Phase 4B
+> Last updated: 2026-05-12 (Session 8)
+> Current phase: Checkpoint 1 DONE (Publishing Foundation) + Add Source UI
+> Next action: Checkpoint 2 (LinkedIn Adapter) then remaining Phase 4B platforms
 
 ---
 
@@ -219,6 +219,28 @@
 | CP0.6 | E2E pipeline verified: n8n RSS -> webhook -> Inngest -> embed -> rank -> idea | DONE | 1.7s per signal, 121 signals ingested | — | 2026-05-11 |
 | CP0.7 | Deep connector strategy research (13-part plan) | DONE | Plan at ~/.claude/plans/unified-sniffing-island.md | 54debee | 2026-05-11 |
 | CP0.8 | Competitor analysis (Blotato, Hootsuite, Taplio, Typefully, Copy.ai) | DONE | Documented in connector architecture revised | 76b517b | 2026-05-11 |
+
+---
+
+## Checkpoint 1: Publishing Foundation (DONE — Session 8)
+
+| # | Task | Status | Verified | Committed | Session |
+|---|------|--------|----------|-----------|---------|
+| CP1.1 | Extend error taxonomy + platform error mapping | DONE | pnpm build OK | ee88a9a | 2026-05-12 |
+| CP1.2 | ConnectorAdapter interface + BaseAdapter abstract class | DONE | pnpm build OK | ee88a9a | 2026-05-12 |
+| CP1.3 | Adapter registry (platform → adapter lookup) | DONE | pnpm build OK | ee88a9a | 2026-05-12 |
+| CP1.4 | Inngest publish events (PostPublish, PostVerify, TokenRefreshDue) | DONE | pnpm build OK | ee88a9a | 2026-05-12 |
+| CP1.5 | Inngest publish-post function (10-step pipeline + ghost delay) | DONE | pnpm build OK, 5 functions registered | ee88a9a | 2026-05-12 |
+| CP1.6 | Inngest verify-post function (ghost detection at +10min) | DONE | pnpm build OK | ee88a9a | 2026-05-12 |
+| CP1.7 | tRPC publish/publishMulti/getPublishStatus mutations | DONE | pnpm build OK | ee88a9a | 2026-05-12 |
+
+## Add Source UI (DONE — Session 8)
+
+| # | Task | Status | Verified | Committed | Session |
+|---|------|--------|----------|-----------|---------|
+| AS.1 | Add Source dialog with per-type input fields | DONE | E2E tested in browser | 04ea302 | 2026-05-12 |
+| AS.2 | SourceRail: + button, toggle enable/disable, delete per source | DONE | Toggle + delete verified | 04ea302 | 2026-05-12 |
+| AS.3 | E2E: added "Sam Altman Blog" RSS → appeared in SourceRail + Supabase | DONE | Supabase query confirmed | — | 2026-05-12 |
 
 ---
 
