@@ -2,7 +2,7 @@ export interface ModelConfig {
   id: string;
   label: string;
   provider: "google" | "anthropic" | "openrouter";
-  tier: "fast" | "balanced" | "best";
+  tier: "fast" | "balanced" | "best" | "thinking";
   description: string;
   costPer1kInput: number;
   costPer1kOutput: number;
