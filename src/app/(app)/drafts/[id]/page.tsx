@@ -458,6 +458,48 @@ export default function DraftEditorPage() {
             </button>
           )}
 
+          {/* Content actions */}
+          {!generating && content && (
+            <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${title}\n\n${content}`);
+                  toast.success("Copied to clipboard");
+                }}
+                title="Copy content"
+                style={{ padding: "5px 10px", fontSize: 11, borderRadius: 5, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+              >
+                Copy
+              </button>
+              <button
+                onClick={() => {
+                  const blob = new Blob([`${title}\n\n${content}`], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${(title || "draft").replace(/[^a-zA-Z0-9]/g, "-").slice(0, 50)}.txt`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success("Downloaded");
+                }}
+                title="Download as text"
+                style={{ padding: "5px 10px", fontSize: 11, borderRadius: 5, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+              >
+                Download
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success("Link copied");
+                }}
+                title="Copy link to this draft"
+                style={{ padding: "5px 10px", fontSize: 11, borderRadius: 5, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+              >
+                Share
+              </button>
+            </div>
+          )}
+
           {livePost && (
             <a
               href={livePost.platformPostUrl ?? "#"}
@@ -632,35 +674,35 @@ export default function DraftEditorPage() {
             })}
           </span>
         </div>
+        {/* AI Generation Info */}
+        {draft.content && (
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+              AI Model
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ink-primary)", fontFamily: "var(--font-mono)" }}>
+              gemini-2.0-flash
+            </div>
+            <div style={{ fontSize: 10, color: "var(--ink-tertiary)", marginTop: 2 }}>
+              Google AI
+            </div>
+          </div>
+        )}
+
         {/* Source idea */}
         {draft.ideaId && (
           <div>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                color: "var(--ink-tertiary)",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginBottom: 6,
-              }}
-            >
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
               Source Idea
             </div>
+            <div style={{ fontSize: 12, color: "var(--ink-secondary)", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {draft.title || "Untitled idea"}
+            </div>
             <button
-              onClick={() => router.push("/ideas")}
-              style={{
-                fontSize: 12,
-                color: "var(--accent)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                textDecoration: "underline",
-                textUnderlineOffset: 2,
-              }}
+              onClick={() => router.push(`/ideas?highlight=${draft.ideaId}`)}
+              style={{ fontSize: 11, color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}
             >
-              View on Idea Wall
+              View source idea
             </button>
           </div>
         )}
