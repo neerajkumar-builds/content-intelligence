@@ -245,33 +245,33 @@ export default function OnboardingPage() {
   return (
     <>
       <Stepper currentStep={step} />
+
+      {error && (
+        <div
+          style={{
+            padding: "10px 20px",
+            background: "var(--danger-soft, #fee)",
+            borderBottom: "1px solid var(--danger, #c00)",
+            fontSize: 13,
+            color: "var(--danger, #c00)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexShrink: 0,
+          }}
+        >
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "inherit", marginLeft: 12 }}
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       <div style={{ flex: 1, overflowY: "auto", padding: "32px 64px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          {error && (
-            <div
-              style={{
-                padding: "10px 14px",
-                marginBottom: 16,
-                background: "var(--danger-soft, #fee)",
-                border: "1px solid var(--danger, #c00)",
-                borderRadius: 6,
-                fontSize: 13,
-                color: "var(--danger, #c00)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span>{error}</span>
-              <button
-                onClick={() => setError(null)}
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "inherit" }}
-              >
-                &times;
-              </button>
-            </div>
-          )}
-
           <div
             className="eyebrow"
             style={{ fontSize: 9.5, color: step === 1 ? "var(--danger)" : undefined }}
