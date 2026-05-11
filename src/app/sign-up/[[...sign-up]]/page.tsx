@@ -104,12 +104,18 @@ export default function SignUpPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "var(--bg-canvas)",
+          background: "#0f172a",
           padding: "40px 32px",
           flexShrink: 0,
         }}
       >
-        <SignUp />
+        <SignUp
+          appearance={{
+            elements: {
+              card: { boxShadow: "0 8px 32px rgba(0,0,0,0.4)", borderRadius: "14px" },
+            },
+          }}
+        />
       </div>
     </div>
   );
