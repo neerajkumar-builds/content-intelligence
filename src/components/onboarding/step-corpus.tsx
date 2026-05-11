@@ -24,6 +24,7 @@ export function StepCorpus({
   voiceStyle: string;
   onSave: (items: CorpusItem[]) => void;
   onSkip: () => void;
+  initialItems?: CorpusItem[];
 }) {
   const [tab, setTab] = useState<"paste" | "guided" | "template">("paste");
   const [pasteText, setPasteText] = useState("");
@@ -80,6 +81,10 @@ export function StepCorpus({
             }}
           />
         </div>
+      </div>
+
+      <div style={{ fontSize: 12, color: "var(--ink-secondary)", fontStyle: "italic" }}>
+        Choose one method below. You only need to use one tab — pick whichever is easiest for you.
       </div>
 
       <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--border-subtle)" }}>
