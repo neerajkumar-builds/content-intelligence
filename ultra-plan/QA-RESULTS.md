@@ -97,4 +97,10 @@ If FAIL:
 | 4Aw.6 Clerk Organizations | Browser | PASS | Enabled via Clerk dev dialog, "Membership required" |
 | Final build | pnpm build | PASS | Compiled in 1868ms, 21/21 pages, TS clean |
 | Dev server | pnpm dev | PASS | Welcome screen renders on /onboarding |
-| 4Aw.7 E2E test | Browser | PENDING | Requires user sign-in to test full flow |
+| 4Aw.7 E2E test | Browser | PASS | Sign-in → 4 steps → Supabase verified: ws=3, brands=4, briefs=3, corpus=13, rules=72 |
+| 4Aw.8 DB driver | pnpm build | PASS | postgres-js with prepare:false for Supavisor pgbouncer |
+| 4Aw.9 Supabase conn | node test | PASS | aws-1-us-east-1.pooler.supabase.com:6543, password URL-encoded |
+| 4Aw.10 UUID fix | pnpm build | PASS | antiAiRules uses workspace.id not Clerk orgId |
+| 4Aw.11 Toast | pnpm build | PASS | sonner@2.0.7, top-right, rich colors |
+| 4Aw.12 Theme detect | Browser | PASS | OS dark mode detected in incognito |
+| 4Aw.13 Auth pages | pnpm build | PASS | Dark theme, split layout, Clerk dark baseTheme |

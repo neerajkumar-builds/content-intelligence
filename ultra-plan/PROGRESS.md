@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
 > Last updated: 2026-05-11 (Session 5)
-> Current phase: Phase 4A-wire (Onboarding DB Wiring) — DONE
-> Next action: Manual E2E test (sign-in + onboarding flow), then Phase 5 (Signal Ingestion)
+> Current phase: Phase 4A-wire (Onboarding DB Wiring) — DONE + E2E VERIFIED
+> Next action: Phase 5 (Signal Ingestion / Learn)
 
 ---
 
@@ -105,7 +105,13 @@
 | 4Aw.4 | Make saveGuardrails idempotent (delete before insert) | `src/server/routers/onboarding.ts` | DONE | pnpm build OK | 2026-05-11 |
 | 4Aw.5 | Handle step 4 stuck state (auto-complete) | `src/app/onboarding/page.tsx` | DONE | pnpm build OK | 2026-05-11 |
 | 4Aw.6 | Enable Clerk Organizations (Membership required) | Clerk dashboard | DONE | Dialog confirmed | 2026-05-11 |
-| 4Aw.7 | E2E test (sign-in → onboarding → Supabase) | — | PENDING | Needs user sign-in | 2026-05-11 |
+| 4Aw.7 | E2E test (sign-in → onboarding → Supabase) | — | DONE | All 5 tables verified | 2026-05-11 |
+| 4Aw.8 | Fix DB driver (neon-http → postgres-js) | `src/db/index.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 4Aw.9 | Fix Supabase connection (Supavisor migration) | `.env.local` | DONE | SELECT count(*) OK | 2026-05-11 |
+| 4Aw.10 | Fix antiAiRules UUID mismatch (Clerk orgId vs workspace.id) | `onboarding.ts` | DONE | 57 rules inserted | 2026-05-11 |
+| 4Aw.11 | Toast notifications (sonner) | `layout.tsx`, `page.tsx` | DONE | pnpm build OK | 2026-05-11 |
+| 4Aw.12 | Theme detection (OS prefers-color-scheme fallback) | `theme-provider.tsx` | DONE | Dark mode in incognito | 2026-05-11 |
+| 4Aw.13 | Redesign welcome + sign-in/sign-up pages | 3 files | DONE | Dark theme, animations | 2026-05-11 |
 
 ---
 
