@@ -1,19 +1,9 @@
 import { z } from "zod";
-import { eq, desc, and, lt } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { ideas, signals, workspaces } from "@/db/schema";
-
-async function getWorkspaceUuid(db: typeof import("@/db").db, clerkOrgId: string) {
-  const [ws] = await db
-    .select({ id: workspaces.id })
-    .from(workspaces)
-    .where(eq(workspaces.clerkOrgId, clerkOrgId))
-    .limit(1);
-  if (!ws) throw new TRPCError({ code: "NOT_FOUND", message: "Workspace not found" });
-  return ws.id;
-}
+import { ideas, signals } from "@/db/schema";
 
 export const ideasRouter = router({
   list: protectedProcedure
@@ -29,10 +19,10 @@ export const ideasRouter = router({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+      const { db, workspaceId } = ctx.scoped;
       const limit = input?.limit ?? 20;
 
-      const conditions = [eq(ideas.workspaceId, wsId)];
+      const conditions = [eq(ideas.workspaceId, workspaceId)];
       if (input?.brandId) conditions.push(eq(ideas.brandId, input.brandId));
       if (input?.source) conditions.push(eq(ideas.sourceKind, input.source));
 
@@ -43,7 +33,7 @@ export const ideasRouter = router({
             ? desc(ideas.createdAt)
             : desc(ideas.hotScore);
 
-      const rows = await ctx.db
+      const rows = await db
         .select()
         .from(ideas)
         .where(and(...conditions))
@@ -63,19 +53,19 @@ export const ideasRouter = router({
   getById: protectedProcedure
     .input(z.object({ ideaId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+      const { db, workspaceId } = ctx.scoped;
 
-      const [idea] = await ctx.db
+      const [idea] = await db
         .select()
         .from(ideas)
-        .where(and(eq(ideas.id, input.ideaId), eq(ideas.workspaceId, wsId)))
+        .where(and(eq(ideas.id, input.ideaId), eq(ideas.workspaceId, workspaceId)))
         .limit(1);
 
       if (!idea) throw new TRPCError({ code: "NOT_FOUND", message: "Idea not found" });
 
       let signal = null;
       if (idea.signalId) {
-        const [s] = await ctx.db
+        const [s] = await db
           .select({
             id: signals.id,
             source: signals.source,
@@ -97,12 +87,12 @@ export const ideasRouter = router({
   dismiss: protectedProcedure
     .input(z.object({ ideaId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+      const { db, workspaceId } = ctx.scoped;
 
-      const [updated] = await ctx.db
+      const [updated] = await db
         .update(ideas)
         .set({ hotScore: 0, score: "0.00" })
-        .where(and(eq(ideas.id, input.ideaId), eq(ideas.workspaceId, wsId)))
+        .where(and(eq(ideas.id, input.ideaId), eq(ideas.workspaceId, workspaceId)))
         .returning({ id: ideas.id });
 
       if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Idea not found" });
@@ -120,12 +110,12 @@ export const ideasRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+      const { db, workspaceId } = ctx.scoped;
 
-      const [idea] = await ctx.db
+      const [idea] = await db
         .insert(ideas)
         .values({
-          workspaceId: wsId,
+          workspaceId,
           brandId: input.brandId,
           hook: input.hook,
           angle: input.angle,

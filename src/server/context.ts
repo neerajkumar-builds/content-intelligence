@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { scopedDb, type ScopedDb } from "@/lib/security/scoped-db";
+import { type ScopedDb } from "@/lib/security/scoped-db";
 import { createTraceId } from "@/lib/logging";
 
 export interface Context {
@@ -20,7 +20,7 @@ export async function createTRPCContext(opts: {
   return {
     userId,
     workspaceId: orgId ?? null,
-    scoped: orgId ? scopedDb(orgId) : null,
+    scoped: null,
     db,
     traceId,
   };

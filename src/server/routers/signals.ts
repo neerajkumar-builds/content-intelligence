@@ -3,27 +3,17 @@ import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { signalSourceConfigs, workspaces, brands } from "@/db/schema";
+import { signalSourceConfigs, brands } from "@/db/schema";
 import { inngest } from "@/server/inngest/client";
 import { CorpusBackfill } from "@/server/inngest/events";
 
-async function getWorkspaceUuid(db: typeof import("@/db").db, clerkOrgId: string) {
-  const [ws] = await db
-    .select({ id: workspaces.id })
-    .from(workspaces)
-    .where(eq(workspaces.clerkOrgId, clerkOrgId))
-    .limit(1);
-  if (!ws) throw new TRPCError({ code: "NOT_FOUND", message: "Workspace not found" });
-  return ws.id;
-}
-
 export const signalsRouter = router({
   listSources: protectedProcedure.query(async ({ ctx }) => {
-    const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
-    return ctx.db
+    const { db, workspaceId } = ctx.scoped;
+    return db
       .select()
       .from(signalSourceConfigs)
-      .where(eq(signalSourceConfigs.workspaceId, wsId))
+      .where(eq(signalSourceConfigs.workspaceId, workspaceId))
       .orderBy(desc(signalSourceConfigs.createdAt));
   }),
 
@@ -45,12 +35,12 @@ export const signalsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+      const { db, workspaceId } = ctx.scoped;
 
-      const [config] = await ctx.db
+      const [config] = await db
         .insert(signalSourceConfigs)
         .values({
-          workspaceId: wsId,
+          workspaceId,
           source: input.source,
           label: input.label,
           configUrl: input.configUrl,
@@ -68,15 +58,15 @@ export const signalsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+      const { db, workspaceId } = ctx.scoped;
 
-      const [updated] = await ctx.db
+      const [updated] = await db
         .update(signalSourceConfigs)
         .set({ enabled: input.enabled })
         .where(
           and(
             eq(signalSourceConfigs.id, input.sourceId),
-            eq(signalSourceConfigs.workspaceId, wsId),
+            eq(signalSourceConfigs.workspaceId, workspaceId),
           ),
         )
         .returning({ id: signalSourceConfigs.id });
@@ -90,14 +80,14 @@ export const signalsRouter = router({
   deleteSource: protectedProcedure
     .input(z.object({ sourceId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+      const { db, workspaceId } = ctx.scoped;
 
-      const [deleted] = await ctx.db
+      const [deleted] = await db
         .delete(signalSourceConfigs)
         .where(
           and(
             eq(signalSourceConfigs.id, input.sourceId),
-            eq(signalSourceConfigs.workspaceId, wsId),
+            eq(signalSourceConfigs.workspaceId, workspaceId),
           ),
         )
         .returning({ id: signalSourceConfigs.id });
@@ -111,12 +101,12 @@ export const signalsRouter = router({
   triggerBackfill: protectedProcedure
     .input(z.object({ brandId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+      const { db, workspaceId } = ctx.scoped;
 
-      const [brand] = await ctx.db
+      const [brand] = await db
         .select({ id: brands.id })
         .from(brands)
-        .where(and(eq(brands.id, input.brandId), eq(brands.workspaceId, wsId)))
+        .where(and(eq(brands.id, input.brandId), eq(brands.workspaceId, workspaceId)))
         .limit(1);
       if (!brand) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Brand not in this workspace" });
@@ -125,7 +115,7 @@ export const signalsRouter = router({
       await inngest.send(
         CorpusBackfill.create({
           brandId: input.brandId,
-          workspaceId: wsId,
+          workspaceId,
         }),
       );
       return { triggered: true };

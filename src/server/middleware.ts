@@ -18,7 +18,7 @@ const authMiddleware = publicProcedure.use((opts) => {
   });
 });
 
-const workspaceScopeMiddleware = authMiddleware.use((opts) => {
+const workspaceScopeMiddleware = authMiddleware.use(async (opts) => {
   if (!opts.ctx.workspaceId) {
     throw new TRPCError({
       code: "FORBIDDEN",
@@ -26,7 +26,7 @@ const workspaceScopeMiddleware = authMiddleware.use((opts) => {
     });
   }
 
-  const scoped = scopedDb(opts.ctx.workspaceId);
+  const scoped = await scopedDb(opts.ctx.workspaceId);
 
   return opts.next({
     ctx: {

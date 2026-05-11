@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { brandCorpus, brands, workspaces } from "@/db/schema";
+import { brandCorpus, brands } from "@/db/schema";
 import { inngest } from "@/server/inngest/client";
 import { CorpusItemAdded } from "@/server/inngest/events";
 
@@ -17,7 +17,7 @@ export const corpusRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { db, scopeAnd } = ctx.scoped;
+      const { db, scopeAnd, workspaceId } = ctx.scoped;
 
       const [brand] = await db
         .select({ id: brands.id })
@@ -40,23 +40,15 @@ export const corpusRouter = router({
         })
         .returning();
 
-      const [ws] = await ctx.db
-        .select({ id: workspaces.id })
-        .from(workspaces)
-        .where(eq(workspaces.clerkOrgId, ctx.workspaceId!))
-        .limit(1);
-
-      if (ws) {
-        inngest
-          .send(
-            CorpusItemAdded.create({
-              corpusItemId: item.id,
-              brandId: input.brandId,
-              workspaceId: ws.id,
-            }),
-          )
-          .catch(() => {});
-      }
+      inngest
+        .send(
+          CorpusItemAdded.create({
+            corpusItemId: item.id,
+            brandId: input.brandId,
+            workspaceId,
+          }),
+        )
+        .catch(() => {});
 
       return item;
     }),
@@ -93,18 +85,28 @@ export const corpusRouter = router({
   delete: protectedProcedure
     .input(z.object({ corpusItemId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const { db } = ctx.scoped;
+      const { db, workspaceId } = ctx.scoped;
 
-      const [deleted] = await db
-        .delete(brandCorpus)
-        .where(eq(brandCorpus.id, input.corpusItemId))
-        .returning({ id: brandCorpus.id });
-      if (!deleted) {
+      const [item] = await db
+        .select({ id: brandCorpus.id })
+        .from(brandCorpus)
+        .innerJoin(brands, eq(brandCorpus.brandId, brands.id))
+        .where(
+          and(
+            eq(brandCorpus.id, input.corpusItemId),
+            eq(brands.workspaceId, workspaceId),
+          ),
+        )
+        .limit(1);
+
+      if (!item) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Corpus item not found",
         });
       }
+
+      await db.delete(brandCorpus).where(eq(brandCorpus.id, input.corpusItemId));
       return { deleted: true };
     }),
 });
