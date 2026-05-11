@@ -165,3 +165,38 @@
 - **4Aw.6** Clerk Organizations enabled
   - Config: Clerk dashboard — Organizations set to "Membership required" (Standard)
   - Why: useOrganizationList hook requires Organizations feature. "Membership required" matches B2B workspace model.
+
+- **4Aw.7** DB driver: neon-http → postgres-js
+  - Files: `src/db/index.ts`, `package.json`
+  - What: `@neondatabase/serverless` neon() uses Neon-specific HTTP endpoint Supabase doesn't have. Switched to `postgres` (postgres.js) with `prepare: false` for pgbouncer compatibility.
+  - Added: `postgres@3.4.9`
+
+- **4Aw.8** Supabase connection: Supavisor migration
+  - Files: `.env.local`
+  - What: Old hostname `db.<ref>.supabase.co` no longer resolves (DNS NXDOMAIN). Supabase migrated to Supavisor pooler at `aws-1-us-east-1.pooler.supabase.com`. Username changed from `postgres` to `postgres.<ref>`. Password `@` URL-encoded to `%40`.
+
+- **4Aw.9** Brief validation relaxed + error formatting
+  - Files: `src/server/routers/onboarding.ts`, `src/app/onboarding/page.tsx`, `src/components/onboarding/step-brief.tsx`
+  - What: saveBrief removed `.min(1)` on icp/antiPositioning (users may not know during onboarding). Brief always pre-populates wedge/voiceTraits from template. `friendlyError()` parser converts raw Zod JSON into readable messages.
+
+- **4Aw.10** Toast notifications
+  - Files: `src/app/layout.tsx`, `src/app/onboarding/page.tsx`
+  - What: Added `sonner@2.0.7`. `<Toaster />` in root layout. Replaced sticky error banner with `toast.error()`.
+
+- **4Aw.11** Theme: OS dark mode detection
+  - Files: `src/components/shell/theme-provider.tsx`, `src/app/onboarding/layout.tsx`
+  - What: ThemeProvider now falls back to `window.matchMedia("prefers-color-scheme: dark")` when no saved theme. Added ThemeProvider to onboarding layout.
+
+- **4Aw.12** Sign-in/sign-up redesign
+  - Files: `src/app/sign-in/[[...sign-in]]/page.tsx`, `src/app/sign-up/[[...sign-up]]/page.tsx`
+  - What: Dark gradient bg, dot grid, feature cards, stats bar, Clerk `dark` baseTheme from `@clerk/themes`. Single seamless background.
+
+- **4Aw.13** antiAiRules UUID mismatch fix
+  - Files: `src/server/routers/onboarding.ts`
+  - What: `ctx.scoped.workspaceId` is Clerk orgId (string), but `antiAiRules.workspaceId` is UUID FK to `workspaces.id`. Now looks up internal workspace UUID before inserting rules.
+
+- **4Aw.14** Hardcoded workspaces cleanup
+  - Files: `src/components/shell/user-menu.tsx`
+  - What: Removed GTMinds and say2neeraj from dropdown. Only FullFunnel LLC.
+
+- **E2E verified** — Sign-in → 4 onboarding steps → Supabase: workspaces=3, brands=4, briefs=3, corpus=13, rules=72, onboarding_step=5 → dashboard redirect confirmed

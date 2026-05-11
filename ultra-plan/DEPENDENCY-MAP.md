@@ -96,8 +96,10 @@ src/app/api/health/route.ts
   └── Used by: Vercel health monitoring, uptime checks
 
 src/db/index.ts
-  └── Uses: @neondatabase/serverless, drizzle-orm/neon-http, src/db/schema/index.ts
+  └── Uses: postgres (postgres-js), drizzle-orm/postgres-js, src/db/schema/index.ts
+  └── Config: prepare: false (required for Supavisor pgbouncer)
   └── Used by: ALL server-side code (tRPC, Inngest, API routes, utilities)
+  └── NOTE: Changed from @neondatabase/serverless (neon-http) in Session 5 — neon-http incompatible with Supabase
 
 drizzle.config.ts
   └── Uses: src/db/schema/index.ts, DATABASE_URL env var
@@ -150,6 +152,15 @@ src/server/routers/corpus.ts
 /drafts             → tRPC: drafts.list, drafts.get → drafts + draft_grades + ai_calls
 /schedule           → tRPC: schedule.list → schedules + posts tables
 /audit              → tRPC: audit.list → audit_log table
+/onboarding         → tRPC: onboarding.* → workspaces + brands + brand_briefs + brand_corpus + anti_ai_rules
+```
+
+## Session 5 New Dependencies
+
+```
+postgres@3.4.9         — DB driver (replaced @neondatabase/serverless)
+sonner@2.0.7           — Toast notifications (src/app/layout.tsx Toaster, page.tsx toast.error)
+@clerk/themes          — Clerk dark theme for sign-in/sign-up pages
 ```
 
 ## Critical: Files That Break Everything If Wrong

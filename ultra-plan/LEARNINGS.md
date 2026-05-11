@@ -81,6 +81,11 @@
 4. **rules.ts Zod enum mismatch**: Zod category enum had values not in DB (structure/hedge/adverb). DB ruleCategoryEnum has: punctuation/transition/filler/corporate/cliche/custom. Always check `src/db/schema/enums.ts` before writing Zod validators. (Task 2.6, e5636b5)
 5. **@neondatabase/serverless neon() HTTP mode**: Does NOT work from local Node.js against Supabase. The `neon()` function makes HTTP requests to a Neon-specific `/sql` endpoint that Supabase doesn't provide. For local scripts (seed, ad-hoc), use `pg` with `drizzle-orm/node-postgres` and `DATABASE_URL_DIRECT`. (Task 2.13, 006d8f0)
 
+6. **DB driver must match hosting provider**: Switched from `@neondatabase/serverless` (neon-http) to `postgres` (postgres-js) because Supabase doesn't expose Neon's `/sql` HTTP endpoint. Always verify driver compatibility before deploying. Use `prepare: false` for pgbouncer/Supavisor. (Session 5, f5e84bf)
+7. **Supabase migrated to Supavisor**: Old hostname `db.<ref>.supabase.co` may not resolve. New format: `postgresql://postgres.<ref>:<pw>@aws-1-<region>.pooler.supabase.com:6543/postgres`. Username includes project ref. Password `@` must be URL-encoded as `%40`. (Session 5)
+8. **Clerk orgId ≠ workspace UUID**: `ctx.scoped.workspaceId` is Clerk org ID (`org_xxx`), NOT the internal `workspaces.id` UUID. Any table with `workspaceId` UUID FK (like `antiAiRules`) needs the internal UUID, not the Clerk ID. Always look up workspace first: `WHERE clerkOrgId = ctx.workspaceId` → use `ws.id`. (Session 5, 9e5a6c8)
+9. **Theme detection needs OS fallback**: `localStorage.getItem("cia.theme")` is null in incognito/first-visit. Fall back to `window.matchMedia("prefers-color-scheme: dark").matches`. (Session 5, c36ffba)
+
 ---
 
 ## Mistakes NOT to Make

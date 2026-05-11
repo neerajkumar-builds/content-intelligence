@@ -38,8 +38,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Phase 3 (Brand Brief + Rules):** COMPLETE. Merged PR #4. 12 new procedures, 2 UI pages.
 - **Phase 3.5 (Onboarding):** COMPLETE. Merged PR #5. 4-step wizard, Clerk auth, middleware.
 - **Phase 4A (Connector OAuth):** COMPLETE. Merged PR #6. LinkedIn OAuth, encrypt, sign-in/sign-up pages.
-- **KNOWN ISSUE:** Onboarding UI doesn't persist to DB yet (local state only). Wire tRPC mutations first thing next session.
-- **Next:** Wire onboarding→DB, handle no-org Clerk users, then Phase 5 (Signal Ingestion)
+- **Phase 4A-wire (Onboarding DB Wiring):** COMPLETE. E2E verified. 5 mutations wired, Clerk org creation, postgres-js driver, Supavisor pooler, toast notifications, dark theme.
+- **Next:** Phase 5 (Signal Ingestion / Learn)
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
 
@@ -51,7 +51,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 4. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
 5. All work on `main` branch (all PRs merged). No stale branches.
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
-7. **FIRST TASK next session:** Wire onboarding tRPC mutations + handle Clerk org creation
+7. **FIRST TASK next session:** Phase 5 (Signal Ingestion / Learn) — RSS, Reddit, competitors, thought leaders
 
 ## Task Completion Protocol (MANDATORY after every task)
 
@@ -167,8 +167,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | 3 | Brand Brief + Anti-AI Rules (CRUD, versioning, strict mode, 2 UI pages) | DONE |
 | 3.5 | Onboarding Wizard (4 steps, Clerk auth, middleware, voice templates) | DONE |
 | 4A | Connector OAuth (LinkedIn OAuth, encrypt, sign-in/sign-up, connectors page) | DONE |
-| 4A-wire | Wire onboarding UI → tRPC mutations + Clerk org handling | NEXT |
-| 5 | Signal Ingestion / Learn (RSS, Reddit, competitors, thought leaders) | NOT STARTED |
+| 4A-wire | Onboarding DB wiring (5 mutations, Clerk org, postgres-js, Supavisor, toast, dark theme) | DONE |
+| 5 | Signal Ingestion / Learn (RSS, Reddit, competitors, thought leaders) | NEXT |
 | 4B | Connector Publishing Adapters (publish, verify, ghost detect per platform) | NOT STARTED |
 | 6 | Drafts + 7-Dim Grading (core surface, glass-box) | NOT STARTED |
 | 7 | Schedule + Publish (idempotency, fan-out, ghost detection) | NOT STARTED |
