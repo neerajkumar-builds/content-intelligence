@@ -1,5 +1,6 @@
-import type { Platform } from "@/lib/platforms";
+import { Platform } from "@/lib/platforms";
 import type { ConnectorAdapter } from "./adapter";
+import { LinkedInAdapter } from "./adapters/linkedin";
 
 const adapters = new Map<Platform, ConnectorAdapter>();
 
@@ -25,3 +26,8 @@ export function hasAdapter(platform: Platform): boolean {
 export function getRegisteredPlatforms(): Platform[] {
   return [...adapters.keys()];
 }
+
+// ---------------------------------------------------------------------------
+// Auto-register adapters at module load
+// ---------------------------------------------------------------------------
+registerAdapter(Platform.LinkedIn, new LinkedInAdapter());
