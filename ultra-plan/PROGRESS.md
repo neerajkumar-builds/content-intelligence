@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
 > Last updated: 2026-05-11 (Session 4)
-> Current phase: Phase 3 (Brand Brief + Anti-AI Rules) — DONE
-> Next action: Phase 3.5 (Onboarding Wizard)
+> Current phase: Phase 3.5 (Onboarding Wizard) — DONE
+> Next action: Phase 4A (Connector OAuth)
 
 ---
 
@@ -13,8 +13,10 @@
 | 0 — Foundation | DONE | `ultra-plan/foundation` | Merged (PR #1) |
 | 1 — Scaffolding | DONE | `claude/refine-local-plan-0mbkl` | Merged (PR #1) |
 | 2 — Data Model | DONE | `phase-2/data-model` | Pending |
-| 3 — Brand Brief + Rules | DONE | `phase-3/brand-brief-rules` | Pending |
-| 4 — Connectors | NOT STARTED | — | — |
+| 3 — Brand Brief + Rules | DONE | `phase-3/brand-brief-rules` | Merged (PR #4) |
+| 3.5 — Onboarding | DONE | `phase-3.5/onboarding-wizard` | Pending |
+| 4A — Connector OAuth | NOT STARTED | — | — |
+| 4B — Connector Publishing | NOT STARTED | — | — |
 | 5 — Idea Wall | NOT STARTED | — | — |
 | 6 — Drafts + Grading | NOT STARTED | — | — |
 | 7 — Schedule + Publish | NOT STARTED | — | — |
