@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, useOrganizationList, useClerk } from "@clerk/nextjs";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { Stepper } from "@/components/onboarding/stepper";
 import { Welcome } from "@/components/onboarding/welcome";
@@ -64,7 +65,6 @@ export default function OnboardingPage() {
     brandId: null,
     workspaceId: null,
   });
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const router = useRouter();
@@ -105,7 +105,7 @@ export default function OnboardingPage() {
 
   const handleBrandSave = useCallback(
     async (data: BrandData) => {
-      setError(null);
+      
       setSaving(true);
       try {
         const effectiveIndustry = data.industry === "Other" ? data.customIndustry : data.industry;
@@ -135,7 +135,7 @@ export default function OnboardingPage() {
         }));
         setStep(1);
       } catch (e) {
-        setError(friendlyError(e));
+        toast.error(friendlyError(e));
       } finally {
         setSaving(false);
       }
@@ -145,7 +145,7 @@ export default function OnboardingPage() {
 
   const handleCorpusSave = useCallback(
     async (items: CorpusItem[], fullState: CorpusFullState) => {
-      setError(null);
+      
       setSaving(true);
       try {
         if (!state.brandId) throw new Error("Brand not created yet");
@@ -165,7 +165,7 @@ export default function OnboardingPage() {
         }));
         setStep(2);
       } catch (e) {
-        setError(friendlyError(e));
+        toast.error(friendlyError(e));
       } finally {
         setSaving(false);
       }
@@ -174,18 +174,18 @@ export default function OnboardingPage() {
   );
 
   const handleCorpusSkip = useCallback(async () => {
-    setError(null);
+    
     try {
       await skipMut.mutateAsync({ currentStep: 2 });
       setStep(2);
     } catch (e) {
-      setError(friendlyError(e));
+      toast.error(friendlyError(e));
     }
   }, [skipMut]);
 
   const handleBriefSave = useCallback(
     async (data: { wedge: string; icp: string; voiceTraits: string; antiPositioning: string }) => {
-      setError(null);
+      
       setSaving(true);
       try {
         if (!state.brandId) throw new Error("Brand not created yet");
@@ -201,7 +201,7 @@ export default function OnboardingPage() {
         setState((prev) => ({ ...prev, briefData: data }));
         setStep(3);
       } catch (e) {
-        setError(friendlyError(e));
+        toast.error(friendlyError(e));
       } finally {
         setSaving(false);
       }
@@ -210,18 +210,18 @@ export default function OnboardingPage() {
   );
 
   const handleBriefSkip = useCallback(async () => {
-    setError(null);
+    
     try {
       await skipMut.mutateAsync({ currentStep: 3 });
       setStep(3);
     } catch (e) {
-      setError(friendlyError(e));
+      toast.error(friendlyError(e));
     }
   }, [skipMut]);
 
   const handleGuardrailsSave = useCallback(
     async (data: { strictMode: boolean; enabledCategories: string[] }) => {
-      setError(null);
+      
       setSaving(true);
       try {
         if (!state.brandId) throw new Error("Brand not created yet");
@@ -237,7 +237,7 @@ export default function OnboardingPage() {
         setState((prev) => ({ ...prev, guardrailsData: data }));
         setStep(4);
       } catch (e) {
-        setError(friendlyError(e));
+        toast.error(friendlyError(e));
       } finally {
         setSaving(false);
       }
@@ -246,13 +246,13 @@ export default function OnboardingPage() {
   );
 
   const handleGuardrailsSkip = useCallback(async () => {
-    setError(null);
+    
     setSaving(true);
     try {
       await completeMut.mutateAsync();
       setStep(4);
     } catch (e) {
-      setError(friendlyError(e));
+      toast.error(friendlyError(e));
     } finally {
       setSaving(false);
     }
@@ -269,31 +269,6 @@ export default function OnboardingPage() {
   return (
     <>
       <Stepper currentStep={step} />
-
-      {error && (
-        <div
-          style={{
-            padding: "10px 20px",
-            background: "var(--danger-soft, #fee)",
-            borderBottom: "1px solid var(--danger, #c00)",
-            fontSize: 13,
-            color: "var(--danger, #c00)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexShrink: 0,
-          }}
-        >
-          <span>{error}</span>
-          <button
-            onClick={() => setError(null)}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "inherit", marginLeft: 12 }}
-          >
-            &times;
-          </button>
-        </div>
-      )}
-
       <div style={{ flex: 1, overflowY: "auto", padding: "32px 64px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <div

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
 import { Montserrat, JetBrains_Mono, Lora } from "next/font/google";
 import "./globals.css";
 
@@ -39,7 +40,10 @@ export default function RootLayout({
       className={`${montserrat.variable} ${jetbrainsMono.variable} ${lora.variable} h-full`}
     >
       <body>
-        <ClerkProvider>{children}</ClerkProvider>
+        <ClerkProvider>
+          {children}
+          <Toaster position="top-right" richColors closeButton />
+        </ClerkProvider>
       </body>
     </html>
   );
