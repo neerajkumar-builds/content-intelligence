@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth, useOrganizationList, useClerk } from "@clerk/nextjs";
+import { trpc } from "@/lib/trpc/client";
 import { Stepper } from "@/components/onboarding/stepper";
 import { Welcome } from "@/components/onboarding/welcome";
 import { Completion } from "@/components/onboarding/completion";
@@ -24,6 +27,8 @@ interface OnboardingState {
   corpusState: CorpusState | null;
   briefData: { wedge: string; icp: string; voiceTraits: string; antiPositioning: string } | null;
   guardrailsData: { strictMode: boolean; enabledCategories: string[] } | null;
+  brandId: string | null;
+  workspaceId: string | null;
 }
 
 export default function OnboardingPage() {
@@ -34,36 +39,200 @@ export default function OnboardingPage() {
     corpusState: null,
     briefData: null,
     guardrailsData: null,
+    brandId: null,
+    workspaceId: null,
   });
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const router = useRouter();
+  const { orgId } = useAuth();
+  const { createOrganization } = useOrganizationList();
+  const { setActive } = useClerk();
+
+  const saveBrand = trpc.onboarding.saveBrandIdentity.useMutation();
+  const saveCorpus = trpc.onboarding.saveCorpusItems.useMutation();
+  const saveBrief = trpc.onboarding.saveBrief.useMutation();
+  const saveGuardrailsMut = trpc.onboarding.saveGuardrails.useMutation();
+  const completeMut = trpc.onboarding.complete.useMutation();
+  const skipMut = trpc.onboarding.skip.useMutation();
+
+  const { data: stepData } = trpc.onboarding.getStep.useQuery();
+
+  const autoCompleteTriggered = useRef(false);
+  useEffect(() => {
+    if (!stepData) return;
+    if (stepData.step >= 5) {
+      router.replace("/");
+    } else if (stepData.step === 4 && !autoCompleteTriggered.current) {
+      autoCompleteTriggered.current = true;
+      completeMut.mutateAsync().then(() => router.replace("/"));
+    }
+  }, [stepData, router, completeMut]);
+
+  const isLoading =
+    saving ||
+    saveBrand.isPending ||
+    saveCorpus.isPending ||
+    saveBrief.isPending ||
+    saveGuardrailsMut.isPending ||
+    completeMut.isPending;
 
   const voiceStyle = state.brandData?.voiceStyle ?? "direct";
   const corpusCount = state.corpusItems.length;
 
-  const handleBrandSave = useCallback((data: BrandData) => {
-    setState((prev) => ({ ...prev, brandData: data }));
-    setStep(1);
-  }, []);
+  const handleBrandSave = useCallback(
+    async (data: BrandData) => {
+      setError(null);
+      setSaving(true);
+      try {
+        const effectiveIndustry = data.industry === "Other" ? data.customIndustry : data.industry;
+        const effectiveRole = data.role === "Other" ? data.customRole : data.role;
 
-  const handleCorpusSave = useCallback((items: CorpusItem[], fullState: CorpusFullState) => {
-    setState((prev) => ({ ...prev, corpusItems: items, corpusState: fullState as any }));
-    setStep(2);
-  }, []);
+        if (!orgId && createOrganization) {
+          const org = await createOrganization({ name: data.brandName });
+          await setActive({ organization: org.id });
+        }
+
+        const result = await saveBrand.mutateAsync({
+          brandName: data.brandName,
+          industry: effectiveIndustry,
+          voiceStyle: data.voiceStyle,
+          role: effectiveRole || undefined,
+          websiteUrl: data.websiteUrl || undefined,
+          additionalBrands: data.additionalBrands.length > 0 ? data.additionalBrands : undefined,
+        });
+
+        setState((prev) => ({
+          ...prev,
+          brandData: data,
+          brandId: result.brandId,
+          workspaceId: result.workspaceId,
+        }));
+        setStep(1);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to save brand identity");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [orgId, createOrganization, setActive, saveBrand],
+  );
+
+  const handleCorpusSave = useCallback(
+    async (items: CorpusItem[], fullState: CorpusFullState) => {
+      setError(null);
+      setSaving(true);
+      try {
+        if (!state.brandId) throw new Error("Brand not created yet");
+
+        await saveCorpus.mutateAsync({
+          brandId: state.brandId,
+          items: items.map((item) => ({
+            content: item.content,
+            sourceUrl: item.sourceUrl || undefined,
+          })),
+        });
+
+        setState((prev) => ({
+          ...prev,
+          corpusItems: items,
+          corpusState: fullState as CorpusState,
+        }));
+        setStep(2);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to save voice corpus");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [state.brandId, saveCorpus],
+  );
+
+  const handleCorpusSkip = useCallback(async () => {
+    setError(null);
+    try {
+      await skipMut.mutateAsync({ currentStep: 2 });
+      setStep(2);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to skip");
+    }
+  }, [skipMut]);
 
   const handleBriefSave = useCallback(
-    (data: { wedge: string; icp: string; voiceTraits: string; antiPositioning: string }) => {
-      setState((prev) => ({ ...prev, briefData: data }));
-      setStep(3);
+    async (data: { wedge: string; icp: string; voiceTraits: string; antiPositioning: string }) => {
+      setError(null);
+      setSaving(true);
+      try {
+        if (!state.brandId) throw new Error("Brand not created yet");
+
+        await saveBrief.mutateAsync({
+          brandId: state.brandId,
+          wedge: data.wedge,
+          icp: data.icp,
+          voiceTraits: data.voiceTraits,
+          antiPositioning: data.antiPositioning,
+        });
+
+        setState((prev) => ({ ...prev, briefData: data }));
+        setStep(3);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to save brand brief");
+      } finally {
+        setSaving(false);
+      }
     },
-    [],
+    [state.brandId, saveBrief],
   );
 
+  const handleBriefSkip = useCallback(async () => {
+    setError(null);
+    try {
+      await skipMut.mutateAsync({ currentStep: 3 });
+      setStep(3);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to skip");
+    }
+  }, [skipMut]);
+
   const handleGuardrailsSave = useCallback(
-    (data: { strictMode: boolean; enabledCategories: string[] }) => {
-      setState((prev) => ({ ...prev, guardrailsData: data }));
-      setStep(4);
+    async (data: { strictMode: boolean; enabledCategories: string[] }) => {
+      setError(null);
+      setSaving(true);
+      try {
+        if (!state.brandId) throw new Error("Brand not created yet");
+
+        await saveGuardrailsMut.mutateAsync({
+          brandId: state.brandId,
+          strictMode: data.strictMode,
+          enabledCategories: data.enabledCategories,
+        });
+
+        await completeMut.mutateAsync();
+
+        setState((prev) => ({ ...prev, guardrailsData: data }));
+        setStep(4);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to save guardrails");
+      } finally {
+        setSaving(false);
+      }
     },
-    [],
+    [state.brandId, saveGuardrailsMut, completeMut],
   );
+
+  const handleGuardrailsSkip = useCallback(async () => {
+    setError(null);
+    setSaving(true);
+    try {
+      await completeMut.mutateAsync();
+      setStep(4);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to complete onboarding");
+    } finally {
+      setSaving(false);
+    }
+  }, [completeMut]);
 
   if (step === -1) {
     return <Welcome onStart={() => setStep(0)} />;
@@ -78,6 +247,31 @@ export default function OnboardingPage() {
       <Stepper currentStep={step} />
       <div style={{ flex: 1, overflowY: "auto", padding: "32px 64px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          {error && (
+            <div
+              style={{
+                padding: "10px 14px",
+                marginBottom: 16,
+                background: "var(--danger-soft, #fee)",
+                border: "1px solid var(--danger, #c00)",
+                borderRadius: 6,
+                fontSize: 13,
+                color: "var(--danger, #c00)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>{error}</span>
+              <button
+                onClick={() => setError(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "inherit" }}
+              >
+                &times;
+              </button>
+            </div>
+          )}
+
           <div
             className="eyebrow"
             style={{ fontSize: 9.5, color: step === 1 ? "var(--danger)" : undefined }}
@@ -99,36 +293,57 @@ export default function OnboardingPage() {
             {step === 3 && "Content guardrails"}
           </h2>
 
-          {step === 0 && (
-            <StepBrand onSave={handleBrandSave} initialData={state.brandData} />
-          )}
-          {step === 1 && (
-            <StepCorpus
-              voiceStyle={voiceStyle}
-              onSave={handleCorpusSave}
-              onSkip={() => setStep(2)}
-              initialItems={state.corpusItems}
-              initialState={state.corpusState as any}
-            />
-          )}
-          {step === 2 && (
-            <StepBrief
-              voiceStyle={voiceStyle}
-              corpusCount={corpusCount}
-              onSave={handleBriefSave}
-              onSkip={() => setStep(3)}
-              initialData={state.briefData}
-            />
-          )}
-          {step === 3 && (
-            <StepGuardrails
-              onSave={handleGuardrailsSave}
-              onSkip={() => setStep(4)}
-              initialData={state.guardrailsData}
-            />
+          <div
+            style={{
+              opacity: isLoading ? 0.6 : 1,
+              pointerEvents: isLoading ? "none" : "auto",
+              transition: "opacity 0.2s",
+            }}
+          >
+            {step === 0 && (
+              <StepBrand onSave={handleBrandSave} initialData={state.brandData} />
+            )}
+            {step === 1 && (
+              <StepCorpus
+                voiceStyle={voiceStyle}
+                onSave={handleCorpusSave}
+                onSkip={handleCorpusSkip}
+                initialItems={state.corpusItems}
+                initialState={state.corpusState as CorpusFullState}
+              />
+            )}
+            {step === 2 && (
+              <StepBrief
+                voiceStyle={voiceStyle}
+                corpusCount={corpusCount}
+                onSave={handleBriefSave}
+                onSkip={handleBriefSkip}
+                initialData={state.briefData}
+              />
+            )}
+            {step === 3 && (
+              <StepGuardrails
+                onSave={handleGuardrailsSave}
+                onSkip={handleGuardrailsSkip}
+                initialData={state.guardrailsData}
+              />
+            )}
+          </div>
+
+          {isLoading && (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "12px 0",
+                fontSize: 13,
+                color: "var(--ink-tertiary)",
+              }}
+            >
+              Saving...
+            </div>
           )}
 
-          {step > 0 && step < 4 && (
+          {step > 0 && step < 4 && !isLoading && (
             <div
               style={{
                 display: "flex",

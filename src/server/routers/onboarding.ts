@@ -189,6 +189,11 @@ export const onboardingRouter = router({
         .set({ strictMode: input.strictMode })
         .where(eq(brands.id, input.brandId));
 
+      // Idempotent: clear existing rules before inserting (safe during onboarding — no user-created rules yet)
+      await db
+        .delete(antiAiRules)
+        .where(eq(antiAiRules.workspaceId, ctx.scoped.workspaceId));
+
       const rulesToInsert = DEFAULT_RULES.filter((r) =>
         input.enabledCategories.includes(r.category),
       ).map((r) => ({

@@ -84,3 +84,17 @@ If FAIL:
 | 3.8 Brand Brief page | pnpm build | PASS | Static render OK |
 | 3.9 Anti-AI Rules page | pnpm build | PASS | Static render OK |
 | Final build | pnpm build | PASS | Compiled 1281ms, 21/21 pages |
+
+## Phase 4A-wire: Onboarding DB Wiring — 2026-05-11 (Session 5)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| 4Aw.1 TRPCProvider | pnpm build | PASS | Layout wraps children with TRPCProvider |
+| 4Aw.2 Wire mutations | pnpm build | PASS | 5 mutations + Clerk hooks compile clean |
+| 4Aw.3 Null orgId redirect | pnpm build | PASS | Early return before DB query |
+| 4Aw.4 Idempotent guardrails | pnpm build | PASS | Delete-before-insert pattern |
+| 4Aw.5 Step 4 auto-complete | pnpm build | PASS | useRef guard prevents double-call |
+| 4Aw.6 Clerk Organizations | Browser | PASS | Enabled via Clerk dev dialog, "Membership required" |
+| Final build | pnpm build | PASS | Compiled in 1868ms, 21/21 pages, TS clean |
+| Dev server | pnpm dev | PASS | Welcome screen renders on /onboarding |
+| 4Aw.7 E2E test | Browser | PENDING | Requires user sign-in to test full flow |

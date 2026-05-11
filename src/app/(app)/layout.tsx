@@ -11,16 +11,18 @@ import { workspaces } from "@/db/schema";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { orgId } = await auth();
 
-  if (orgId) {
-    const [ws] = await db
-      .select({ onboardingStep: workspaces.onboardingStep })
-      .from(workspaces)
-      .where(eq(workspaces.clerkOrgId, orgId))
-      .limit(1);
+  if (!orgId) {
+    redirect("/onboarding");
+  }
 
-    if (!ws || ws.onboardingStep < 5) {
-      redirect("/onboarding");
-    }
+  const [ws] = await db
+    .select({ onboardingStep: workspaces.onboardingStep })
+    .from(workspaces)
+    .where(eq(workspaces.clerkOrgId, orgId))
+    .limit(1);
+
+  if (!ws || ws.onboardingStep < 5) {
+    redirect("/onboarding");
   }
 
   return (

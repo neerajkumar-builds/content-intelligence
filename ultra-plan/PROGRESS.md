@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-11 (Session 4)
-> Current phase: Phase 4A (Connector OAuth) — DONE
-> Next action: Wire onboarding→DB, then Phase 5 (Signal Ingestion)
+> Last updated: 2026-05-11 (Session 5)
+> Current phase: Phase 4A-wire (Onboarding DB Wiring) — DONE
+> Next action: Manual E2E test (sign-in + onboarding flow), then Phase 5 (Signal Ingestion)
 
 ---
 
@@ -12,12 +12,13 @@
 |-------|--------|--------|----|
 | 0 — Foundation | DONE | `ultra-plan/foundation` | Merged (PR #1) |
 | 1 — Scaffolding | DONE | `claude/refine-local-plan-0mbkl` | Merged (PR #1) |
-| 2 — Data Model | DONE | `phase-2/data-model` | Pending |
+| 2 — Data Model | DONE | `phase-2/data-model` | Merged (PR #2) |
 | 3 — Brand Brief + Rules | DONE | `phase-3/brand-brief-rules` | Merged (PR #4) |
-| 3.5 — Onboarding | DONE | `phase-3.5/onboarding-wizard` | Pending |
-| 4A — Connector OAuth | NOT STARTED | — | — |
+| 3.5 — Onboarding | DONE | `phase-3.5/onboarding-wizard` | Merged (PR #5) |
+| 4A — Connector OAuth | DONE | `phase-4a/connector-oauth` | Merged (PR #6) |
+| 4A-wire — Onboarding DB Wiring | DONE | `main` | Pending |
 | 4B — Connector Publishing | NOT STARTED | — | — |
-| 5 — Idea Wall | NOT STARTED | — | — |
+| 5 — Signal Ingestion / Learn | NOT STARTED | — | — |
 | 6 — Drafts + Grading | NOT STARTED | — | — |
 | 7 — Schedule + Publish | NOT STARTED | — | — |
 | 8 — Insights + Remaining | NOT STARTED | — | — |
@@ -93,6 +94,18 @@
 | 3.7 | Seed brand briefs, corpus, regex rules | DONE | counts verified | via MCP |
 | 3.8 | Brand Brief page UI | DONE | pnpm build OK | 8a74f4e |
 | 3.9 | Anti-AI Rules page UI | DONE | pnpm build OK | 3c3e175 |
+
+## Phase 4A-wire: Onboarding DB Wiring (DONE)
+
+| # | Task | Files | Status | Verified | Session |
+|---|------|-------|--------|----------|---------|
+| 4Aw.1 | Add TRPCProvider to onboarding layout | `src/app/onboarding/layout.tsx` | DONE | pnpm build OK | 2026-05-11 |
+| 4Aw.2 | Wire all 5 mutations + Clerk org creation to onboarding page | `src/app/onboarding/page.tsx` | DONE | pnpm build OK | 2026-05-11 |
+| 4Aw.3 | Fix app layout redirect for null orgId | `src/app/(app)/layout.tsx` | DONE | pnpm build OK | 2026-05-11 |
+| 4Aw.4 | Make saveGuardrails idempotent (delete before insert) | `src/server/routers/onboarding.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 4Aw.5 | Handle step 4 stuck state (auto-complete) | `src/app/onboarding/page.tsx` | DONE | pnpm build OK | 2026-05-11 |
+| 4Aw.6 | Enable Clerk Organizations (Membership required) | Clerk dashboard | DONE | Dialog confirmed | 2026-05-11 |
+| 4Aw.7 | E2E test (sign-in → onboarding → Supabase) | — | PENDING | Needs user sign-in | 2026-05-11 |
 
 ---
 

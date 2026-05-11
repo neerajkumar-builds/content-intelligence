@@ -135,3 +135,33 @@
 - **3.8-3.9** UI pages
   - Brand Brief page: 2-column grid, version tabs, brief cards, voice fidelity, fed-into, versioning
   - Anti-AI Rules page: KPI strip, strict mode toggle, rules table with type/action/severity pills
+
+### Phase 4A-wire: Onboarding DB Wiring (Session 5)
+
+- **4Aw.1** TRPCProvider added to onboarding layout
+  - Files: `src/app/onboarding/layout.tsx`
+  - Why: tRPC hooks require TRPCProvider upstream — was missing from onboarding route
+
+- **4Aw.2** Onboarding page rewritten to wire all mutations
+  - Files: `src/app/onboarding/page.tsx`
+  - What: 5 tRPC mutations wired (saveBrandIdentity, saveCorpusItems, saveBrief, saveGuardrails, complete), Clerk org creation via useOrganizationList + setActive, brandId/workspaceId threaded between steps, error/loading states, "Other" field resolution, skip handlers persist to DB
+  - Fixes: Gap 1 (data loss), Gap 3 (Clerk org chicken-and-egg), Gap 4 (complete never called), Gap 5 (brandId not threaded), Gap 6 ("Other" not resolved)
+
+- **4Aw.3** App layout redirect for null orgId
+  - Files: `src/app/(app)/layout.tsx`
+  - What: Users without Clerk org redirected to /onboarding instead of dashboard
+  - Fixes: Gap 7 (new users bypass onboarding)
+
+- **4Aw.4** saveGuardrails made idempotent
+  - Files: `src/server/routers/onboarding.ts`
+  - What: Delete existing rules before inserting — prevents duplicate rules on retry
+  - Why: Self-review found partial failure (guardrails saved + complete fails) causes duplicate inserts
+
+- **4Aw.5** Step 4 stuck state auto-recovery
+  - Files: `src/app/onboarding/page.tsx`
+  - What: getStep returns 4 (guardrails saved, complete failed) → auto-call complete + redirect
+  - Uses useRef guard to prevent multiple calls
+
+- **4Aw.6** Clerk Organizations enabled
+  - Config: Clerk dashboard — Organizations set to "Membership required" (Standard)
+  - Why: useOrganizationList hook requires Organizations feature. "Membership required" matches B2B workspace model.
