@@ -259,7 +259,14 @@ export default function OnboardingPage() {
   }, [completeMut]);
 
   if (step === -1) {
-    return <Welcome onStart={() => setStep(0)} />;
+    return (
+      <Welcome
+        onStart={() => setStep(0)}
+        onSkip={() => {
+          completeMut.mutateAsync().then(() => router.replace("/")).catch(() => router.replace("/"));
+        }}
+      />
+    );
   }
 
   if (step >= 4) {

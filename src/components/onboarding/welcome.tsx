@@ -50,7 +50,7 @@ const STEPS = [
   },
 ];
 
-export function Welcome({ onStart }: { onStart: () => void }) {
+export function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip?: () => void }) {
   return (
     <div
       style={{
@@ -209,6 +209,24 @@ export function Welcome({ onStart }: { onStart: () => void }) {
       >
         Takes about 5 minutes
       </div>
+
+      {onSkip && (
+        <button
+          onClick={onSkip}
+          style={{
+            marginTop: 12,
+            fontSize: 12,
+            color: "var(--ink-secondary)",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            textDecoration: "underline",
+            animation: "slideUp 0.5s ease-out 0.65s both",
+          }}
+        >
+          Skip to dashboard
+        </button>
+      )}
     </div>
   );
 }
