@@ -16,7 +16,7 @@ export const publishPostFn = inngest.createFunction(
   {
     id: "publish-post",
     concurrency: [
-      { scope: "account", key: "publish-{{ event.data.workspaceId }}", limit: 5 },
+      { limit: 5 },
     ],
     retries: 3,
     triggers: [{ event: PostPublish }],

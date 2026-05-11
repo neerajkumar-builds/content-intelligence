@@ -24,13 +24,7 @@ function parseGeneratedDraft(text: string): { title: string; body: string } {
 export const generateDraftFn = inngest.createFunction(
   {
     id: "generate-draft",
-    concurrency: [
-      {
-        scope: "account",
-        key: "generate-{{ event.data.workspaceId }}",
-        limit: 3,
-      },
-    ],
+    concurrency: [{ limit: 3 }],
     retries: 2,
     triggers: [{ event: DraftGenerate }],
   },
