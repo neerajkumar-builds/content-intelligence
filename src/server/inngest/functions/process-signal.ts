@@ -53,7 +53,7 @@ function inferAngle(source: string, metadata: Record<string, unknown>): string {
 export const processSignalFn = inngest.createFunction(
   {
     id: "process-signal",
-    concurrency: [{ limit: 20 }],
+    concurrency: [{ limit: 5 }],
     retries: 3,
     triggers: [{ event: SignalIngested }],
   },
