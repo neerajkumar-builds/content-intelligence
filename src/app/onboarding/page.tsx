@@ -5,13 +5,23 @@ import { Stepper } from "@/components/onboarding/stepper";
 import { Welcome } from "@/components/onboarding/welcome";
 import { Completion } from "@/components/onboarding/completion";
 import { StepBrand, type BrandData } from "@/components/onboarding/step-brand";
-import { StepCorpus, type CorpusItem } from "@/components/onboarding/step-corpus";
+import { StepCorpus, type CorpusItem, type CorpusFullState } from "@/components/onboarding/step-corpus";
 import { StepBrief } from "@/components/onboarding/step-brief";
 import { StepGuardrails } from "@/components/onboarding/step-guardrails";
+
+interface CorpusState {
+  items: CorpusItem[];
+  tab: "paste" | "guided" | "template";
+  pasteText: string;
+  guidedAnswers: string[];
+  selectedTemplate: string | null;
+  templatePosts: string[];
+}
 
 interface OnboardingState {
   brandData: BrandData | null;
   corpusItems: CorpusItem[];
+  corpusState: CorpusState | null;
   briefData: { wedge: string; icp: string; voiceTraits: string; antiPositioning: string } | null;
   guardrailsData: { strictMode: boolean; enabledCategories: string[] } | null;
 }
@@ -21,6 +31,7 @@ export default function OnboardingPage() {
   const [state, setState] = useState<OnboardingState>({
     brandData: null,
     corpusItems: [],
+    corpusState: null,
     briefData: null,
     guardrailsData: null,
   });
@@ -33,8 +44,8 @@ export default function OnboardingPage() {
     setStep(1);
   }, []);
 
-  const handleCorpusSave = useCallback((items: CorpusItem[]) => {
-    setState((prev) => ({ ...prev, corpusItems: items }));
+  const handleCorpusSave = useCallback((items: CorpusItem[], fullState: CorpusFullState) => {
+    setState((prev) => ({ ...prev, corpusItems: items, corpusState: fullState as any }));
     setStep(2);
   }, []);
 
@@ -97,6 +108,7 @@ export default function OnboardingPage() {
               onSave={handleCorpusSave}
               onSkip={() => setStep(2)}
               initialItems={state.corpusItems}
+              initialState={state.corpusState as any}
             />
           )}
           {step === 2 && (
