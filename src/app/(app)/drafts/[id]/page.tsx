@@ -70,6 +70,14 @@ export default function DraftEditorPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  const regenerateMut = trpc.drafts.generate.useMutation({
+    onSuccess: (data) => {
+      toast.success("Regenerating with fresh AI output...");
+      router.push(`/drafts/${data.draftId}`);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const publishMut = trpc.drafts.publish.useMutation({
     onSuccess: (data) => {
       if (data.skipped) {
@@ -377,6 +385,31 @@ export default function DraftEditorPage() {
             {updateMut.isPending ? "Saving..." : "Save"}
           </button>
 
+          {status === "draft" && !generating && draft.ideaId && (
+            <button
+              onClick={() => {
+                regenerateMut.mutate({
+                  ideaId: draft.ideaId!,
+                  brandId: draft.brandId,
+                  channel,
+                });
+              }}
+              disabled={regenerateMut.isPending}
+              style={{
+                padding: "7px 16px",
+                fontSize: 12,
+                fontWeight: 600,
+                borderRadius: 6,
+                border: "1px solid var(--border-subtle)",
+                background: "var(--bg-surface)",
+                color: "var(--ink-secondary)",
+                cursor: "pointer",
+              }}
+            >
+              {regenerateMut.isPending ? "Regenerating..." : "Regenerate"}
+            </button>
+          )}
+
           {status === "draft" && !generating && content.trim() !== "" && (
             <button
               onClick={handleApprove}
@@ -599,6 +632,38 @@ export default function DraftEditorPage() {
             })}
           </span>
         </div>
+        {/* Source idea */}
+        {draft.ideaId && (
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: "var(--ink-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: 6,
+              }}
+            >
+              Source Idea
+            </div>
+            <button
+              onClick={() => router.push("/ideas")}
+              style={{
+                fontSize: 12,
+                color: "var(--accent)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                textDecoration: "underline",
+                textUnderlineOffset: 2,
+              }}
+            >
+              View on Idea Wall
+            </button>
+          </div>
+        )}
       </aside>
     </div>
   );
