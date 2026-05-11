@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
 > Last updated: 2026-05-11 (Session 4)
-> Current phase: Phase 3.5 (Onboarding Wizard) — DONE
-> Next action: Phase 4A (Connector OAuth)
+> Current phase: Phase 4A (Connector OAuth) — DONE
+> Next action: Wire onboarding→DB, then Phase 5 (Signal Ingestion)
 
 ---
 
