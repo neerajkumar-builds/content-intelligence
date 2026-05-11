@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { IdeaCard } from "@/components/ideas/idea-card";
@@ -11,6 +12,7 @@ export default function IdeaWallPage() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState<"hot" | "icp" | "fresh">("hot");
 
+  const router = useRouter();
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.ideas.list.useQuery({
@@ -26,11 +28,26 @@ export default function IdeaWallPage() {
     },
   });
 
+  const generateMut = trpc.drafts.generate.useMutation({
+    onSuccess: (data) => {
+      toast.success("Generating draft...");
+      router.push(`/drafts/${data.draftId}`);
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
   const items = data?.items ?? [];
 
   function handleGenerate(ideaId: string) {
-    toast.info("Draft generation coming in next update");
-    void ideaId;
+    const idea = items.find((i) => i.id === ideaId);
+    if (!idea) return;
+    generateMut.mutate({
+      ideaId,
+      brandId: idea.brandId,
+      channel: "linkedin",
+    });
   }
 
   function handleDismiss(ideaId: string) {
