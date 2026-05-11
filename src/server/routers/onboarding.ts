@@ -82,18 +82,32 @@ export const onboardingRouter = router({
           .returning();
       }
 
-      const [primaryBrand] = await ctx.db
-        .insert(brands)
-        .values({ workspaceId: ws.id, name: input.brandName })
-        .returning();
+      let [primaryBrand] = await ctx.db
+        .select()
+        .from(brands)
+        .where(eq(brands.workspaceId, ws.id))
+        .limit(1);
 
-      if (input.additionalBrands?.length) {
-        await ctx.db.insert(brands).values(
-          input.additionalBrands.map((name) => ({
-            workspaceId: ws.id,
-            name,
-          })),
-        );
+      if (!primaryBrand) {
+        [primaryBrand] = await ctx.db
+          .insert(brands)
+          .values({ workspaceId: ws.id, name: input.brandName })
+          .returning();
+
+        if (input.additionalBrands?.length) {
+          await ctx.db.insert(brands).values(
+            input.additionalBrands.map((name) => ({
+              workspaceId: ws.id,
+              name,
+            })),
+          );
+        }
+      } else {
+        [primaryBrand] = await ctx.db
+          .update(brands)
+          .set({ name: input.brandName })
+          .where(eq(brands.id, primaryBrand.id))
+          .returning();
       }
 
       await ctx.db
@@ -142,10 +156,10 @@ export const onboardingRouter = router({
     .input(
       z.object({
         brandId: z.string().uuid(),
-        wedge: z.string().min(1),
-        icp: z.string().min(1),
-        voiceTraits: z.string().min(1),
-        antiPositioning: z.string().min(1),
+        wedge: z.string(),
+        icp: z.string(),
+        voiceTraits: z.string(),
+        antiPositioning: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

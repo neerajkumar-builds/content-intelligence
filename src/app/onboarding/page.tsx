@@ -12,6 +12,28 @@ import { StepCorpus, type CorpusItem, type CorpusFullState } from "@/components/
 import { StepBrief } from "@/components/onboarding/step-brief";
 import { StepGuardrails } from "@/components/onboarding/step-guardrails";
 
+function friendlyError(e: unknown): string {
+  if (!(e instanceof Error)) return "Something went wrong. Please try again.";
+  const msg = e.message;
+  try {
+    const parsed = JSON.parse(msg);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((issue: { path?: string[]; message?: string }) => {
+          const field = issue.path?.join(".") ?? "field";
+          return `${field}: ${issue.message ?? "invalid"}`;
+        })
+        .join(". ");
+    }
+  } catch {
+    // not JSON — use as-is
+  }
+  if (msg.includes("FORBIDDEN")) return "No workspace found. Please sign out and sign in again.";
+  if (msg.includes("UNAUTHORIZED")) return "Session expired. Please sign in again.";
+  if (msg.includes("Failed query")) return "Database connection error. Please try again.";
+  return msg;
+}
+
 interface CorpusState {
   items: CorpusItem[];
   tab: "paste" | "guided" | "template";
@@ -99,7 +121,9 @@ export default function OnboardingPage() {
           industry: effectiveIndustry,
           voiceStyle: data.voiceStyle,
           role: effectiveRole || undefined,
-          websiteUrl: data.websiteUrl || undefined,
+          websiteUrl: data.websiteUrl
+            ? data.websiteUrl.match(/^https?:\/\//) ? data.websiteUrl : `https://${data.websiteUrl}`
+            : undefined,
           additionalBrands: data.additionalBrands.length > 0 ? data.additionalBrands : undefined,
         });
 
@@ -111,7 +135,7 @@ export default function OnboardingPage() {
         }));
         setStep(1);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to save brand identity");
+        setError(friendlyError(e));
       } finally {
         setSaving(false);
       }
@@ -141,7 +165,7 @@ export default function OnboardingPage() {
         }));
         setStep(2);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to save voice corpus");
+        setError(friendlyError(e));
       } finally {
         setSaving(false);
       }
@@ -155,7 +179,7 @@ export default function OnboardingPage() {
       await skipMut.mutateAsync({ currentStep: 2 });
       setStep(2);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to skip");
+      setError(friendlyError(e));
     }
   }, [skipMut]);
 
@@ -177,7 +201,7 @@ export default function OnboardingPage() {
         setState((prev) => ({ ...prev, briefData: data }));
         setStep(3);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to save brand brief");
+        setError(friendlyError(e));
       } finally {
         setSaving(false);
       }
@@ -191,7 +215,7 @@ export default function OnboardingPage() {
       await skipMut.mutateAsync({ currentStep: 3 });
       setStep(3);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to skip");
+      setError(friendlyError(e));
     }
   }, [skipMut]);
 
@@ -213,7 +237,7 @@ export default function OnboardingPage() {
         setState((prev) => ({ ...prev, guardrailsData: data }));
         setStep(4);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to save guardrails");
+        setError(friendlyError(e));
       } finally {
         setSaving(false);
       }
@@ -228,7 +252,7 @@ export default function OnboardingPage() {
       await completeMut.mutateAsync();
       setStep(4);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to complete onboarding");
+      setError(friendlyError(e));
     } finally {
       setSaving(false);
     }

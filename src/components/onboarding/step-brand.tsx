@@ -152,10 +152,10 @@ export function StepBrand({
           Website URL
         </label>
         <input
-          type="url"
+          type="text"
           value={websiteUrl}
           onChange={(e) => setWebsiteUrl(e.target.value)}
-          placeholder="https://yourcompany.com (optional)"
+          placeholder="yourcompany.com (optional)"
           style={inputStyle}
         />
       </div>

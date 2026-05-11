@@ -35,10 +35,9 @@ export function StepBrief({
   initialData?: { wedge: string; icp: string; voiceTraits: string; antiPositioning: string } | null;
 }) {
   const template = BRIEF_TEMPLATES[voiceStyle] ?? BRIEF_TEMPLATES.direct;
-  const prefill = corpusCount >= 5;
-  const [wedge, setWedge] = useState(initialData?.wedge ?? (prefill ? template.wedge : ""));
+  const [wedge, setWedge] = useState(initialData?.wedge ?? template.wedge);
   const [icp, setIcp] = useState(initialData?.icp ?? "");
-  const [voiceTraits, setVoiceTraits] = useState(initialData?.voiceTraits ?? (prefill ? template.voiceTraits : ""));
+  const [voiceTraits, setVoiceTraits] = useState(initialData?.voiceTraits ?? template.voiceTraits);
   const [antiPositioning, setAntiPositioning] = useState(initialData?.antiPositioning ?? "");
 
   const fields = [
@@ -50,11 +49,9 @@ export function StepBrief({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {prefill && (
-        <div className="card" style={{ padding: 10, background: "var(--accent-soft)", borderColor: "var(--accent)", fontSize: 11, color: "var(--accent)" }}>
-          Pre-populated from your voice style selection. Edit to match your brand.
-        </div>
-      )}
+      <div className="card" style={{ padding: 10, background: "var(--accent-soft)", borderColor: "var(--accent)", fontSize: 11, color: "var(--accent)" }}>
+        Pre-populated from your voice style selection. Edit to match your brand.
+      </div>
       {fields.map((f) => (
         <div key={f.label} className="card" style={{ padding: 14 }}>
           <div className="eyebrow" style={{ fontSize: 9.5, marginBottom: 6 }}>{f.label}</div>
