@@ -3,11 +3,11 @@ import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { drafts, draftGrades, draftAntiAiHits } from "@/db/schema";
+import { drafts, draftGrades, draftAntiAiHits, ideas } from "@/db/schema";
 import { posts, postResults } from "@/db/schema/publishing";
 import { connectors } from "@/db/schema/connectors";
 import { inngest } from "../inngest/client";
-import { PostPublish } from "../inngest/events";
+import { PostPublish, DraftGenerate } from "../inngest/events";
 
 export const draftsRouter = router({
   list: protectedProcedure
@@ -287,5 +287,170 @@ export const draftsRouter = router({
         .orderBy(desc(posts.createdAt));
 
       return { posts: rows };
+    }),
+
+  generate: protectedProcedure
+    .input(
+      z.object({
+        ideaId: z.string().uuid(),
+        brandId: z.string().uuid(),
+        channel: z.string().default("linkedin"),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db, workspaceId, scopeAnd } = ctx.scoped;
+
+      // Verify the idea exists and belongs to this workspace
+      const [idea] = await db
+        .select({ id: ideas.id, hook: ideas.hook })
+        .from(ideas)
+        .where(scopeAnd(ideas.workspaceId, eq(ideas.id, input.ideaId)))
+        .limit(1);
+
+      if (!idea) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Idea not found" });
+      }
+
+      const [draft] = await db
+        .insert(drafts)
+        .values({
+          workspaceId,
+          brandId: input.brandId,
+          ideaId: input.ideaId,
+          title: idea.hook,
+          content: "",
+          status: "draft",
+          channel: input.channel,
+        })
+        .returning({ id: drafts.id });
+
+      await inngest
+        .send(
+          DraftGenerate.create({
+            draftId: draft.id,
+            ideaId: input.ideaId,
+            brandId: input.brandId,
+            workspaceId,
+          }),
+        )
+        .catch(() => {});
+
+      return { draftId: draft.id };
+    }),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        brandId: z.string().uuid(),
+        title: z.string().min(1).max(500),
+        content: z.string().min(1),
+        channel: z.string().default("linkedin"),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db, workspaceId } = ctx.scoped;
+
+      const [draft] = await db
+        .insert(drafts)
+        .values({
+          workspaceId,
+          brandId: input.brandId,
+          title: input.title,
+          content: input.content,
+          status: "draft",
+          channel: input.channel,
+        })
+        .returning({ id: drafts.id });
+
+      return { draftId: draft.id };
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        draftId: z.string().uuid(),
+        title: z.string().min(1).max(500).optional(),
+        content: z.string().optional(),
+        channel: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+
+      const [existing] = await db
+        .select()
+        .from(drafts)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .limit(1);
+
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      }
+
+      if (existing.status !== "draft") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `Cannot edit draft with status "${existing.status}", must be "draft"`,
+        });
+      }
+
+      const updates: Partial<{
+        title: string;
+        content: string;
+        channel: string;
+      }> = {};
+      if (input.title !== undefined) updates.title = input.title;
+      if (input.content !== undefined) updates.content = input.content;
+      if (input.channel !== undefined) updates.channel = input.channel;
+
+      if (Object.keys(updates).length === 0) {
+        return existing;
+      }
+
+      const [updated] = await db
+        .update(drafts)
+        .set(updates)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .returning();
+
+      return updated;
+    }),
+
+  approve: protectedProcedure
+    .input(z.object({ draftId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+
+      const [existing] = await db
+        .select()
+        .from(drafts)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .limit(1);
+
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      }
+
+      if (existing.status !== "draft") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `Cannot approve draft with status "${existing.status}", must be "draft"`,
+        });
+      }
+
+      if (!existing.content || existing.content.trim() === "") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Cannot approve draft with empty content",
+        });
+      }
+
+      const [updated] = await db
+        .update(drafts)
+        .set({ status: "approved" })
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .returning();
+
+      return updated;
     }),
 });

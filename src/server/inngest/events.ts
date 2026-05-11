@@ -58,6 +58,18 @@ export const PostVerify = eventType(
   },
 );
 
+export const DraftGenerate = eventType(
+  "content-intelligence/draft.generate",
+  {
+    schema: z.object({
+      draftId: z.string().uuid(),
+      ideaId: z.string().uuid(),
+      brandId: z.string().uuid(),
+      workspaceId: z.string().uuid(),
+    }),
+  },
+);
+
 export const TokenRefreshDue = eventType(
   "content-intelligence/token.refresh-due",
   {
