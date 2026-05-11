@@ -42,6 +42,9 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Phase 5 (Signal Ingestion):** ALL COMPLETE (5A-5E). E2E verified. Inngest (3 functions), Gemini embeddings (halfvec 3072), webhook, signal pipeline, Idea Wall UI. n8n workflow deployed (qrnItYAUlVcgchZO).
 - **Scope Fix (Session 7):** Systemic workspace scoping bug fixed — scopedDb() now async, resolves Clerk orgId→UUID. 8 routers (24 procedures) fixed with zero per-router changes. corpus.delete cross-tenant vuln fixed.
 - **Checkpoint 0 (Session 7):** First Vercel deploy, Inngest Cloud connected, n8n workflow activated with production URL.
+- **Clerk Middleware Fix (Session 7):** Excluded `/api/webhooks(.*)`, `/api/health`, `/api/inngest` from Clerk matcher — without this, Clerk blocks n8n webhooks, Inngest Cloud, and health probes.
+- **Inngest Cloud (Session 7):** 3 functions synced via Vercel integration (auto-injects INNGEST_SIGNING_KEY + INNGEST_EVENT_KEY). process-signal concurrency = 5 (reduced from 20 plan limit after Supabase connection saturation).
+- **E2E Pipeline Verified (Session 7):** n8n RSS -> webhook -> Inngest Cloud -> Gemini embed -> rank -> idea. 1.7s per signal. 121 signals ingested, 12+ processed to ideas.
 - **Next:** Phase 4B (Connector Publishing) — Checkpoint 1 (Publishing Foundation) first
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
@@ -58,6 +61,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
 7. **FIRST TASK next session:** Phase 4B (Connector Publishing) — LinkedIn adapter first
 8. **Key context:** `ctx.workspaceId` = Clerk orgId (for OAuth). `ctx.scoped.workspaceId` = UUID (for DB). Never confuse them.
+9. **Production is LIVE:** content-intelligence-eight.vercel.app auto-deploys from main. Inngest Cloud + n8n workflow are active. Test locally before pushing.
+10. **Connector strategy plan:** Read `/Users/neerajkumar/.claude/plans/unified-sniffing-island.md` for the 13-part deep research plan before starting Phase 4B.
 
 ## Task Completion Protocol (MANDATORY after every task)
 
@@ -186,6 +191,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | 4A-wire | Onboarding DB wiring (5 mutations, Clerk org, postgres-js, Supavisor, toast, dark theme) | DONE |
 | 5 (5A-5E) | Signal Ingestion (Inngest, Gemini embed, webhook, pipeline, Idea Wall, n8n workflow) | DONE |
 | SCOPE-FIX | Workspace UUID retrofit (scopedDb async, 8 routers fixed, cross-tenant vuln fixed) | DONE |
+| CP0 | Checkpoint 0: Vercel deploy, Inngest Cloud, n8n activated, E2E verified (1.7s/signal) | DONE |
 | 4B | Connector Publishing Adapters (publish, verify, ghost detect per platform) | NEXT |
 | 6 | Drafts + 7-Dim Grading (core surface, glass-box) | NOT STARTED |
 | 7 | Schedule + Publish (idempotency, fan-out, ghost detection) | NOT STARTED |

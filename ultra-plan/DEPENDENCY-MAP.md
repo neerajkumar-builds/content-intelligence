@@ -246,6 +246,34 @@ GEMINI_API_KEY         — Google Gemini API key for embedding-001
 N8N_WEBHOOK_SECRET     — HMAC-SHA256 shared secret for n8n webhook verification
 ```
 
+## Session 7 New Dependencies
+
+```
+Vercel (Hosting)
+  └── Production URL: content-intelligence-eight.vercel.app
+  └── Auto-deploys from main branch (GitHub integration)
+  └── Injects: INNGEST_SIGNING_KEY, INNGEST_EVENT_KEY (via Vercel Inngest integration)
+  └── Used by: n8n webhook target, Inngest Cloud, public access
+
+Inngest Cloud (Background Jobs)
+  └── 3 functions synced: corpus-backfill, corpus-embed-item, process-signal
+  └── Connected via Vercel integration (auto-injects signing + event keys)
+  └── Concurrency: process-signal limited to 5 (NOT 20 — plan limit, reduced after Supabase connection saturation)
+  └── Dashboard: app.inngest.com
+
+n8n Signal Harvester Workflow (qrnItYAUlVcgchZO)
+  └── Uses: Supabase credential (reads signal_source_configs)
+  └── Uses: N8N_WEBHOOK_SECRET (HMAC signing in Code node)
+  └── POSTs to: https://content-intelligence-eight.vercel.app/api/webhooks/n8n
+  └── Schedule: every 30 min, Mon-Fri 8am-6pm
+  └── Flow: Supabase configs → Loop brands → RSS Read → Normalize + HMAC → POST webhook
+
+src/middleware.ts (Clerk Auth)
+  └── Matcher exclusions: /api/webhooks(.*), /api/health, /api/inngest
+  └── NOTE: Without these exclusions, Clerk blocks unauthenticated API calls (n8n, Inngest Cloud, health probes)
+  └── Used by: All route protection + the excluded API routes above
+```
+
 ## Critical: Files That Break Everything If Wrong
 
 1. `src/db/schema/enums.ts` — Every other schema file imports from here

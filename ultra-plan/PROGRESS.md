@@ -186,15 +186,39 @@
 | AF.2 | "Skip to dashboard" button on onboarding welcome | `src/app/onboarding/page.tsx` | DONE | 2026-05-11 |
 | AF.3 | Remove hardcoded sidebar badge counts (23/4/12) | `src/components/shell/` | DONE | 2026-05-11 |
 
-## Phase 5E: n8n Workflow Deployment (NOT STARTED)
+## Phase 5E: n8n Workflow Deployment (DONE — Session 7)
 
-| # | Task | Status | Session |
-|---|------|--------|---------|
-| 5E.1 | Deploy RSS ingestion n8n workflow | NOT STARTED | — |
-| 5E.2 | Deploy Reddit monitoring n8n workflow | NOT STARTED | — |
-| 5E.3 | Deploy competitor tracking n8n workflow | NOT STARTED | — |
-| 5E.4 | Deploy thought leader monitoring n8n workflow | NOT STARTED | — |
-| 5E.5 | Configure n8n webhooks to point at /api/webhooks/n8n | NOT STARTED | — |
+| # | Task | Status | Verified | Session |
+|---|------|--------|----------|---------|
+| 5E.1 | Deploy RSS Signal Harvester n8n workflow (qrnItYAUlVcgchZO) | DONE | Workflow active, 30min cron | 2026-05-11 |
+| 5E.2 | Seed 5 RSS source configs (SaaStr, HubSpot, Tomasz Tunguz, Lenny, First Round Review) | DONE | 5 rows in signal_source_configs (1 disabled — First Round 404) | 2026-05-11 |
+| 5E.3 | Configure n8n Supabase credential for source config reads | DONE | n8n reads configs successfully | 2026-05-11 |
+| 5E.4 | Set production webhook URL in n8n Code node | DONE | POSTs to content-intelligence-eight.vercel.app/api/webhooks/n8n | 2026-05-11 |
+| 5E.5 | Set HMAC secret in n8n Code node | DONE | HMAC-SHA256 verified by webhook endpoint | 2026-05-11 |
+
+> **Note:** Reddit, competitor, and thought leader workflows deferred — RSS-only for MVP. Additional workflows can reuse the same webhook endpoint.
+
+## Scope Fix: Workspace UUID Retrofit (DONE — Session 7)
+
+| # | Task | Status | Verified | Committed | Session |
+|---|------|--------|----------|-----------|---------|
+| SF.1 | Make scopedDb() async (resolves Clerk orgId -> UUID internally) | DONE | pnpm build OK | d6c88cc | 2026-05-11 |
+| SF.2 | Fix 8 routers (24 procedures) to await scopedDb | DONE | pnpm build OK | d6c88cc | 2026-05-11 |
+| SF.3 | Fix corpus.delete cross-tenant vulnerability | DONE | pnpm build OK | d6c88cc | 2026-05-11 |
+| SF.4 | Complete corpus backfill (13/13 items embedded across 3 brands) | DONE | Gemini embeddings verified | 7861458 | 2026-05-11 |
+
+## Checkpoint 0: Production Deploy + Inngest Cloud + n8n Activation (DONE — Session 7)
+
+| # | Task | Status | Verified | Committed | Session |
+|---|------|--------|----------|-----------|---------|
+| CP0.1 | First Vercel production deploy | DONE | content-intelligence-eight.vercel.app live | eb13392 | 2026-05-11 |
+| CP0.2 | Inngest Cloud connected via Vercel integration | DONE | 3 functions synced, keys auto-injected | — | 2026-05-11 |
+| CP0.3 | Fix process-signal concurrency (20 -> 5, Supabase saturation) | DONE | Inngest Cloud accepted | 8b7fc8e | 2026-05-11 |
+| CP0.4 | Fix Clerk middleware (exclude api/webhooks, api/health, api/inngest) | DONE | n8n + Inngest Cloud unblocked | 1ceeecb | 2026-05-11 |
+| CP0.5 | Activate n8n workflow with production URL | DONE | Workflow sends to Vercel URL | — | 2026-05-11 |
+| CP0.6 | E2E pipeline verified: n8n RSS -> webhook -> Inngest -> embed -> rank -> idea | DONE | 1.7s per signal, 121 signals ingested | — | 2026-05-11 |
+| CP0.7 | Deep connector strategy research (13-part plan) | DONE | Plan at ~/.claude/plans/unified-sniffing-island.md | 54debee | 2026-05-11 |
+| CP0.8 | Competitor analysis (Blotato, Hootsuite, Taplio, Typefully, Copy.ai) | DONE | Documented in connector architecture revised | 76b517b | 2026-05-11 |
 
 ---
 
