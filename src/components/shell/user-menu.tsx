@@ -8,8 +8,6 @@ import { Avatar } from "@/components/primitives";
 
 const WORKSPACES = [
   { id: "ws_fullfunnel", name: "FullFunnel LLC", plan: "Creator", active: true },
-  { id: "ws_gtminds", name: "GTMinds Pvt Ltd", plan: "Creator", active: false },
-  { id: "ws_personal", name: "say2neeraj", plan: "Starter", active: false },
 ];
 
 export function UserMenu() {
