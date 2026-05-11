@@ -35,6 +35,11 @@
 | CP0-INNGEST | curl /api/inngest | PASS | {"message":"Unauthorized"} — signing key enforced (correct) |
 | CP0-N8N | n8n update_workflow + publish_workflow | PASS | Production URL + HMAC secret set, workflow activated |
 | CP0-REVIEW | Self-review agent | PASS | 0 real bugs, Clerk dev mode OK, env vars verified |
+| CP0-MIDDLEWARE | Clerk middleware fix | PASS | Excluded /api/webhooks,health,inngest from matcher |
+| CP0-CONCURRENCY | Inngest concurrency fix | PASS | Lowered process-signal from 20→5 for free plan |
+| CP0-SYNC | Inngest Cloud sync | PASS | 3 functions registered, app connected |
+| CP0-E2E | Production E2E pipeline | PASS | curl→webhook→Inngest→Gemini embed→rank→idea in 1.7s |
+| CP0-N8N-E2E | n8n→production pipeline | PASS | RSS feeds fetched, 121 signals ingested, 12 processed via Inngest |
 
 ### 2026-05-11 (Session 6)
 
