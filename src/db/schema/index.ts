@@ -21,7 +21,7 @@ export {
   contractTestResults,
 } from "./connectors";
 
-export { signals, ideas } from "./signals";
+export { signals, ideas, signalSourceConfigs } from "./signals";
 
 export { drafts, draftGrades, draftAntiAiHits } from "./content";
 

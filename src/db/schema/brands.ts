@@ -8,7 +8,7 @@ import {
   numeric,
   timestamp,
   index,
-  vector,
+  halfvec,
   unique,
 } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
@@ -74,7 +74,7 @@ export const brandCorpus = pgTable(
       .references(() => brands.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
     sourceUrl: text("source_url"),
-    embedding: vector("embedding", { dimensions: 1536 }),
+    embedding: halfvec("embedding", { dimensions: 3072 }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -83,7 +83,7 @@ export const brandCorpus = pgTable(
     index("brand_corpus_brand_idx").on(t.brandId),
     index("brand_corpus_embedding_idx").using(
       "hnsw",
-      t.embedding.op("vector_cosine_ops"),
+      t.embedding.op("halfvec_cosine_ops"),
     ),
   ],
 );

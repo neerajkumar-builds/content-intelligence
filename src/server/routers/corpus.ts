@@ -3,7 +3,9 @@ import { eq, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { brandCorpus, brands } from "@/db/schema";
+import { brandCorpus, brands, workspaces } from "@/db/schema";
+import { inngest } from "@/server/inngest/client";
+import { CorpusItemAdded } from "@/server/inngest/events";
 
 export const corpusRouter = router({
   add: protectedProcedure
@@ -37,6 +39,25 @@ export const corpusRouter = router({
           sourceUrl: input.sourceUrl,
         })
         .returning();
+
+      const [ws] = await ctx.db
+        .select({ id: workspaces.id })
+        .from(workspaces)
+        .where(eq(workspaces.clerkOrgId, ctx.workspaceId!))
+        .limit(1);
+
+      if (ws) {
+        inngest
+          .send(
+            CorpusItemAdded.create({
+              corpusItemId: item.id,
+              brandId: input.brandId,
+              workspaceId: ws.id,
+            }),
+          )
+          .catch(() => {});
+      }
+
       return item;
     }),
 

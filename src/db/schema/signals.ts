@@ -9,7 +9,7 @@ import {
   timestamp,
   jsonb,
   index,
-  vector,
+  halfvec,
   check,
 } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
@@ -31,7 +31,7 @@ export const signals = pgTable(
       .notNull()
       .default(sql`'{}'::jsonb`)
       .$type<Record<string, unknown>>(),
-    embedding: vector("embedding", { dimensions: 1536 }),
+    embedding: halfvec("embedding", { dimensions: 3072 }),
     processed: boolean("processed").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -45,7 +45,7 @@ export const signals = pgTable(
       .where(sql`${t.processed} = false`),
     index("signals_embedding_idx").using(
       "hnsw",
-      t.embedding.op("vector_cosine_ops"),
+      t.embedding.op("halfvec_cosine_ops"),
     ),
   ],
 );
@@ -90,5 +90,38 @@ export const ideas = pgTable(
     index("ideas_brand_idx").on(t.brandId),
     index("ideas_score_idx").on(t.workspaceId, t.score),
     index("ideas_hot_score_idx").on(t.workspaceId, t.hotScore),
+  ],
+);
+
+export const signalSourceConfigs = pgTable(
+  "signal_source_configs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    source: signalSourceEnum("source").notNull(),
+    label: text("label").notNull(),
+    configUrl: text("config_url").notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    lastFetchedAt: timestamp("last_fetched_at", { withTimezone: true }),
+    metadata: jsonb("metadata")
+      .notNull()
+      .default(sql`'{}'::jsonb`)
+      .$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("signal_source_configs_workspace_idx").on(t.workspaceId),
+    index("signal_source_configs_source_idx").on(t.workspaceId, t.source),
+    index("signal_source_configs_enabled_idx")
+      .on(t.workspaceId, t.enabled)
+      .where(sql`${t.enabled} = true`),
   ],
 );

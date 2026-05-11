@@ -16,7 +16,6 @@
   "dependencies": {
     "@clerk/nextjs": "^7.3.3",
     "@clerk/themes": "^2.4.57",
-    "@neondatabase/serverless": "^1.1.0",
     "@tanstack/react-query": "^5.100.9",
     "@trpc/client": "^11.13.0",
     "@trpc/next": "^11.13.0",
