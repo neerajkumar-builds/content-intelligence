@@ -1,7 +1,12 @@
+import { z } from "zod";
 import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
 import { connectors, oauthCredentials, contractTestResults } from "@/db/schema";
+import { createOAuthState } from "@/lib/connectors/oauth/state";
+import { getOAuthConfig, getSupportedOAuthPlatforms } from "@/lib/connectors/oauth/registry";
+import { buildLinkedInAuthUrl } from "@/lib/connectors/oauth/linkedin";
 
 const PLATFORM_DISPLAY: Record<string, { name: string; kind: string }> = {
   linkedin: { name: "LinkedIn", kind: "Social · B2B" },
@@ -81,4 +86,61 @@ export const connectorsRouter = router({
 
     return enriched;
   }),
+
+  getOAuthUrl: protectedProcedure
+    .input(z.object({ platform: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const config = getOAuthConfig(input.platform);
+      if (!config) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `OAuth not supported for ${input.platform}. Supported: ${getSupportedOAuthPlatforms().join(", ")}`,
+        });
+      }
+
+      const state = createOAuthState(
+        input.platform,
+        ctx.workspaceId,
+        ctx.userId,
+      );
+
+      let url: string;
+      if (input.platform === "linkedin") {
+        url = buildLinkedInAuthUrl(state);
+      } else {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `OAuth not yet implemented for ${input.platform}`,
+        });
+      }
+
+      return { url };
+    }),
+
+  disconnect: protectedProcedure
+    .input(z.object({ connectorId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+
+      const [connector] = await db
+        .select({ id: connectors.id })
+        .from(connectors)
+        .where(scopeAnd(connectors.workspaceId, eq(connectors.id, input.connectorId)))
+        .limit(1);
+
+      if (!connector) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Connector not found" });
+      }
+
+      await db
+        .delete(oauthCredentials)
+        .where(eq(oauthCredentials.connectorId, connector.id));
+
+      await db
+        .update(connectors)
+        .set({ state: "disconnected" })
+        .where(eq(connectors.id, connector.id));
+
+      return { disconnected: true };
+    }),
 });
