@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
+import { ModelSelect, getModelLabel } from "@/components/ai/model-select";
 
 const CHAR_LIMITS: Record<string, number> = {
   linkedin: 3000,
@@ -33,6 +34,11 @@ export default function DraftEditorPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [regenModelId, setRegenModelId] = useState(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem("cia.preferredModel") ?? "gemini-2.0-flash"
+      : "gemini-2.0-flash",
+  );
 
   // Determine if we should poll (content still being generated)
   const isGenerating = (c: string | null | undefined) => !c || c.trim() === "";
@@ -347,7 +353,7 @@ export default function DraftEditorPage() {
                   color: "var(--ink-primary)",
                   resize: "vertical",
                   padding: 0,
-                  fontFamily: "inherit",
+                  fontFamily: "var(--font-body, 'Lora', serif)",
                   opacity: editable ? 1 : 0.6,
                 }}
               />
@@ -386,28 +392,39 @@ export default function DraftEditorPage() {
           </button>
 
           {status === "draft" && !generating && draft.ideaId && (
-            <button
-              onClick={() => {
-                regenerateMut.mutate({
-                  ideaId: draft.ideaId!,
-                  brandId: draft.brandId,
-                  channel,
-                });
-              }}
-              disabled={regenerateMut.isPending}
-              style={{
-                padding: "7px 16px",
-                fontSize: 12,
-                fontWeight: 600,
-                borderRadius: 6,
-                border: "1px solid var(--border-subtle)",
-                background: "var(--bg-surface)",
-                color: "var(--ink-secondary)",
-                cursor: "pointer",
-              }}
-            >
-              {regenerateMut.isPending ? "Regenerating..." : "Regenerate"}
-            </button>
+            <>
+              <ModelSelect
+                value={regenModelId}
+                onChange={(m) => {
+                  setRegenModelId(m);
+                  if (typeof window !== "undefined") localStorage.setItem("cia.preferredModel", m);
+                }}
+                compact
+              />
+              <button
+                onClick={() => {
+                  regenerateMut.mutate({
+                    ideaId: draft.ideaId!,
+                    brandId: draft.brandId,
+                    channel,
+                    modelId: regenModelId,
+                  });
+                }}
+                disabled={regenerateMut.isPending}
+                style={{
+                  padding: "7px 16px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-surface)",
+                  color: "var(--ink-secondary)",
+                  cursor: "pointer",
+                }}
+              >
+                {regenerateMut.isPending ? "Regenerating..." : "Regenerate"}
+              </button>
+            </>
           )}
 
           {status === "draft" && !generating && content.trim() !== "" && (
@@ -674,17 +691,17 @@ export default function DraftEditorPage() {
             })}
           </span>
         </div>
-        {/* AI Generation Info */}
+        {/* AI Generation Info — from ai_calls via draft grades or heuristic */}
         {draft.content && (
           <div>
             <div style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
               AI Model
             </div>
-            <div style={{ fontSize: 12, color: "var(--ink-primary)", fontFamily: "var(--font-mono)" }}>
-              gemini-2.0-flash
+            <div style={{ fontSize: 12, color: "var(--ink-primary)", fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)" }}>
+              {getModelLabel(regenModelId)}
             </div>
-            <div style={{ fontSize: 10, color: "var(--ink-tertiary)", marginTop: 2 }}>
-              Google AI
+            <div style={{ fontSize: 10, color: "var(--ink-tertiary)", marginTop: 2, fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)" }}>
+              {charCount > 0 ? `${charCount} chars` : "Generating..."}
             </div>
           </div>
         )}

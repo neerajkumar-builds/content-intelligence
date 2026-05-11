@@ -7,10 +7,16 @@ import { toast } from "sonner";
 import { IdeaCard } from "@/components/ideas/idea-card";
 import { SourceRail } from "@/components/ideas/source-rail";
 import { FilterBar } from "@/components/ideas/filter-bar";
+import { ModelSelect } from "@/components/ai/model-select";
 
 export default function IdeaWallPage() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState<"hot" | "icp" | "fresh">("hot");
+  const [modelId, setModelId] = useState(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem("cia.preferredModel") ?? "gemini-2.0-flash"
+      : "gemini-2.0-flash",
+  );
 
   const router = useRouter();
   const utils = trpc.useUtils();
@@ -40,6 +46,13 @@ export default function IdeaWallPage() {
 
   const items = data?.items ?? [];
 
+  function handleModelChange(newModelId: string) {
+    setModelId(newModelId);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cia.preferredModel", newModelId);
+    }
+  }
+
   function handleGenerate(ideaId: string) {
     const idea = items.find((i) => i.id === ideaId);
     if (!idea) return;
@@ -47,6 +60,7 @@ export default function IdeaWallPage() {
       ideaId,
       brandId: idea.brandId,
       channel: "linkedin",
+      modelId,
     });
   }
 
@@ -70,6 +84,11 @@ export default function IdeaWallPage() {
           onSortChange={(s) => setSort(s as "hot" | "icp" | "fresh")}
           onAddIdea={handleAddIdea}
         />
+
+        <div style={{ padding: "8px 24px 0", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 11, color: "var(--ink-tertiary)", fontWeight: 500 }}>AI Model:</span>
+          <ModelSelect value={modelId} onChange={handleModelChange} compact />
+        </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 60px" }}>
           {isLoading ? (

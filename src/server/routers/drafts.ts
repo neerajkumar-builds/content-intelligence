@@ -295,6 +295,7 @@ export const draftsRouter = router({
         ideaId: z.string().uuid(),
         brandId: z.string().uuid(),
         channel: z.string().default("linkedin"),
+        modelId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -331,6 +332,7 @@ export const draftsRouter = router({
             ideaId: input.ideaId,
             brandId: input.brandId,
             workspaceId,
+            modelId: input.modelId,
           }),
         )
         .catch(() => {});

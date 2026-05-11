@@ -3,7 +3,7 @@ import { DraftGenerate } from "../events";
 import { db } from "@/db";
 import { ideas, signals, brands, brandBriefs, antiAiRules, drafts } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
-import { generateText } from "@/lib/ai/generate";
+import { callLLM } from "@/lib/ai/llm-router";
 import { getOrSeedPrompt, interpolate } from "@/lib/prompts/seed";
 import { createTraceId } from "@/lib/logging";
 
@@ -146,7 +146,8 @@ export const generateDraftFn = inngest.createFunction(
       const systemPrompt = interpolate(prompt.systemPrompt, vars);
       const userPrompt = interpolate(prompt.userPromptTemplate, vars);
 
-      return generateText({
+      return callLLM({
+        modelId: (event.data as Record<string, unknown>).modelId as string | undefined,
         systemPrompt,
         userPrompt,
         workspaceId,
