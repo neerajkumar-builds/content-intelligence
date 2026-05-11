@@ -118,7 +118,7 @@ src/server/middleware.ts
   └── Used by: ALL domain routers (protectedProcedure)
 
 src/server/routers/_app.ts
-  └── Uses: src/server/trpc.ts, ALL 7 domain routers
+  └── Uses: src/server/trpc.ts, ALL 11 domain routers (brand, brief, corpus, rules, connectors, ideas, drafts, schedule, audit, onboarding, signals)
   └── Used by: src/app/api/trpc/[trpc]/route.ts, src/lib/trpc/client.tsx (type), src/lib/trpc/server.ts
 
 src/lib/trpc/client.tsx
@@ -138,8 +138,64 @@ src/server/routers/brief.ts
   └── Used by: src/server/routers/_app.ts, Brand Brief page
 
 src/server/routers/corpus.ts
-  └── Uses: src/server/trpc.ts, src/server/middleware.ts, src/db/schema (brandCorpus, brands)
+  └── Uses: src/server/trpc.ts, src/server/middleware.ts, src/db/schema (brandCorpus, brands), src/server/inngest/client.ts
   └── Used by: src/server/routers/_app.ts, Brand Brief page (corpus section)
+  └── NOTE: Emits corpus.item.added Inngest event on new items (Session 6)
+
+src/server/routers/signals.ts
+  └── Uses: src/server/trpc.ts, src/server/middleware.ts, src/db/schema (signalSourceConfigs, signals, brands), src/server/inngest/client.ts
+  └── Used by: src/server/routers/_app.ts, Idea Wall page (SourceRail)
+  └── 11 procedures: listSources, addSource, toggleSource, deleteSource, triggerBackfill, etc.
+
+src/server/routers/ideas.ts (REWRITTEN Session 6)
+  └── Uses: src/server/trpc.ts, src/server/middleware.ts, src/db/schema (ideas, signals), workspace UUID lookup
+  └── Used by: src/server/routers/_app.ts, Idea Wall page
+  └── Procedures: list (enhanced with source filter + sort), getById, dismiss, addManual
+
+src/lib/ai/embed.ts
+  └── Uses: @google/generative-ai (Gemini), src/db/index.ts, src/db/schema (aiCalls)
+  └── Used by: Inngest functions (corpus-embed-item, process-signal)
+  └── Config: gemini-embedding-001, 3072 dimensions, glass-box logging to ai_calls
+
+src/server/inngest/client.ts
+  └── Uses: inngest (Inngest SDK)
+  └── Used by: src/server/inngest/events.ts, ALL Inngest functions, serve route, corpus.ts router, signals.ts router
+
+src/server/inngest/events.ts
+  └── Uses: zod, src/server/inngest/client.ts
+  └── Used by: Inngest functions, webhook route, corpus.ts router
+  └── Defines: signal.ingested, corpus.backfill, corpus.item.added
+
+src/app/api/inngest/route.ts
+  └── Uses: inngest/next, src/server/inngest/client.ts, ALL Inngest functions
+  └── Used by: Inngest dev server (serves functions at /api/inngest)
+
+src/server/inngest/functions/ (3 functions)
+  └── corpus-backfill: Uses embed.ts, db/schema (brandCorpus)
+  └── corpus-embed-item: Uses embed.ts, db/schema (brandCorpus)
+  └── process-signal: Uses embed.ts, db/schema (signals, ideas), Supabase RPCs (match_brand_corpus, match_signal_ideas)
+  └── Used by: src/app/api/inngest/route.ts (registered in serve)
+
+src/app/api/webhooks/n8n/route.ts
+  └── Uses: src/lib/security/hmac.ts, src/db/index.ts, src/db/schema (webhookDeliveries, signals), src/server/inngest/client.ts
+  └── Used by: n8n workflows (external POST requests)
+  └── Security: HMAC-SHA256 verification, idempotency via n8nExecutionId unique constraint
+
+src/lib/security/hmac.ts
+  └── Uses: crypto (node built-in)
+  └── Used by: src/app/api/webhooks/n8n/route.ts
+
+src/components/ideas/IdeaCard.tsx
+  └── Uses: UI primitives, tRPC hooks (ideas.dismiss)
+  └── Used by: Idea Wall page
+
+src/components/ideas/SourceRail.tsx
+  └── Uses: tRPC hooks (signals.listSources, signals.toggleSource)
+  └── Used by: Idea Wall page
+
+src/components/ideas/FilterBar.tsx
+  └── Uses: React state
+  └── Used by: Idea Wall page
 ```
 
 ## UI → Backend Dependencies (Phase 2: NOW WIRED)
@@ -148,7 +204,7 @@ src/server/routers/corpus.ts
 /govern/brand       → tRPC: brand.get, brand.update → brand_briefs table
 /govern/rules       → tRPC: rules.list, rules.create, rules.update → anti_ai_rules table
 /govern/connectors  → tRPC: connectors.list → connectors + oauth_credentials + contract_test_results
-/ideas              → tRPC: ideas.list → ideas + signals tables + pgvector
+/ideas              → tRPC: ideas.list/getById/dismiss/addManual, signals.listSources/toggleSource → ideas + signals + signal_source_configs + pgvector (halfvec)
 /drafts             → tRPC: drafts.list, drafts.get → drafts + draft_grades + ai_calls
 /schedule           → tRPC: schedule.list → schedules + posts tables
 /audit              → tRPC: audit.list → audit_log table
@@ -161,6 +217,31 @@ src/server/routers/corpus.ts
 postgres@3.4.9         — DB driver (replaced @neondatabase/serverless)
 sonner@2.0.7           — Toast notifications (src/app/layout.tsx Toaster, page.tsx toast.error)
 @clerk/themes          — Clerk dark theme for sign-in/sign-up pages
+```
+
+## Session 6 New Dependencies
+
+```
+inngest                — Background job framework (Inngest client, serve route, typed events)
+@google/generative-ai  — Gemini embedding API (embed.ts, gemini-embedding-001, 3072 dims)
+```
+
+## Session 6 New Supabase Objects
+
+```
+halfvec(3072) columns  — brand_corpus.embedding, signals.embedding (migrated from vector(1536))
+HNSW indexes           — Rebuilt with halfvec_cosine_ops, m=16, ef_construction=64
+signal_source_configs  — New table for managing signal sources per brand
+match_brand_corpus     — Supabase RPC for cosine similarity search on corpus
+match_signal_ideas     — Supabase RPC for idea deduplication check
+```
+
+## Session 6 New Env Vars
+
+```
+INNGEST_DEV=1          — Required for local Inngest dev (connect to local dev server, not cloud)
+GEMINI_API_KEY         — Google Gemini API key for embedding-001
+N8N_WEBHOOK_SECRET     — HMAC-SHA256 shared secret for n8n webhook verification
 ```
 
 ## Critical: Files That Break Everything If Wrong
