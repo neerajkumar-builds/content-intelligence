@@ -20,27 +20,38 @@ export function encryptToken(plaintext: string): {
   encrypted += cipher.final("base64");
   const tag = cipher.getAuthTag();
 
+  const ivB64 = iv.toString("base64");
+  const tagB64 = tag.toString("base64");
+  const saltB64 = salt.toString("base64");
+
   return {
-    ciphertext: `${salt.toString("base64")}:${encrypted}`,
-    iv: iv.toString("base64"),
-    tag: tag.toString("base64"),
+    ciphertext: `${saltB64}:${ivB64}:${tagB64}:${encrypted}`,
+    iv: ivB64,
+    tag: tagB64,
   };
 }
 
-export function decryptToken(
-  ciphertext: string,
-  iv: string,
-  tag: string,
-): string {
-  const [saltB64, encrypted] = ciphertext.split(":");
+export function decryptToken(ciphertext: string): string {
+  const parts = ciphertext.split(":");
+
+  let saltB64: string, ivB64: string, tagB64: string, encrypted: string;
+
+  if (parts.length === 4) {
+    [saltB64, ivB64, tagB64, encrypted] = parts;
+  } else if (parts.length === 2) {
+    throw new Error("Legacy 2-part ciphertext format requires separate IV and tag");
+  } else {
+    throw new Error(`Invalid ciphertext format: expected 4 parts, got ${parts.length}`);
+  }
+
   const salt = Buffer.from(saltB64, "base64");
   const key = deriveKey(salt);
   const decipher = createDecipheriv(
     "aes-256-gcm",
     key,
-    Buffer.from(iv, "base64"),
+    Buffer.from(ivB64, "base64"),
   );
-  decipher.setAuthTag(Buffer.from(tag, "base64"));
+  decipher.setAuthTag(Buffer.from(tagB64, "base64"));
 
   let decrypted = decipher.update(encrypted, "base64", "utf8");
   decrypted += decipher.final("utf8");
