@@ -3,12 +3,14 @@ import { PostPublish, PostVerify } from "../events";
 import { db } from "@/db";
 import { posts, postResults } from "@/db/schema/publishing";
 import { drafts } from "@/db/schema/content";
-import { connectors } from "@/db/schema/connectors";
+import { connectors, oauthCredentials } from "@/db/schema/connectors";
 import { auditLog } from "@/db/schema/ops";
 import { eq } from "drizzle-orm";
 import { getAdapter } from "@/lib/connectors/registry";
+import { decryptToken, encryptToken } from "@/lib/connectors/oauth/encrypt";
 import { ErrorCodes, type AppError } from "@/lib/errors/app-error";
-import type { Platform } from "@/lib/platforms";
+import { Platform } from "@/lib/platforms";
+import type { PublishInput } from "@/lib/connectors/types";
 
 export const publishPostFn = inngest.createFunction(
   {
@@ -64,11 +66,28 @@ export const publishPostFn = inngest.createFunction(
     const platform = connector.platform as Platform;
     const adapter = getAdapter(platform);
 
+    // Build proper publish input based on platform
+    const connectorConfig = connector.config as Record<string, string>;
+    const publishInput: PublishInput = (() => {
+      switch (platform) {
+        case Platform.LinkedIn:
+          return {
+            platform: Platform.LinkedIn,
+            authorUrn: connectorConfig.authorUrn ?? "",
+            commentary: draft.content ?? "",
+            visibility: "PUBLIC" as const,
+          };
+        default:
+          // Other platforms will be added as adapters land
+          return {
+            platform,
+            ...JSON.parse(JSON.stringify(draft)),
+          } as never;
+      }
+    })();
+
     const validation = await step.run("validate-content", async () => {
-      return adapter.validateContent({
-        platform,
-        ...JSON.parse(JSON.stringify(draft)),
-      } as never);
+      return adapter.validateContent(publishInput);
     });
 
     if (!validation.valid) {
@@ -76,15 +95,77 @@ export const publishPostFn = inngest.createFunction(
       return { error: "validation_failed", details: validation.errors };
     }
 
+    // -------------------------------------------------------------------
+    // get-token: decrypt access token + inline refresh if near-expiry (C2 + C4)
+    // -------------------------------------------------------------------
+    const token = await step.run("get-token", async () => {
+      const [cred] = await db
+        .select()
+        .from(oauthCredentials)
+        .where(eq(oauthCredentials.connectorId, connectorId))
+        .limit(1);
+
+      if (!cred) {
+        throw new Error("No OAuth credentials found for connector");
+      }
+
+      const accessToken = decryptToken(cred.encryptedAccessToken);
+
+      // Check if token expires within 5 minutes — refresh proactively
+      const needsRefresh =
+        cred.expiresAt &&
+        cred.expiresAt < new Date(Date.now() + 5 * 60 * 1000);
+
+      if (needsRefresh && cred.encryptedRefreshToken) {
+        try {
+          const refreshToken = decryptToken(cred.encryptedRefreshToken);
+          const newTokens = await adapter.refreshToken({
+            workspaceId,
+            platform,
+            accessToken,
+            refreshToken,
+            expiresAt: cred.expiresAt,
+            refreshTokenExpiresAt: cred.refreshExpiresAt,
+            scopes: cred.scopes.split(",").map((s) => s.trim()),
+            encryptedPayload: Buffer.alloc(0),
+          });
+
+          // Persist refreshed tokens back to DB
+          const encrypted = encryptToken(newTokens.accessToken);
+          const refreshEncrypted = newTokens.refreshToken
+            ? encryptToken(newTokens.refreshToken)
+            : null;
+
+          await db
+            .update(oauthCredentials)
+            .set({
+              encryptedAccessToken: encrypted.ciphertext,
+              tokenIv: encrypted.iv,
+              tokenTag: encrypted.tag,
+              expiresAt: newTokens.expiresAt,
+              ...(refreshEncrypted
+                ? { encryptedRefreshToken: refreshEncrypted.ciphertext }
+                : {}),
+              ...(newTokens.refreshTokenExpiresAt
+                ? { refreshExpiresAt: newTokens.refreshTokenExpiresAt }
+                : {}),
+            })
+            .where(eq(oauthCredentials.connectorId, connectorId));
+
+          return newTokens.accessToken;
+        } catch {
+          // Refresh failed — fall back to existing token (might still work)
+          return accessToken;
+        }
+      }
+
+      return accessToken;
+    });
+
     const startMs = Date.now();
 
     const result = await step.run("publish", async () => {
-      const token = ""; // TokenManager.getValidToken() — wired in CP2 when LinkedIn adapter lands
-      return adapter.publish(
-        { platform, ...JSON.parse(JSON.stringify(draft)) } as never,
-        token,
-        post.idempotencyKey,
-      );
+      return adapter.publish(publishInput, token, post.idempotencyKey);
     });
 
     const latencyMs = Date.now() - startMs;

@@ -70,6 +70,24 @@ export default function DraftEditorPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  const publishMut = trpc.drafts.publish.useMutation({
+    onSuccess: (data) => {
+      if (data.skipped) {
+        toast.info("Already published today (idempotency key matched)");
+      } else {
+        toast.success("Publishing started");
+      }
+      void utils.drafts.get.invalidate({ draftId: id });
+      void utils.drafts.getPublishStatus.invalidate({ draftId: id });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const { data: connectorsList } = trpc.connectors.list.useQuery();
+  const linkedInConnector = connectorsList?.find(
+    (c) => c.platform === "linkedin" && c.state === "healthy",
+  );
+
   // Sync server data into local state (only when not dirty)
   useEffect(() => {
     if (draft && !dirty) {
@@ -101,7 +119,15 @@ export default function DraftEditorPage() {
   }
 
   function handlePublish() {
-    toast.info("LinkedIn connector required -- wire in Phase C");
+    if (!linkedInConnector) {
+      toast.error("Connect LinkedIn first (Settings > Connectors)");
+      return;
+    }
+    publishMut.mutate({
+      draftId: id,
+      channel: channel,
+      connectorId: linkedInConnector.id,
+    });
   }
 
   const status = draft?.status ?? "draft";
@@ -373,18 +399,29 @@ export default function DraftEditorPage() {
           {status === "approved" && (
             <button
               onClick={handlePublish}
+              disabled={!linkedInConnector || publishMut.isPending}
+              title={
+                !linkedInConnector
+                  ? "Connect LinkedIn first"
+                  : undefined
+              }
               style={{
                 padding: "7px 16px",
                 fontSize: 12,
                 fontWeight: 600,
                 borderRadius: 6,
                 border: "none",
-                background: "#0a66c2",
+                background: linkedInConnector ? "#0a66c2" : "#6b7280",
                 color: "#fff",
-                cursor: "pointer",
+                cursor: linkedInConnector ? "pointer" : "not-allowed",
+                opacity: linkedInConnector ? 1 : 0.6,
               }}
             >
-              Publish to LinkedIn
+              {publishMut.isPending
+                ? "Publishing..."
+                : !linkedInConnector
+                  ? "Connect LinkedIn first"
+                  : "Publish to LinkedIn"}
             </button>
           )}
 
