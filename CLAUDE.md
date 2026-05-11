@@ -41,9 +41,12 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Phase 4A-wire (Onboarding DB Wiring):** COMPLETE. E2E verified. 5 mutations wired, Clerk org creation, postgres-js driver, Supavisor pooler, toast notifications, dark theme.
 - **Phase 5 (Signal Ingestion):** ALL COMPLETE (5A-5E). E2E verified. Inngest (3 functions), Gemini embeddings (halfvec 3072), webhook, signal pipeline, Idea Wall UI. n8n workflow deployed (qrnItYAUlVcgchZO).
 - **Scope Fix (Session 7):** Systemic workspace scoping bug fixed — scopedDb() now async, resolves Clerk orgId→UUID. 8 routers (24 procedures) fixed with zero per-router changes. corpus.delete cross-tenant vuln fixed.
-- **Next:** Phase 4B (Connector Publishing)
+- **Checkpoint 0 (Session 7):** First Vercel deploy, Inngest Cloud connected, n8n workflow activated with production URL.
+- **Next:** Phase 4B (Connector Publishing) — Checkpoint 1 (Publishing Foundation) first
+- **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
+- **Inngest:** app.inngest.com (Vercel integration, auto-injected keys)
 
 ## How to Resume
 

@@ -123,3 +123,5 @@
 9. **Don't assume vector type works for all dimensions** — pgvector HNSW caps at 2000 dims for vector, 4000 for halfvec. Check limits before choosing column type.
 10. **Don't forget INNGEST_DEV=1 locally** — Without it, Inngest client silently fails to connect. Always set in .env.local for dev.
 11. **Don't trust Clerk orgId as a UUID FK** — It's `org_xxx` format, not UUID. Every DB query with workspaceId FK needs the internal UUID lookup first.
+12. **Strip quotes when pushing .env.local to Vercel** — .env.local uses `KEY="value"` format. Vercel stores the literal string including quotes. Must strip with `value="${value%\"}"; value="${value#\"}"` before `vercel env add`. First Vercel deploy failed due to `"postgresql://..."` instead of `postgresql://...`. (Session 7)
+13. **n8n can't manage per-customer OAuth tokens** — n8n credentials are per-workspace (one credential per n8n account). For multi-tenant SaaS with 50+ customers, MUST use Direct API adapters via Inngest. Never send decrypted customer tokens to n8n Cloud. (Session 7 research)

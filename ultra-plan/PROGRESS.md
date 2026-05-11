@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
 > Last updated: 2026-05-11 (Session 7)
-> Current phase: Phase 5 COMPLETE (all sub-phases 5A-5E done)
-> Next action: Phase 4B (Connector Publishing)
+> Current phase: Checkpoint 0 DONE (Vercel deploy + Inngest Cloud + n8n activated)
+> Next action: Checkpoint 1 (Publishing Foundation) then Phase 4B
 
 ---
 
@@ -23,6 +23,7 @@
 | 5D — Routers + Idea Wall UI | DONE | `main` | Session 6 |
 | SCOPE-FIX — Workspace UUID Retrofit | DONE | `main` | Session 7 |
 | 5E — n8n Workflow Deployment | DONE | n8n Cloud | Session 7 |
+| CP0 — Vercel Deploy + Inngest Cloud + n8n Activation | DONE | Vercel + n8n | Session 7 |
 | 4B — Connector Publishing | NOT STARTED | — | — |
 | 6 — Drafts + Grading | NOT STARTED | — | — |
 | 7 — Schedule + Publish | NOT STARTED | — | — |

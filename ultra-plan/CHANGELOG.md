@@ -24,6 +24,28 @@
 - **[CLEANUP] Dead code removed** — standalone `workspaceScope()` and `workspaceScopeAnd()` exports removed from scoped-db.ts, manual ws lookup removed from corpus.ts
   - Impact: Less dead code, cleaner API surface
 
+### Checkpoint 0: Production Deployment
+
+- **[DEPLOY] First Vercel production deploy** — App live at content-intelligence-eight.vercel.app
+  - 13 env vars pushed (quotes stripped from .env.local values — gotcha!)
+  - NEXT_PUBLIC_APP_URL set to production domain
+  - First deploy failed: DATABASE_URL had literal quotes. Second deploy succeeded.
+  - Build: 23 routes, 42s, zero errors
+
+- **[INFRA] Inngest Cloud connected** — Vercel Integration auto-injects INNGEST_SIGNING_KEY + INNGEST_EVENT_KEY
+  - Redeploy after integration → Inngest endpoint returns "Unauthorized" (correct = signing key enforced)
+  - 3 functions should auto-register on next Inngest sync
+
+- **[INFRA] n8n workflow configured for production** — Updated via MCP, activated
+  - Webhook URL: https://content-intelligence-eight.vercel.app/api/webhooks/n8n
+  - HMAC secret embedded in Code node
+  - Workflow published (activeVersionId: 750e15ae)
+
+- **[SELF-REVIEW] Deployment audit** — 1 false-positive bug, 0 real bugs, 1 note
+  - tRPC localhost fallback: NOT a bug (VERCEL_URL auto-injected by Vercel)
+  - INNGEST_DEV not on Vercel: confirmed clean
+  - Clerk domain: Dev instance allows all origins, no action needed now
+
 ### Phase 5E: n8n Signal Harvester Workflow
 
 - **[FEATURE] n8n workflow "CI - Signal Harvester" deployed** — Fetches RSS feeds, normalizes articles, HMAC-signs, POSTs to CI webhook

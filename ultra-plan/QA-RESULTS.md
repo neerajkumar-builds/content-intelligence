@@ -29,6 +29,12 @@
 | 5E-SEED | Supabase INSERT signal_source_configs | PASS | 5 RSS configs across 2 workspaces |
 | 5E-WORKFLOW | n8n validate_workflow | PASS | 8 nodes, 0 warnings |
 | 5E-WORKFLOW | n8n create_workflow_from_code | PASS | Workflow qrnItYAUlVcgchZO created, Supabase cred auto-assigned |
+| CP0-DEPLOY1 | vercel deploy --prod | FAIL | DATABASE_URL had literal quotes from .env.local → "Invalid URL" |
+| CP0-DEPLOY2 | vercel deploy --prod (quotes stripped) | PASS | 23 routes, 42s build, aliased to content-intelligence-eight.vercel.app |
+| CP0-HEALTH | curl /api/health | PASS | {"status":"healthy","latencyMs":66-71} — DB connection confirmed |
+| CP0-INNGEST | curl /api/inngest | PASS | {"message":"Unauthorized"} — signing key enforced (correct) |
+| CP0-N8N | n8n update_workflow + publish_workflow | PASS | Production URL + HMAC secret set, workflow activated |
+| CP0-REVIEW | Self-review agent | PASS | 0 real bugs, Clerk dev mode OK, env vars verified |
 
 ### 2026-05-11 (Session 6)
 
