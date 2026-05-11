@@ -13,6 +13,19 @@ const CHAR_LIMITS: Record<string, number> = {
   bluesky: 300,
 };
 
+const CHANNEL_LABELS: Record<string, string> = {
+  linkedin: "LinkedIn",
+  twitter: "X / Twitter",
+  instagram: "Instagram",
+  threads: "Threads",
+  facebook: "Facebook",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  reddit: "Reddit",
+  bluesky: "Bluesky",
+  beehiiv: "Beehiiv",
+};
+
 const STATUS_BADGE_STYLES: Record<
   string,
   { bg: string; color: string; label: string }
@@ -314,13 +327,18 @@ export default function DraftEditorPage() {
             </div>
           ) : (
             <>
-              {/* Title input */}
-              <input
-                type="text"
+              {/* Title input — textarea for wrapping, auto-height */}
+              <textarea
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
+                onInput={(e) => {
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
                 placeholder="Draft title"
                 disabled={!editable}
+                rows={1}
                 style={{
                   width: "100%",
                   fontSize: 22,
@@ -333,6 +351,12 @@ export default function DraftEditorPage() {
                   marginBottom: 16,
                   borderBottom: "1px solid var(--border-subtle)",
                   opacity: editable ? 1 : 0.6,
+                  resize: "none",
+                  overflow: "hidden",
+                  lineHeight: 1.3,
+                  display: "block",
+                  boxSizing: "border-box",
+                  fontFamily: "inherit",
                 }}
               />
 
@@ -609,10 +633,9 @@ export default function DraftEditorPage() {
             style={{
               fontSize: 13,
               color: "var(--ink-primary)",
-              textTransform: "capitalize",
             }}
           >
-            {channel}
+            {CHANNEL_LABELS[channel] ?? channel}
           </span>
         </div>
 
@@ -699,9 +722,6 @@ export default function DraftEditorPage() {
             </div>
             <div style={{ fontSize: 12, color: "var(--ink-primary)", fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)" }}>
               {getModelLabel(regenModelId)}
-            </div>
-            <div style={{ fontSize: 10, color: "var(--ink-tertiary)", marginTop: 2, fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)" }}>
-              {charCount > 0 ? `${charCount} chars` : "Generating..."}
             </div>
           </div>
         )}

@@ -41,7 +41,7 @@ export function ModelSelect({ value, onChange, compact }: Props) {
         cursor: "pointer",
         outline: "none",
         appearance: "auto" as never,
-        minWidth: compact ? 140 : 180,
+        minWidth: compact ? 120 : 180,
       }}
     >
       {MODELS.map((m) => (
