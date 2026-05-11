@@ -20,9 +20,9 @@ export const NAV: NavGroup[] = [
   {
     group: "Make",
     items: [
-      { id: "ideas", label: "Idea Wall", icon: "sparkle", count: 23 },
-      { id: "drafts", label: "Drafts", icon: "edit", count: 4 },
-      { id: "schedule", label: "Schedule", icon: "calendar", count: 12 },
+      { id: "ideas", label: "Idea Wall", icon: "sparkle" },
+      { id: "drafts", label: "Drafts", icon: "edit" },
+      { id: "schedule", label: "Schedule", icon: "calendar" },
     ],
   },
   {
