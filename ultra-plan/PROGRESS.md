@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-12 (Session 8)
-> Current phase: Checkpoint 1 DONE (Publishing Foundation) + Add Source UI
-> Next action: Checkpoint 2 (LinkedIn Adapter) then remaining Phase 4B platforms
+> Last updated: 2026-05-12 (Session 8 — Vertical Slice)
+> Current phase: Vertical Slice DONE (Idea → Draft → LinkedIn publish, end-to-end)
+> Next action: Prompt Studio UI → LinkedIn E2E publish test → Phase 6 (7-dim grading)
 
 ---
 
@@ -24,8 +24,11 @@
 | SCOPE-FIX — Workspace UUID Retrofit | DONE | `main` | Session 7 |
 | 5E — n8n Workflow Deployment | DONE | n8n Cloud | Session 7 |
 | CP0 — Vercel Deploy + Inngest Cloud + n8n Activation | DONE | Vercel + n8n | Session 7 |
-| 4B — Connector Publishing | NOT STARTED | — | — |
-| 6 — Drafts + Grading | NOT STARTED | — | — |
+| CP1 — Publishing Foundation (adapter interface, publish pipeline, tRPC mutations) | DONE | `main` | Session 8 |
+| Add Source UI — dialog + SourceRail actions | DONE | `main` | Session 8 |
+| VS — Vertical Slice (Idea→Draft→LinkedIn publish, end-to-end) | DONE | `main` | Session 8 |
+| 4B — Connector Publishing | IN PROGRESS (LinkedIn adapter done) | `main` | Session 8 |
+| 6 — Drafts + Grading | IN PROGRESS (generation done, grading NOT STARTED) | `main` | Session 8 |
 | 7 — Schedule + Publish | NOT STARTED | — | — |
 | 8 — Insights + Remaining | NOT STARTED | — | — |
 
@@ -241,6 +244,38 @@
 | AS.1 | Add Source dialog with per-type input fields | DONE | E2E tested in browser | 04ea302 | 2026-05-12 |
 | AS.2 | SourceRail: + button, toggle enable/disable, delete per source | DONE | Toggle + delete verified | 04ea302 | 2026-05-12 |
 | AS.3 | E2E: added "Sam Altman Blog" RSS → appeared in SourceRail + Supabase | DONE | Supabase query confirmed | — | 2026-05-12 |
+
+---
+
+## Vertical Slice: Idea → Draft → Publish (DONE — Session 8)
+
+### Part A: Draft Generation Backend
+
+| # | Task | Files | Status | Verified | Committed | Session |
+|---|------|-------|--------|----------|-----------|---------|
+| VS-A1 | 4 new draft mutations: generate, create, update, approve | `src/server/routers/drafts.ts` | DONE | pnpm build OK | 229ba7d | 2026-05-12 |
+| VS-A2 | DraftGenerate Inngest event | `src/server/inngest/events.ts` | DONE | pnpm build OK | 229ba7d | 2026-05-12 |
+| VS-A3 | LLM generation utility (Gemini 2.0 Flash, glass-box ai_calls logging) | `src/lib/ai/generate.ts` | DONE | pnpm build OK | 229ba7d | 2026-05-12 |
+| VS-A4 | Prompt seed utility (DB-stored configurable prompts) | `src/lib/ai/seed.ts` | DONE | pnpm build OK | 229ba7d | 2026-05-12 |
+| VS-A5 | generate-draft Inngest function (5 steps: context → prompt → LLM → save) | `src/server/inngest/functions/generate-draft.ts` | DONE | pnpm build OK | 229ba7d | 2026-05-12 |
+| VS-A6 | Generate button on Idea Wall wired → redirect to /drafts/{id} | `src/app/(app)/ideas/page.tsx` | DONE | Browser E2E tested | 229ba7d | 2026-05-12 |
+
+### Part B: Drafts UI
+
+| # | Task | Files | Status | Verified | Committed | Session |
+|---|------|--------|----------|-----------|---------|---------|
+| VS-B1 | Drafts list page with status filters (replaced stub) | `src/app/(app)/drafts/page.tsx` | DONE | Browser verified | c6673d2 | 2026-05-12 |
+| VS-B2 | Draft editor page (/drafts/[id]): auto-poll, edit, approve, publish | `src/app/(app)/drafts/[id]/page.tsx` | DONE | Browser verified | c6673d2 | 2026-05-12 |
+| VS-B3 | Regenerate button + source idea link on editor | `src/app/(app)/drafts/[id]/page.tsx` | DONE | Browser verified | c6673d2 | 2026-05-12 |
+
+### Part C: LinkedIn Adapter + Publish Wiring
+
+| # | Task | Files | Status | Verified | Committed | Session |
+|---|------|-------|--------|----------|-----------|---------|
+| VS-C1 | LinkedIn adapter (publish, verify, delete, refreshToken, healthProbe) | `src/lib/connectors/adapters/linkedin.ts` | DONE | pnpm build OK | c6673d2 | 2026-05-12 |
+| VS-C2 | Token decrypt + inline refresh in publish-post Inngest function | `src/server/inngest/functions/publish-post.ts` | DONE | pnpm build OK | c6673d2 | 2026-05-12 |
+| VS-C3 | Publish button wired to real LinkedIn connector | `src/app/(app)/drafts/[id]/page.tsx` | DONE | pnpm build OK | c6673d2 | 2026-05-12 |
+| VS-C4 | Inngest concurrency key fix ({{ }} template syntax → simple limits) | `src/server/inngest/functions/*.ts` | DONE | pnpm build OK | c6673d2 | 2026-05-12 |
 
 ---
 

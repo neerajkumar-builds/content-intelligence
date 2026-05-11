@@ -42,6 +42,54 @@
   - Commit: `04ea302`
   - E2E verified: added "Sam Altman Blog" RSS → appeared in SourceRail + confirmed in Supabase
 
+### Vertical Slice: Idea → Draft → Publish
+
+- **[FEATURE] 4 new draft tRPC mutations** — `generate` (trigger Inngest), `create` (manual), `update` (content edit), `approve` (status transition to approved).
+  - Files: `src/server/routers/drafts.ts` (+~180 lines)
+  - Impact: Full draft lifecycle CRUD, feeds the editor page
+
+- **[FEATURE] DraftGenerate Inngest event** — Typed event triggering the generate-draft function with brandId, ideaId, format, workspaceId.
+  - Files: `src/server/inngest/events.ts` (+10 lines)
+
+- **[FEATURE] LLM generation utility (generate.ts)** — Gemini 2.0 Flash wrapper with glass-box ai_calls logging (model, prompt hash, cost, latency, token count, status). Structured JSON output via Gemini's response schema.
+  - Files: `src/lib/ai/generate.ts` (new, ~120 lines)
+  - Impact: Reusable for all future LLM generation tasks (grading, suggestions, etc.)
+
+- **[FEATURE] Prompt seed utility (seed.ts)** — Reads prompts from `prompts` DB table by task name (e.g., "draft_generation"). Falls back to hardcoded default if no DB row. Enables operator-editable prompts without deploys.
+  - Files: `src/lib/ai/seed.ts` (new, ~60 lines)
+  - Impact: Glass-box AI rule — prompts must be visible and editable
+
+- **[FEATURE] generate-draft Inngest function (5 steps)** — fetch-idea-context → fetch-brand-brief → build-prompt → call-llm → save-draft. Saves draft as `draft` status, logs to ai_calls.
+  - Files: `src/server/inngest/functions/generate-draft.ts` (new, ~140 lines)
+  - Impact: 6 Inngest functions total (was 5 after CP1)
+
+- **[FEATURE] Generate button wired on Idea Wall** — Calls `ideas.generate` tRPC mutation → receives draftId → redirects to `/drafts/{id}`.
+  - Files: `src/app/(app)/ideas/page.tsx` (modified, button logic added)
+
+- **[FEATURE] Drafts list page (replaced stub)** — Lists drafts with status filter tabs (all/draft/graded/approved/scheduled/live). Shows title, status badge, channel, created date, word count.
+  - Files: `src/app/(app)/drafts/page.tsx` (rewritten, ~180 lines)
+
+- **[FEATURE] Draft editor page (/drafts/[id])** — Full editor with: auto-poll while generating (status=draft → content populated), textarea edit, approve button (draft→approved), publish button (wired to LinkedIn connector), regenerate button, source idea link.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx` (new, ~320 lines)
+  - Impact: First interactive content surface in the app
+
+- **[FEATURE] LinkedIn adapter** — Full ConnectorAdapter implementation: `publish()` (2-phase: register post → publish via UGC Posts API), `verify()` (ghost detection via REST API), `delete()`, `refreshToken()`, `healthProbe()`. Handles LinkedIn-specific quirks: ID in `x-restli-id` header, `LinkedIn-Version: 202604` required, refresh token TTL does not reset.
+  - Files: `src/lib/connectors/adapters/linkedin.ts` (new, ~210 lines)
+  - Commits: `c6673d2`
+
+- **[FEATURE] Token decrypt + inline refresh in publish-post** — publish-post Inngest function now decrypts token via token-manager, calls adapter.publish(), and if token is expired, refreshes inline before retry. Stores updated token back to DB.
+  - Files: `src/server/inngest/functions/publish-post.ts` (modified, +token decrypt/refresh logic)
+
+- **[FIX] Inngest concurrency key syntax** — `{{ event.data.workspaceId }}` template string syntax was invalid in Inngest v4 Node SDK. Replaced with simple numeric concurrency limits per function.
+  - Files: All 6 Inngest functions in `src/server/inngest/functions/`
+  - Impact: Functions now register cleanly in Inngest Cloud
+
+- **Summary:**
+  - Commits: 8 commits (`229ba7d` → `c6673d2`)
+  - Lines added: ~2,500
+  - New files: `adapter.ts`, `registry.ts`, `generate.ts`, `seed.ts`, `generate-draft.ts`, `linkedin.ts`, `add-source-dialog.tsx`, `drafts/[id]/page.tsx`
+  - Modified files: `app-error.ts`, `events.ts`, `functions/index.ts`, `publish-post.ts`, `verify-post.ts`, `drafts.ts`, `source-rail.tsx`, `ideas/page.tsx`, `drafts/page.tsx`, `signals.ts`
+
 ---
 
 ## 2026-05-11 (Session 7)

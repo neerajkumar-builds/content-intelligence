@@ -47,7 +47,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **E2E Pipeline Verified (Session 7):** n8n RSS -> webhook -> Inngest Cloud -> Gemini embed -> rank -> idea. 1.7s per signal. 121 signals ingested, 12+ processed to ideas.
 - **Checkpoint 1 (Session 8):** Publishing Foundation DONE. ConnectorAdapter interface, BaseAdapter, adapter registry, 3 Inngest events (PostPublish, PostVerify, TokenRefreshDue), publish-post function (10-step pipeline + ghost detection), verify-post function, 3 tRPC mutations (publish, publishMulti, getPublishStatus). 5 Inngest functions total (was 3). Idempotency keys: `idem_{draftId}_v{version}_{channel}_{yyyymmdd}`.
 - **Add Source UI (Session 8):** Add Source dialog with 6 source types (RSS active, others "coming soon"). SourceRail + button, toggle live/paused, delete with confirm. E2E tested: "Sam Altman Blog" RSS added successfully.
-- **Next:** Checkpoint 2 (LinkedIn Adapter) — OAuth already done, adapter plugs into CP1 interface
+- **Vertical Slice (Session 8):** End-to-end Idea → Draft → LinkedIn publish complete. 8 commits, ~2,500 lines. Draft generation via Gemini 2.0 Flash (glass-box), generate-draft Inngest function (5 steps), drafts list page (status filter tabs), draft editor page (auto-poll, edit, approve, publish), LinkedIn publishing adapter (publish/verify/delete/refresh/healthProbe), token decrypt + inline refresh in publish-post. 6 Inngest functions total.
+- **Next:** Prompt Studio UI → LinkedIn E2E publish test → Phase 6 (7-dim grading)
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
@@ -61,7 +62,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 4. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
 5. All work on `main` branch (all PRs merged). No stale branches.
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
-7. **FIRST TASK next session:** Checkpoint 2 (LinkedIn Adapter: implement ConnectorAdapter, 2-phase media upload, token refresh cron, E2E test) → then expand to other platforms
+7. **FIRST TASK next session:** Prompt Studio UI (basic: list prompts from DB, edit + save, linked from Draft editor glass-box panel) → then LinkedIn E2E publish test (live post to LinkedIn via connected account) → then Phase 6 (7-dim grading: grade-draft Inngest function, GradePanel UI on editor)
 8. **Key context:** `ctx.workspaceId` = Clerk orgId (for OAuth). `ctx.scoped.workspaceId` = UUID (for DB). Never confuse them.
 9. **Production is LIVE:** content-intelligence-eight.vercel.app auto-deploys from main. Inngest Cloud + n8n workflow are active. Test locally before pushing.
 10. **Connector strategy plan:** Read `/Users/neerajkumar/.claude/plans/unified-sniffing-island.md` for the 13-part deep research plan before starting Phase 4B.
@@ -138,7 +139,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Default anti-AI rules (62) | `src/lib/rules/default-rules.ts` |
 | Voice style templates | `src/components/onboarding/voice-templates.ts` |
 | Inngest client + events | `src/server/inngest/client.ts`, `events.ts` |
-| Inngest functions (3) | `src/server/inngest/functions/*.ts` (corpus-backfill, corpus-embed-item, process-signal) |
+| Inngest functions (6) | `src/server/inngest/functions/*.ts` (corpus-backfill, corpus-embed-item, process-signal, publish-post, verify-post, generate-draft) |
 | Inngest serve route | `src/app/api/inngest/route.ts` |
 | Gemini embedding utility | `src/lib/ai/embed.ts` (gemini-embedding-001, 3072 dims, glass-box) |
 | n8n webhook endpoint | `src/app/api/webhooks/n8n/route.ts` (HMAC-SHA256) |
@@ -147,10 +148,15 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Idea Wall page | `src/app/(app)/ideas/page.tsx` + `src/components/ideas/*.tsx` |
 | Connector adapter interface | `src/lib/connectors/adapter.ts` (ConnectorAdapter + BaseAdapter) |
 | Adapter registry | `src/lib/connectors/registry.ts` (getAdapter/registerAdapter) |
-| Adapters directory | `src/lib/connectors/adapters/` (empty, ready for LinkedIn in CP2) |
-| Inngest publish function | `src/server/inngest/functions/publish-post.ts` (10-step pipeline) |
+| LinkedIn publishing adapter | `src/lib/connectors/adapters/linkedin.ts` (publish/verify/delete/refresh/healthProbe) |
+| Inngest publish function | `src/server/inngest/functions/publish-post.ts` (10-step pipeline + token decrypt/refresh) |
 | Inngest verify function | `src/server/inngest/functions/verify-post.ts` (ghost detection) |
+| Inngest generate-draft function | `src/server/inngest/functions/generate-draft.ts` (5-step: context→prompt→LLM→save) |
+| LLM generation utility | `src/lib/ai/generate.ts` (Gemini 2.0 Flash, glass-box, structured JSON output) |
+| Prompt seed utility | `src/lib/ai/seed.ts` (DB-stored prompts, hardcoded fallback) |
 | Add Source dialog | `src/components/ideas/add-source-dialog.tsx` |
+| Drafts list page | `src/app/(app)/drafts/page.tsx` (status filter tabs, replaced stub) |
+| Draft editor page | `src/app/(app)/drafts/[id]/page.tsx` (auto-poll, edit, approve, publish) |
 | Supabase RPC functions | `match_brand_corpus()`, `match_signal_ideas()` (in DB, not files) |
 | Dev seed script | `src/db/seed.ts` (uses pg, not neon HTTP) |
 | Reference code (paste-ready) | `ultra-plan/reference/01-06*.md` |
@@ -202,7 +208,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | CP0 | Checkpoint 0: Vercel deploy, Inngest Cloud, n8n activated, E2E verified (1.7s/signal) | DONE |
 | CP1 | Checkpoint 1: Publishing Foundation (adapter interface, publish pipeline, tRPC mutations) | DONE |
 | Add Source | Add Source dialog + SourceRail actions (toggle, delete) — E2E tested | DONE |
-| 4B | Connector Publishing Adapters (publish, verify, ghost detect per platform) | NEXT (CP2: LinkedIn first) |
-| 6 | Drafts + 7-Dim Grading (core surface, glass-box) | NOT STARTED |
+| VS | Vertical Slice: Idea → Draft → LinkedIn publish (generation, editor, LinkedIn adapter) | DONE |
+| 4B | Connector Publishing Adapters (LinkedIn done; 14 platforms remaining) | IN PROGRESS |
+| 6 | Drafts + 7-Dim Grading (generation done; grading NOT STARTED) | IN PROGRESS |
 | 7 | Schedule + Publish (idempotency, fan-out, ghost detection) | NOT STARTED |
 | 8 | Insights + Remaining (home, competitors, prompt studio) | NOT STARTED |

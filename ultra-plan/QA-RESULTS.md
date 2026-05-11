@@ -36,6 +36,25 @@
 | SourceRail layout | Browser | PASS | + button, toggle badges, delete x all visible |
 | Full build | `pnpm build` | PASS | 23 routes after Add Source feature |
 
+### Vertical Slice: Idea → Draft → Publish (Session 8)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| VS-A1 Draft mutations | `npx tsc --noEmit` | PASS | generate/create/update/approve compile clean |
+| VS-A2 DraftGenerate event | `npx tsc --noEmit` | PASS | Typed event, Zod-validated |
+| VS-A3 generate.ts | `npx tsc --noEmit` | PASS | Gemini 2.0 Flash, structured output, glass-box |
+| VS-A4 seed.ts | `npx tsc --noEmit` | PASS | DB prompt lookup + hardcoded fallback |
+| VS-A5 generate-draft fn | `npx tsc --noEmit` | PASS | 5-step pipeline, 6 Inngest functions registered |
+| VS-A6 Generate button wire | Browser | PASS | Click → Inngest event fired → redirected to /drafts/{id} |
+| VS-B1 Drafts list page | Browser | PASS | Status filter tabs render, drafts listed |
+| VS-B2 Draft editor page | Browser | PASS | Auto-poll while generating, content appears when ready |
+| VS-B3 Regenerate + source link | Browser | PASS | Regenerate fires new generate event, source idea link resolves |
+| VS-C1 LinkedIn adapter | `npx tsc --noEmit` | PASS | ConnectorAdapter interface satisfied, all 5 methods |
+| VS-C2 Token decrypt in publish | `npx tsc --noEmit` | PASS | AES-256-GCM decrypt, inline refresh on 401 |
+| VS-C3 Publish button | Browser | PASS | Button wired to drafts.publish mutation |
+| VS-C4 Inngest concurrency fix | `npx tsc --noEmit` | PASS | Simple numeric limits, no template syntax |
+| VS full build | `pnpm build` | PASS | All routes compile, 6 Inngest functions registered |
+
 ### 2026-05-11 (Session 7)
 
 | Task | Command | Result | Notes |

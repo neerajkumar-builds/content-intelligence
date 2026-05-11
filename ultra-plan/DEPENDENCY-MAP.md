@@ -207,7 +207,8 @@ src/components/ideas/FilterBar.tsx
 /govern/rules       → tRPC: rules.list, rules.create, rules.update → anti_ai_rules table
 /govern/connectors  → tRPC: connectors.list → connectors + oauth_credentials + contract_test_results
 /ideas              → tRPC: ideas.list/getById/dismiss/addManual, signals.listSources/toggleSource → ideas + signals + signal_source_configs + pgvector (halfvec)
-/drafts             → tRPC: drafts.list, drafts.get → drafts + draft_grades + ai_calls
+/drafts             → tRPC: drafts.list, drafts.get, drafts.generate, drafts.update, drafts.approve, drafts.publish → drafts + draft_grades + ai_calls + posts
+/drafts/[id]        → tRPC: drafts.getById, drafts.update, drafts.approve, drafts.publish → drafts + posts tables (auto-poll, edit, approve, publish)
 /schedule           → tRPC: schedule.list → schedules + posts tables
 /audit              → tRPC: audit.list → audit_log table
 /onboarding         → tRPC: onboarding.* → workspaces + brands + brand_briefs + brand_corpus + anti_ai_rules
@@ -310,10 +311,51 @@ src/components/ideas/source-rail.tsx (REWRITTEN Session 8)
   └── Uses: add-source-dialog.tsx
   └── Used by: src/app/(app)/ideas/page.tsx
 
-Inngest Cloud (Updated Session 8)
+Inngest Cloud (Updated Session 8 — CP1)
   └── 5 functions synced (was 3): + publish-post, verify-post
   └── Free plan: 5 concurrency per function, 5 active functions limit — AT CAPACITY
   └── NOTE: Adding more functions requires Inngest plan upgrade or consolidation
+```
+
+## Session 8 Vertical Slice New Files
+
+```
+src/lib/ai/generate.ts
+  └── Uses: @google/generative-ai (Gemini 2.0 Flash), src/db/index.ts, src/db/schema (aiCalls), src/lib/logging
+  └── Used by: src/server/inngest/functions/generate-draft.ts
+  └── Config: gemini-2.0-flash, structured JSON output, glass-box logging (model, cost, latency, tokens, status)
+
+src/lib/ai/seed.ts
+  └── Uses: src/db/index.ts, src/db/schema (prompts table)
+  └── Used by: src/server/inngest/functions/generate-draft.ts
+  └── Behavior: reads prompt by task name from DB; falls back to hardcoded default if no row found
+
+src/server/inngest/functions/generate-draft.ts
+  └── Uses: events.ts (DraftGenerate), generate.ts, seed.ts, db/schema (drafts, ideas, brands, brandBriefs)
+  └── Used by: Inngest serve route (registered in functions/index.ts)
+  └── Triggered by: DraftGenerate event (from drafts.generate tRPC mutation)
+  └── Steps: fetch-idea-context → fetch-brand-brief → build-prompt → call-llm → save-draft
+
+src/lib/connectors/adapters/linkedin.ts (PUBLISHING adapter — distinct from OAuth adapter in src/lib/connectors/oauth/linkedin.ts)
+  └── Uses: src/lib/connectors/adapter.ts (ConnectorAdapter interface), src/lib/connectors/registry.ts
+  └── Uses: src/lib/errors/app-error.ts (mapPlatformError)
+  └── Used by: publish-post.ts, verify-post.ts (via getAdapter("linkedin"))
+  └── Quirks: ID in x-restli-id header, LinkedIn-Version: 202604 required, refresh TTL doesn't reset
+
+src/app/(app)/drafts/[id]/page.tsx (NEW — Draft Editor)
+  └── Uses: src/lib/trpc/client.tsx (drafts.getById, drafts.update, drafts.approve, drafts.publish)
+  └── Auto-polls while status=draft (content not yet generated)
+  └── Used by: Idea Wall "Generate" button redirect, Drafts list page links
+
+src/app/(app)/drafts/page.tsx (REWRITTEN — was stub)
+  └── Uses: src/lib/trpc/client.tsx (drafts.list)
+  └── Filter tabs: all / draft / graded / approved / scheduled / live
+  └── Used by: Sidebar nav → /drafts route
+
+Inngest Cloud (Updated Session 8 — Vertical Slice)
+  └── 6 functions synced (was 5 after CP1): + generate-draft
+  └── Free plan: 5 active functions limit EXCEEDED — plan upgrade needed
+  └── NOTE: 6th function (generate-draft) may not register on free plan
 ```
 
 ## Critical: Files That Break Everything If Wrong
