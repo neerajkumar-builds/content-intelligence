@@ -198,20 +198,29 @@ export const onboardingRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { db } = ctx.scoped;
 
+      const [ws] = await db
+        .select({ id: workspaces.id })
+        .from(workspaces)
+        .where(eq(workspaces.clerkOrgId, ctx.workspaceId))
+        .limit(1);
+
+      if (!ws) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Workspace not found" });
+      }
+
       await db
         .update(brands)
         .set({ strictMode: input.strictMode })
         .where(eq(brands.id, input.brandId));
 
-      // Idempotent: clear existing rules before inserting (safe during onboarding — no user-created rules yet)
       await db
         .delete(antiAiRules)
-        .where(eq(antiAiRules.workspaceId, ctx.scoped.workspaceId));
+        .where(eq(antiAiRules.workspaceId, ws.id));
 
       const rulesToInsert = DEFAULT_RULES.filter((r) =>
         input.enabledCategories.includes(r.category),
       ).map((r) => ({
-        workspaceId: ctx.scoped.workspaceId,
+        workspaceId: ws.id,
         phraseOrPattern: r.phraseOrPattern,
         category: r.category,
         severity: r.severity,
