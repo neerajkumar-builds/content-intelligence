@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -12,11 +12,11 @@ import { ModelSelect } from "@/components/ai/model-select";
 export default function IdeaWallPage() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState<"hot" | "icp" | "fresh">("hot");
-  const [modelId, setModelId] = useState(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem("cia.preferredModel") ?? "gemini-2.0-flash"
-      : "gemini-2.0-flash",
-  );
+  const [modelId, setModelId] = useState("gemini-2.0-flash");
+  useEffect(() => {
+    const saved = localStorage.getItem("cia.preferredModel");
+    if (saved) setModelId(saved);
+  }, []);
 
   const router = useRouter();
   const utils = trpc.useUtils();

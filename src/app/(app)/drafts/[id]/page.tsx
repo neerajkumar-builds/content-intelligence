@@ -47,11 +47,11 @@ export default function DraftEditorPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [dirty, setDirty] = useState(false);
-  const [regenModelId, setRegenModelId] = useState(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem("cia.preferredModel") ?? "gemini-2.0-flash"
-      : "gemini-2.0-flash",
-  );
+  const [regenModelId, setRegenModelId] = useState("gemini-2.0-flash");
+  useEffect(() => {
+    const saved = localStorage.getItem("cia.preferredModel");
+    if (saved) setRegenModelId(saved);
+  }, []);
 
   // Determine if we should poll (content still being generated)
   const isGenerating = (c: string | null | undefined) => !c || c.trim() === "";
