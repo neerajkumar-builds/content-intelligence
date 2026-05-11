@@ -424,6 +424,7 @@ export default function DraftEditorPage() {
                   if (typeof window !== "undefined") localStorage.setItem("cia.preferredModel", m);
                 }}
                 compact
+                dropUp
               />
               <button
                 onClick={() => {
@@ -501,14 +502,14 @@ export default function DraftEditorPage() {
 
           {/* Content actions */}
           {!generating && content && (
-            <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
+            <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(`${title}\n\n${content}`);
                   toast.success("Copied to clipboard");
                 }}
                 title="Copy content"
-                style={{ padding: "5px 10px", fontSize: 11, borderRadius: 5, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+                style={{ padding: "7px 14px", fontSize: 12, fontWeight: 500, borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
               >
                 Copy
               </button>
@@ -524,7 +525,7 @@ export default function DraftEditorPage() {
                   toast.success("Downloaded");
                 }}
                 title="Download as text"
-                style={{ padding: "5px 10px", fontSize: 11, borderRadius: 5, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+                style={{ padding: "7px 14px", fontSize: 12, fontWeight: 500, borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
               >
                 Download
               </button>
@@ -534,7 +535,7 @@ export default function DraftEditorPage() {
                   toast.success("Link copied");
                 }}
                 title="Copy link to this draft"
-                style={{ padding: "5px 10px", fontSize: 11, borderRadius: 5, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+                style={{ padding: "7px 14px", fontSize: 12, fontWeight: 500, borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
               >
                 Share
               </button>
@@ -720,7 +721,7 @@ export default function DraftEditorPage() {
             <div style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
               AI Model
             </div>
-            <div style={{ fontSize: 12, color: "var(--ink-primary)", fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)" }}>
+            <div style={{ fontSize: 13, color: "var(--ink-primary)", fontWeight: 500 }}>
               {getModelLabel(regenModelId)}
             </div>
           </div>

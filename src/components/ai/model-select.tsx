@@ -50,9 +50,10 @@ interface Props {
   value: string;
   onChange: (modelId: string) => void;
   compact?: boolean;
+  dropUp?: boolean;
 }
 
-export function ModelSelect({ value, onChange, compact }: Props) {
+export function ModelSelect({ value, onChange, compact, dropUp }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -104,7 +105,9 @@ export function ModelSelect({ value, onChange, compact }: Props) {
         <div
           style={{
             position: "absolute",
-            top: "calc(100% + 4px)",
+            ...(dropUp
+              ? { bottom: "calc(100% + 4px)" }
+              : { top: "calc(100% + 4px)" }),
             left: 0,
             zIndex: 50,
             minWidth: 220,
