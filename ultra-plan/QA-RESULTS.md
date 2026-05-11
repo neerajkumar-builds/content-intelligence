@@ -104,3 +104,76 @@ If FAIL:
 | 4Aw.11 Toast | pnpm build | PASS | sonner@2.0.7, top-right, rich colors |
 | 4Aw.12 Theme detect | Browser | PASS | OS dark mode detected in incognito |
 | 4Aw.13 Auth pages | pnpm build | PASS | Dark theme, split layout, Clerk dark baseTheme |
+
+## Phase 5: Signal Ingestion / Learn — 2026-05-11 (Session 6)
+
+### Sub-Phase 5A: Inngest Infrastructure + Embedding Utility
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| 5A.1 Inngest client | pnpm build | PASS | Client configured with app ID |
+| 5A.2 Typed events | pnpm build | PASS | 3 events: signal.ingested, corpus.backfill, corpus.item.added |
+| 5A.3 Serve route | pnpm build | PASS | /api/inngest route registered |
+| 5A.4 Gemini embed | pnpm build | PASS | 3072 dims, glass-box logging to ai_calls |
+| 5A.5 Remove dead dep | pnpm build | PASS | @neondatabase/serverless removed |
+
+### Sub-Phase 5B: Schema Migration + Corpus Backfill
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| 5B.1 halfvec migration | Supabase MCP | PASS | vector(1536) → halfvec(3072) on brand_corpus + signals |
+| 5B.2 HNSW rebuild | Supabase MCP | PASS | halfvec_cosine_ops, m=16, ef_construction=64 |
+| 5B.3 signal_source_configs | pnpm build | PASS | New table for source management |
+| 5B.4 RPC functions | Supabase MCP | PASS | match_brand_corpus + match_signal_ideas created |
+| 5B.5-5B.6 Inngest functions | Inngest dev | PASS | 3 functions registered (corpus-backfill, corpus-embed-item, process-signal) |
+| 5B.7 corpus emits event | pnpm build | PASS | New corpus items trigger embed via Inngest |
+
+### Sub-Phase 5C: Webhook + Signal Processing Pipeline
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| 5C.1 Webhook endpoint | curl POST | PASS | 202 Accepted, signal created in DB |
+| 5C.2 HMAC verify | pnpm build | PASS | timingSafeEqual for timing-safe comparison |
+| 5C.3 Zod schemas | pnpm build | PASS | Single + batch payloads validated |
+| 5C.4 process-signal | Inngest dev | PASS | Completed in 5.5s (fetch → embed → rank → dedup → create-idea → mark-processed) |
+| 5C.5 Idempotency | curl (2x same signal) | PASS | Second send skipped — no duplicate |
+| Supabase verify | SQL queries | PASS | 1 signal with embedding, 1 idea created, 1 webhook delivery, 1 ai_call logged |
+
+### Sub-Phase 5D: Enhanced Routers + Idea Wall UI
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| 5D.1 Signals router | pnpm build | PASS | 11 procedures, workspace UUID lookup |
+| 5D.2 Ideas router | pnpm build | PASS | getById, dismiss, addManual, enhanced list |
+| 5D.3 Workspace UUID | pnpm build | PASS | getWorkspaceUuid helper used across all new routers |
+| 5D.4 _app.ts update | pnpm build | PASS | 11 routers total |
+| 5D.5 UI components | pnpm build | PASS | IdeaCard, SourceRail, FilterBar render correctly |
+| 5D.6 Idea Wall page | Browser | PASS | Card renders with source badge, hotScore, ICP fit, tags, formats |
+
+### Self-Review (16 issues fixed)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| All 16 fixes | pnpm build | PASS | Zero errors after all fixes applied |
+| Generate button | Browser | PASS | Shows stub toast |
+| Dismiss | Code review | REVIEWED | hotScore=0 (not -1), workspace scoped, cache invalidated |
+
+### Additional Fixes
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| Onboarding user menu | pnpm build | PASS | Top bar added to onboarding layout |
+| Skip to dashboard | pnpm build | PASS | Button on welcome screen |
+| Badge counts | pnpm build | PASS | Hardcoded 23/4/12 removed |
+
+### End-to-End Verification Summary
+
+| Check | Result |
+|-------|--------|
+| pnpm build | PASS (zero errors after each sub-phase) |
+| Inngest dev server | 3 functions registered |
+| Webhook test (curl) | 202 Accepted, signal persisted |
+| process-signal pipeline | 5.5s end-to-end |
+| Supabase data | 1 signal + embedding, 1 idea, 1 webhook delivery, 1 ai_call |
+| Idea Wall UI | Cards render with all metadata |
+| Idempotency | Duplicate signal skipped |

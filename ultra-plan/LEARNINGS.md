@@ -88,6 +88,28 @@
 
 ---
 
+## Session 6 Learnings (Phase 5)
+
+### pgvector halfvec
+10. **pgvector HNSW dimension limits**: vector type max 2000 dims for HNSW indexes, halfvec type max 4000 dims. Gemini embedding-001 outputs 3072 dims — MUST use halfvec(3072), not vector(3072). Using vector(3072) with HNSW will fail silently or error at index creation. Always check `halfvec_cosine_ops` operator class for halfvec columns. (Session 6)
+
+### Inngest v4 API
+11. **Inngest v4 `eventType()` is lowercase**: The function to define typed events is `eventType()` (lowercase), NOT `EventType.create()` or similar class-based patterns. First positional arg is the event name string. Inngest v4 docs are sparse — always check the actual SDK types. (Session 6)
+
+### Zod v4 Record
+12. **Zod v4 `z.record()` requires 2 args**: In Zod v4, `z.record(z.unknown())` fails — you must provide both key and value schemas: `z.record(z.string(), z.unknown())`. This is a breaking change from Zod v3 where single-arg was valid. (Session 6)
+
+### Postgres Error Codes
+13. **postgres-js throws PostgresError with `.code` field**: Don't check `error.message.includes("unique")` — it's fragile and may match unrelated errors. Check `error.code === "23505"` for unique violation. Other useful codes: 23502 (not null), 23503 (FK violation), 42P01 (undefined table). The error object from postgres-js is PostgresError, not standard Error. (Session 6)
+
+### Inngest Local Dev
+14. **Inngest local dev requires INNGEST_DEV=1**: Without this env var, Inngest client tries to connect to Inngest Cloud and fails. Set `INNGEST_DEV=1` in `.env.local` for local development. The Inngest dev server runs separately via `npx inngest-cli dev`. (Session 6)
+
+### Clerk orgId Systemic Issue
+15. **Clerk orgId != workspace UUID is systemic**: This isn't a one-off bug (Session 5 found it in antiAiRules). EVERY router that uses `ctx.scoped.workspaceId` and needs to insert/query tables with UUID `workspaceId` FK must look up the internal workspace UUID first. New pattern: `getWorkspaceUuid()` helper that does `WHERE clerkOrgId = ctx.workspaceId` and returns `ws.id`. All Phase 5 routers use this pattern. Audit older routers (brand, rules, connectors, etc.) for this issue. (Session 6)
+
+---
+
 ## Mistakes NOT to Make
 
 1. **Don't stack unverified layers** — Schema → verify tables → then tRPC. Never write tRPC before schema is confirmed.
@@ -97,3 +119,7 @@
 5. **Don't mix workspace data** — Every query through `scopedDb`. Missing scope = cross-tenant leak. This is the #1 security risk.
 6. **Don't hardcode token refresh intervals** — Use the token_manager with platform-specific schedules. TikTok needs daily, X needs every 90 min.
 7. **Don't "improve" prototype fixture shapes** — Fixtures ARE the API contract. Changing shapes breaks UI integration.
+8. **Don't use string matching for Postgres errors** — Always use error.code (e.g., "23505" for unique). String matching is fragile and locale-dependent.
+9. **Don't assume vector type works for all dimensions** — pgvector HNSW caps at 2000 dims for vector, 4000 for halfvec. Check limits before choosing column type.
+10. **Don't forget INNGEST_DEV=1 locally** — Without it, Inngest client silently fails to connect. Always set in .env.local for dev.
+11. **Don't trust Clerk orgId as a UUID FK** — It's `org_xxx` format, not UUID. Every DB query with workspaceId FK needs the internal UUID lookup first.

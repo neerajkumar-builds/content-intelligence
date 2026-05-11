@@ -39,7 +39,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Phase 3.5 (Onboarding):** COMPLETE. Merged PR #5. 4-step wizard, Clerk auth, middleware.
 - **Phase 4A (Connector OAuth):** COMPLETE. Merged PR #6. LinkedIn OAuth, encrypt, sign-in/sign-up pages.
 - **Phase 4A-wire (Onboarding DB Wiring):** COMPLETE. E2E verified. 5 mutations wired, Clerk org creation, postgres-js driver, Supavisor pooler, toast notifications, dark theme.
-- **Next:** Phase 5 (Signal Ingestion / Learn)
+- **Phase 5 (Signal Ingestion):** 5A-5D COMPLETE. E2E verified. Inngest (3 functions), Gemini embeddings (halfvec 3072), webhook, signal pipeline, Idea Wall UI. 5E (n8n workflow) NOT STARTED.
+- **Next:** Phase 5E (n8n workflow deployment) → Phase 4B (Connector Publishing)
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
 
@@ -51,7 +52,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 4. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
 5. All work on `main` branch (all PRs merged). No stale branches.
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
-7. **FIRST TASK next session:** Phase 5 (Signal Ingestion / Learn) — RSS, Reddit, competitors, thought leaders
+7. **FIRST TASK next session:** Phase 5E (n8n Signal Ingestion Workflow deployment) — then Phase 4B (Connector Publishing)
 
 ## Task Completion Protocol (MANDATORY after every task)
 
@@ -91,8 +92,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Dev prompts | `design_handoff_content_intelligence_agent/DEV_PROMPTS.md` |
 | Design tokens | `design_handoff_content_intelligence_agent/app/tokens.css` |
 | Connectors spec (prototype) | `design_handoff_content_intelligence_agent/app/screens/govern.jsx` |
-| Drizzle schema (LIVE) | `src/db/schema/*.ts` (9 files, 27 tables) |
-| DB client | `src/db/index.ts` (@neondatabase/serverless) |
+| Drizzle schema (LIVE) | `src/db/schema/*.ts` (9 files, 28 tables) |
+| DB client | `src/db/index.ts` (postgres-js, prepare: false) |
 | Drizzle config | `drizzle.config.ts` |
 | Migration SQL | `drizzle/0000_great_jocasta.sql` |
 | Platform enum | `src/lib/platforms.ts` |
@@ -106,7 +107,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Health endpoint | `src/app/api/health/route.ts` |
 | tRPC init + context | `src/server/context.ts`, `src/server/trpc.ts` |
 | tRPC middleware | `src/server/middleware.ts` (auth → workspace → trace) |
-| tRPC routers (10) | `src/server/routers/*.ts` (brand, brief, corpus, rules, connectors, ideas, drafts, schedule, audit, onboarding) |
+| tRPC routers (11) | `src/server/routers/*.ts` (brand, brief, corpus, rules, connectors, ideas, drafts, schedule, audit, onboarding, signals) |
 | tRPC app router | `src/server/routers/_app.ts` |
 | tRPC API route | `src/app/api/trpc/[trpc]/route.ts` |
 | tRPC client hooks | `src/lib/trpc/client.tsx` |
@@ -124,6 +125,15 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | LinkedIn OAuth adapter | `src/lib/connectors/oauth/linkedin.ts` |
 | Default anti-AI rules (62) | `src/lib/rules/default-rules.ts` |
 | Voice style templates | `src/components/onboarding/voice-templates.ts` |
+| Inngest client + events | `src/server/inngest/client.ts`, `events.ts` |
+| Inngest functions (3) | `src/server/inngest/functions/*.ts` (corpus-backfill, corpus-embed-item, process-signal) |
+| Inngest serve route | `src/app/api/inngest/route.ts` |
+| Gemini embedding utility | `src/lib/ai/embed.ts` (gemini-embedding-001, 3072 dims, glass-box) |
+| n8n webhook endpoint | `src/app/api/webhooks/n8n/route.ts` (HMAC-SHA256) |
+| Webhook utilities | `src/lib/webhooks/verify-hmac.ts`, `schemas.ts` |
+| Signals router | `src/server/routers/signals.ts` (source config CRUD + backfill) |
+| Idea Wall page | `src/app/(app)/ideas/page.tsx` + `src/components/ideas/*.tsx` |
+| Supabase RPC functions | `match_brand_corpus()`, `match_signal_ideas()` (in DB, not files) |
 | Dev seed script | `src/db/seed.ts` (uses pg, not neon HTTP) |
 | Reference code (paste-ready) | `ultra-plan/reference/01-06*.md` |
 | n8n workflow code (ready) | `ultra-plan/n8n-workflows/` |
@@ -168,7 +178,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | 3.5 | Onboarding Wizard (4 steps, Clerk auth, middleware, voice templates) | DONE |
 | 4A | Connector OAuth (LinkedIn OAuth, encrypt, sign-in/sign-up, connectors page) | DONE |
 | 4A-wire | Onboarding DB wiring (5 mutations, Clerk org, postgres-js, Supavisor, toast, dark theme) | DONE |
-| 5 | Signal Ingestion / Learn (RSS, Reddit, competitors, thought leaders) | NEXT |
+| 5 (5A-5D) | Signal Ingestion (Inngest, Gemini embed, webhook, pipeline, Idea Wall UI) | DONE |
+| 5E | n8n Signal Ingestion Workflow deployment | NEXT |
 | 4B | Connector Publishing Adapters (publish, verify, ghost detect per platform) | NOT STARTED |
 | 6 | Drafts + 7-Dim Grading (core surface, glass-box) | NOT STARTED |
 | 7 | Schedule + Publish (idempotency, fan-out, ghost detection) | NOT STARTED |

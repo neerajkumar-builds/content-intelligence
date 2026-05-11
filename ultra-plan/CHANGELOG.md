@@ -200,3 +200,104 @@
   - What: Removed GTMinds and say2neeraj from dropdown. Only FullFunnel LLC.
 
 - **E2E verified** — Sign-in → 4 onboarding steps → Supabase: workspaces=3, brands=4, briefs=3, corpus=13, rules=72, onboarding_step=5 → dashboard redirect confirmed
+
+### Phase 5A: Inngest Infrastructure + Embedding Utility (Session 6)
+
+- **5A.1-5A.3** Inngest v4 infrastructure
+  - Files: `src/server/inngest/client.ts`, `src/server/inngest/events.ts`, `src/app/api/inngest/route.ts`
+  - What: Inngest client, typed events with Zod (signal.ingested, corpus.backfill, corpus.item.added), serve route for /api/inngest
+  - Why: Background job infrastructure for async signal processing + corpus embedding
+  - Impact: 3 event types registered, serve route handles all Inngest functions
+
+- **5A.4** Gemini embedding utility
+  - Files: `src/lib/ai/embed.ts`
+  - What: gemini-embedding-001, 3072 dimensions, glass-box logging to ai_calls table (model, cost, latency, status)
+  - Why: Core AI utility for semantic matching — signals against corpus, idea deduplication
+  - Note: Error status logged on failure (self-review fix)
+
+- **5A.5** Dead dependency cleanup
+  - Files: `package.json`
+  - What: Removed `@neondatabase/serverless` — replaced by postgres-js in Session 5
+  - Why: Dead code in production deps
+
+### Phase 5B: Schema Migration + Corpus Backfill (Session 6)
+
+- **5B.1-5B.2** Vector dimension migration
+  - Files: `src/db/schema/brands.ts`, `src/db/schema/signals.ts`, migration SQL
+  - What: vector(1536) → halfvec(3072) on brand_corpus.embedding and signals.embedding. HNSW indexes rebuilt with halfvec_cosine_ops, m=16, ef_construction=64
+  - Why: Gemini embedding-001 outputs 3072 dims. pgvector HNSW max is 2000 for vector type but 4000 for halfvec — must use halfvec
+  - Impact: Breaking schema change — all existing embeddings invalidated (none in production yet)
+
+- **5B.3** signal_source_configs table
+  - Files: `src/db/schema/signals.ts`
+  - What: New table for managing signal sources (RSS feeds, Reddit subreddits, competitors, thought leaders) per brand
+  - Why: Enables source management UI and selective ingestion
+
+- **5B.4** Supabase RPC functions
+  - What: match_brand_corpus (cosine similarity search on corpus), match_signal_ideas (dedup check on existing ideas)
+  - Why: pgvector similarity search needs SQL RPCs — Drizzle ORM doesn't expose halfvec operators
+
+- **5B.5-5B.7** Corpus backfill pipeline
+  - Files: `src/server/inngest/functions/`, `src/server/routers/corpus.ts`
+  - What: corpus-backfill (batch re-embed all corpus items), corpus-embed-item (embed single item on add). corpus.ts router now emits Inngest event on new corpus items.
+  - Why: Existing corpus items need embeddings for voice matching. New items get embedded automatically.
+
+### Phase 5C: Webhook + Signal Processing Pipeline (Session 6)
+
+- **5C.1** n8n webhook endpoint
+  - Files: `src/app/api/webhooks/n8n/route.ts`
+  - What: POST /api/webhooks/n8n, HMAC-SHA256 signature verification, Zod validation (single + batch payloads), atomic CTE for webhook_deliveries + signals insert, returns 202 Accepted + emits Inngest events
+  - Why: n8n workflows (RSS, Reddit, competitors) POST signals to this endpoint
+  - Security: HMAC timing-safe comparison (crypto.timingSafeEqual), idempotency via n8nExecutionId unique constraint
+
+- **5C.2** HMAC verify utility
+  - Files: `src/lib/security/hmac.ts`
+  - What: computeHmac() + verifyHmac() with timingSafeEqual
+  - Why: Webhook signature verification — prevents spoofed signals
+
+- **5C.4** process-signal Inngest function
+  - Files: `src/server/inngest/functions/`
+  - What: Full pipeline — fetch signal → embed (Gemini) → rank via match_brand_corpus RPC → dedup via match_signal_ideas RPC (skip if > 0.85 similarity) → create idea → mark signal processed
+  - Verified: Completed in 5.5s end-to-end
+
+- **5C.5** Idempotency
+  - What: Sending same signal twice → second is skipped (postgres error code 23505 detection, not string matching)
+  - Self-review fix: Changed from `error.message.includes("unique")` to `error.code === "23505"`
+
+### Phase 5D: Enhanced Routers + Idea Wall UI (Session 6)
+
+- **5D.1** Signals router (11 procedures)
+  - Files: `src/server/routers/signals.ts`
+  - What: listSources, addSource, toggleSource, deleteSource, triggerBackfill + more
+  - All procedures use workspace UUID lookup (getWorkspaceUuid helper)
+  - Registered in _app.ts — now 11 routers total
+
+- **5D.2** Ideas router rewrite
+  - Files: `src/server/routers/ideas.ts`
+  - What: getById, dismiss (hotScore=0, not -1), addManual, enhanced list (source filter, sort by hotScore/createdAt/icpFit)
+  - Self-review fixes: dismiss uses hotScore=0 (CHECK constraint prevents -1), workspace scoping on all procedures, cache invalidation after dismiss
+
+- **5D.5-5D.6** Idea Wall UI
+  - Files: `src/components/ideas/IdeaCard.tsx`, `SourceRail.tsx`, `FilterBar.tsx`, `src/app/(app)/ideas/page.tsx`
+  - What: Full Idea Wall replacing placeholder — IdeaCard with source badge, hotScore, ICP fit, tags, format suggestions. SourceRail for source management. FilterBar for source/sort filtering.
+  - Status: Generate button shows stub toast. Dismiss code reviewed but not tested live.
+
+### Phase 5 Self-Review (Session 6) — 16 issues fixed
+
+- **Security:** HMAC timing-safe comparison, workspace scoping on 4 procedures (getById, dismiss, toggleSource, deleteSource), brand ownership check on triggerBackfill
+- **Correctness:** Postgres error code 23505 (not string matching), atomic CTE for webhook insert, dismiss hotScore=0 (not -1), error status logging in embed.ts
+- **Data integrity:** Skip duplicate ideas (dedup > 0.85), cache invalidation after dismiss, Inngest send failure logging
+
+### Additional Fixes (Session 6)
+
+- **Onboarding UX:** Added user menu top bar to onboarding layout, "Skip to dashboard" button on welcome screen
+- **Shell cleanup:** Removed hardcoded sidebar badge counts (23/4/12) — will be dynamic from real data
+
+### Commits (Session 6)
+
+1. `feat(phase5): Inngest infrastructure, Gemini embeddings, halfvec migration`
+2. `feat(phase5): webhook endpoint + signal processing pipeline`
+3. `feat(phase5): signals router, enhanced ideas router, Idea Wall UI`
+4. `fix(phase5): self-review — 16 issues fixed across security, correctness, data integrity`
+5. `fix(onboarding): add user menu top bar + skip to dashboard button`
+6. `fix(shell): remove hardcoded badge counts from sidebar nav`

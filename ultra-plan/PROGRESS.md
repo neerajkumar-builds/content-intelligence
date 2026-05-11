@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-11 (Session 5)
-> Current phase: Phase 4A-wire (Onboarding DB Wiring) — DONE + E2E VERIFIED
-> Next action: Phase 5 (Signal Ingestion / Learn)
+> Last updated: 2026-05-11 (Session 6)
+> Current phase: Phase 5 (Signal Ingestion / Learn) — 5A-5D DONE, 5E NOT STARTED
+> Next action: Phase 5E (n8n workflow deployment) then Phase 4B (Connector Publishing)
 
 ---
 
@@ -17,8 +17,12 @@
 | 3.5 — Onboarding | DONE | `phase-3.5/onboarding-wizard` | Merged (PR #5) |
 | 4A — Connector OAuth | DONE | `phase-4a/connector-oauth` | Merged (PR #6) |
 | 4A-wire — Onboarding DB Wiring | DONE | `main` | Pending |
+| 5A — Inngest + Embeddings | DONE | `main` | Session 6 |
+| 5B — Schema Migration + Corpus Backfill | DONE | `main` | Session 6 |
+| 5C — Webhook + Signal Processing | DONE | `main` | Session 6 |
+| 5D — Routers + Idea Wall UI | DONE | `main` | Session 6 |
+| 5E — n8n Workflow Deployment | NOT STARTED | — | — |
 | 4B — Connector Publishing | NOT STARTED | — | — |
-| 5 — Signal Ingestion / Learn | NOT STARTED | — | — |
 | 6 — Drafts + Grading | NOT STARTED | — | — |
 | 7 — Schedule + Publish | NOT STARTED | — | — |
 | 8 — Insights + Remaining | NOT STARTED | — | — |
@@ -112,6 +116,83 @@
 | 4Aw.11 | Toast notifications (sonner) | `layout.tsx`, `page.tsx` | DONE | pnpm build OK | 2026-05-11 |
 | 4Aw.12 | Theme detection (OS prefers-color-scheme fallback) | `theme-provider.tsx` | DONE | Dark mode in incognito | 2026-05-11 |
 | 4Aw.13 | Redesign welcome + sign-in/sign-up pages | 3 files | DONE | Dark theme, animations | 2026-05-11 |
+
+## Phase 5A: Inngest Infrastructure + Embedding Utility (DONE)
+
+| # | Task | Files | Status | Verified | Session |
+|---|------|-------|--------|----------|---------|
+| 5A.1 | Inngest client | `src/server/inngest/client.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5A.2 | Typed events with Zod (3 events) | `src/server/inngest/events.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5A.3 | Inngest serve route | `src/app/api/inngest/route.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5A.4 | Gemini embedding utility (3072 dims, glass-box) | `src/lib/ai/embed.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5A.5 | Remove dead @neondatabase/serverless from package.json | `package.json` | DONE | pnpm build OK | 2026-05-11 |
+
+## Phase 5B: Schema Migration + Corpus Backfill (DONE)
+
+| # | Task | Files | Status | Verified | Session |
+|---|------|-------|--------|----------|---------|
+| 5B.1 | Migrate vector(1536) to halfvec(3072) on brand_corpus + signals | `src/db/schema/brands.ts`, `signals.ts` | DONE | Supabase verified | 2026-05-11 |
+| 5B.2 | Rebuild HNSW indexes with halfvec_cosine_ops (m=16, ef=64) | Migration SQL | DONE | Supabase verified | 2026-05-11 |
+| 5B.3 | Create signal_source_configs table | `src/db/schema/signals.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5B.4 | Create match_brand_corpus + match_signal_ideas RPC functions | Supabase RPCs | DONE | Supabase verified | 2026-05-11 |
+| 5B.5 | Corpus-backfill Inngest function | `src/server/inngest/functions/` | DONE | 3 functions registered | 2026-05-11 |
+| 5B.6 | Corpus-embed-item Inngest function | `src/server/inngest/functions/` | DONE | 3 functions registered | 2026-05-11 |
+| 5B.7 | corpus.ts router emits Inngest event on new items | `src/server/routers/corpus.ts` | DONE | pnpm build OK | 2026-05-11 |
+
+## Phase 5C: Webhook + Signal Processing Pipeline (DONE)
+
+| # | Task | Files | Status | Verified | Session |
+|---|------|-------|--------|----------|---------|
+| 5C.1 | n8n webhook endpoint with HMAC-SHA256 | `src/app/api/webhooks/n8n/route.ts` | DONE | curl 202 Accepted | 2026-05-11 |
+| 5C.2 | HMAC verify utility (timingSafeEqual) | `src/lib/security/hmac.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5C.3 | Zod schemas for webhook payloads (single + batch) | Webhook route | DONE | pnpm build OK | 2026-05-11 |
+| 5C.4 | process-signal Inngest function (embed, rank, dedup, create idea) | `src/server/inngest/functions/` | DONE | Completed in 5.5s | 2026-05-11 |
+| 5C.5 | Atomic CTE for webhook_deliveries + signals insert (idempotency) | Webhook route | DONE | Idempotency verified | 2026-05-11 |
+
+## Phase 5D: Enhanced Routers + Idea Wall UI (DONE)
+
+| # | Task | Files | Status | Verified | Session |
+|---|------|-------|--------|----------|---------|
+| 5D.1 | Signals router (11 procedures) | `src/server/routers/signals.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5D.2 | Ideas router rewrite (getById, dismiss, addManual, enhanced list) | `src/server/routers/ideas.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5D.3 | Workspace UUID lookup for all queries (Clerk orgId != UUID) | All new routers | DONE | pnpm build OK | 2026-05-11 |
+| 5D.4 | Register signals router in _app.ts (11 routers total) | `src/server/routers/_app.ts` | DONE | pnpm build OK | 2026-05-11 |
+| 5D.5 | IdeaCard, SourceRail, FilterBar components | `src/components/ideas/` | DONE | UI renders | 2026-05-11 |
+| 5D.6 | Idea Wall full implementation (replaced placeholder) | `src/app/(app)/ideas/page.tsx` | DONE | Card renders | 2026-05-11 |
+
+## Phase 5 Self-Review Fixes (DONE)
+
+| # | Task | Status | Session |
+|---|------|--------|---------|
+| SR.1 | HMAC timing-safe comparison | DONE | 2026-05-11 |
+| SR.2 | Postgres error code 23505 detection (not string matching) | DONE | 2026-05-11 |
+| SR.3 | Atomic CTE for webhook insert | DONE | 2026-05-11 |
+| SR.4 | dismiss uses hotScore=0 (not -1, violated CHECK constraint) | DONE | 2026-05-11 |
+| SR.5 | Workspace scoping on getById, dismiss, toggleSource, deleteSource | DONE | 2026-05-11 |
+| SR.6 | Brand ownership check on triggerBackfill | DONE | 2026-05-11 |
+| SR.7 | Skip duplicate ideas (dedup > 0.85) | DONE | 2026-05-11 |
+| SR.8 | Error status logging in embed.ts | DONE | 2026-05-11 |
+| SR.9 | Cache invalidation after dismiss | DONE | 2026-05-11 |
+| SR.10 | Inngest send failure logging | DONE | 2026-05-11 |
+| SR.11-16 | Additional workspace scoping + error handling fixes | DONE | 2026-05-11 |
+
+## Phase 5 Additional Fixes (DONE)
+
+| # | Task | Files | Status | Session |
+|---|------|-------|--------|---------|
+| AF.1 | User menu top bar in onboarding layout | `src/app/onboarding/layout.tsx` | DONE | 2026-05-11 |
+| AF.2 | "Skip to dashboard" button on onboarding welcome | `src/app/onboarding/page.tsx` | DONE | 2026-05-11 |
+| AF.3 | Remove hardcoded sidebar badge counts (23/4/12) | `src/components/shell/` | DONE | 2026-05-11 |
+
+## Phase 5E: n8n Workflow Deployment (NOT STARTED)
+
+| # | Task | Status | Session |
+|---|------|--------|---------|
+| 5E.1 | Deploy RSS ingestion n8n workflow | NOT STARTED | — |
+| 5E.2 | Deploy Reddit monitoring n8n workflow | NOT STARTED | — |
+| 5E.3 | Deploy competitor tracking n8n workflow | NOT STARTED | — |
+| 5E.4 | Deploy thought leader monitoring n8n workflow | NOT STARTED | — |
+| 5E.5 | Configure n8n webhooks to point at /api/webhooks/n8n | NOT STARTED | — |
 
 ---
 
