@@ -26,18 +26,20 @@ export function StepBrief({
   corpusCount,
   onSave,
   onSkip,
+  initialData,
 }: {
   voiceStyle: string;
   corpusCount: number;
   onSave: (data: { wedge: string; icp: string; voiceTraits: string; antiPositioning: string }) => void;
   onSkip: () => void;
+  initialData?: { wedge: string; icp: string; voiceTraits: string; antiPositioning: string } | null;
 }) {
   const template = BRIEF_TEMPLATES[voiceStyle] ?? BRIEF_TEMPLATES.direct;
   const prefill = corpusCount >= 5;
-  const [wedge, setWedge] = useState(prefill ? template.wedge : "");
-  const [icp, setIcp] = useState("");
-  const [voiceTraits, setVoiceTraits] = useState(prefill ? template.voiceTraits : "");
-  const [antiPositioning, setAntiPositioning] = useState("");
+  const [wedge, setWedge] = useState(initialData?.wedge ?? (prefill ? template.wedge : ""));
+  const [icp, setIcp] = useState(initialData?.icp ?? "");
+  const [voiceTraits, setVoiceTraits] = useState(initialData?.voiceTraits ?? (prefill ? template.voiceTraits : ""));
+  const [antiPositioning, setAntiPositioning] = useState(initialData?.antiPositioning ?? "");
 
   const fields = [
     { label: "WEDGE", value: wedge, setter: setWedge, placeholder: "What makes your content different? Why should people read YOU?" },

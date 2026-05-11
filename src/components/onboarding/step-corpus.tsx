@@ -8,6 +8,14 @@ export interface CorpusItem {
   sourceUrl?: string;
 }
 
+export interface CorpusFullState {
+  tab: "paste" | "guided" | "template";
+  pasteText: string;
+  guidedAnswers: string[];
+  selectedTemplate: string | null;
+  templatePosts: string[];
+}
+
 const PROMPTS = [
   "Paste your single best-performing LinkedIn/social post",
   "Explain your product/service like you'd tell a friend at dinner",
@@ -20,16 +28,19 @@ export function StepCorpus({
   voiceStyle,
   onSave,
   onSkip,
+  initialState,
 }: {
   voiceStyle: string;
-  onSave: (items: CorpusItem[]) => void;
+  onSave: (items: CorpusItem[], fullState: CorpusFullState) => void;
   onSkip: () => void;
+  initialItems?: CorpusItem[];
+  initialState?: CorpusFullState | null;
 }) {
-  const [tab, setTab] = useState<"paste" | "guided" | "template">("paste");
-  const [pasteText, setPasteText] = useState("");
-  const [guidedAnswers, setGuidedAnswers] = useState<string[]>(["", "", "", "", ""]);
-  const [templatePosts, setTemplatePosts] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [tab, setTab] = useState<"paste" | "guided" | "template">(initialState?.tab ?? "paste");
+  const [pasteText, setPasteText] = useState(initialState?.pasteText ?? "");
+  const [guidedAnswers, setGuidedAnswers] = useState<string[]>(initialState?.guidedAnswers ?? ["", "", "", "", ""]);
+  const [templatePosts, setTemplatePosts] = useState<string[]>(initialState?.templatePosts ?? []);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(initialState?.selectedTemplate ?? null);
 
   const pastedPosts = pasteText.split(/\n\s*\n/).filter((p) => p.trim().length >= 10);
   const guidedItems = guidedAnswers.filter((a) => a.trim().length >= 10);
@@ -80,6 +91,10 @@ export function StepCorpus({
             }}
           />
         </div>
+      </div>
+
+      <div style={{ fontSize: 12, color: "var(--ink-secondary)", fontStyle: "italic" }}>
+        Choose one method below. You only need to use one tab — pick whichever is easiest for you.
       </div>
 
       <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--border-subtle)" }}>
@@ -196,7 +211,7 @@ export function StepCorpus({
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
         <button className="btn ghost sm" onClick={onSkip}>Skip for now</button>
-        <button className="btn primary sm" disabled={totalItems === 0} onClick={() => onSave(collectItems())}>
+        <button className="btn primary sm" disabled={totalItems === 0} onClick={() => onSave(collectItems(), { tab, pasteText, guidedAnswers, selectedTemplate, templatePosts })}>
           Save {totalItems} item{totalItems !== 1 ? "s" : ""} &rarr; Brand brief
         </button>
       </div>

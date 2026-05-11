@@ -1,9 +1,28 @@
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/top-bar";
 import { ThemeProvider } from "@/components/shell/theme-provider";
 import { TRPCProvider } from "@/lib/trpc/client";
+import { db } from "@/db";
+import { workspaces } from "@/db/schema";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const { orgId } = await auth();
+
+  if (orgId) {
+    const [ws] = await db
+      .select({ onboardingStep: workspaces.onboardingStep })
+      .from(workspaces)
+      .where(eq(workspaces.clerkOrgId, orgId))
+      .limit(1);
+
+    if (!ws || ws.onboardingStep < 5) {
+      redirect("/onboarding");
+    }
+  }
+
   return (
     <TRPCProvider>
       <ThemeProvider>

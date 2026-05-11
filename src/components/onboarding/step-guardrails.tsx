@@ -6,13 +6,17 @@ import { RULE_CATEGORIES } from "@/lib/rules/default-rules";
 export function StepGuardrails({
   onSave,
   onSkip,
+  initialData,
 }: {
   onSave: (data: { strictMode: boolean; enabledCategories: string[] }) => void;
   onSkip: () => void;
+  initialData?: { strictMode: boolean; enabledCategories: string[] } | null;
 }) {
-  const [strict, setStrict] = useState(true);
+  const [strict, setStrict] = useState(initialData?.strictMode ?? true);
   const [categories, setCategories] = useState<Record<string, boolean>>(
-    Object.fromEntries(RULE_CATEGORIES.map((c) => [c.id, c.defaultEnabled])),
+    initialData
+      ? Object.fromEntries(RULE_CATEGORIES.map((c) => [c.id, initialData.enabledCategories.includes(c.id)]))
+      : Object.fromEntries(RULE_CATEGORIES.map((c) => [c.id, c.defaultEnabled])),
   );
 
   const toggleCategory = (id: string) =>

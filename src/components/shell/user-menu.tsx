@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useClerk } from "@clerk/nextjs";
 import { Icon } from "@/components/primitives";
 import { Avatar } from "@/components/primitives";
 
@@ -13,6 +14,7 @@ const WORKSPACES = [
 
 export function UserMenu() {
   const [open, setOpen] = useState(false);
+  const { signOut } = useClerk();
 
   return (
     <div style={{ position: "relative" }}>
@@ -159,6 +161,7 @@ export function UserMenu() {
             ))}
             <button
               className="btn ghost sm"
+              onClick={() => signOut({ redirectUrl: "/sign-in" })}
               style={{
                 width: "100%",
                 justifyContent: "flex-start",
