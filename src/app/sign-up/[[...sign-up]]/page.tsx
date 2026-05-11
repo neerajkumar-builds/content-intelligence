@@ -1,4 +1,5 @@
 import { SignUp } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 
 export default function SignUpPage() {
   return (
@@ -68,13 +69,7 @@ export default function SignUpPage() {
             Get started free. Set up your brand, voice corpus, and guardrails in 5 minutes.
           </p>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 10,
-              flexWrap: "wrap",
-            }}
-          >
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {["Voice grading", "Anti-AI rules", "15 channels", "Idempotent publish", "Glass-box AI", "Audit trails"].map((tag) => (
               <span
                 key={tag}
@@ -111,8 +106,10 @@ export default function SignUpPage() {
       >
         <SignUp
           appearance={{
-            elements: {
-              card: { boxShadow: "0 8px 32px rgba(0,0,0,0.4)", borderRadius: "14px" },
+            baseTheme: dark,
+            variables: {
+              colorPrimary: "#146dfa",
+              borderRadius: "0.75rem",
             },
           }}
         />
