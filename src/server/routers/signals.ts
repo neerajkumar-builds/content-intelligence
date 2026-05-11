@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { signalSourceConfigs, workspaces } from "@/db/schema";
+import { signalSourceConfigs, workspaces, brands } from "@/db/schema";
 import { inngest } from "@/server/inngest/client";
 import { CorpusBackfill } from "@/server/inngest/events";
 
@@ -68,10 +68,17 @@ export const signalsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+
       const [updated] = await ctx.db
         .update(signalSourceConfigs)
         .set({ enabled: input.enabled })
-        .where(eq(signalSourceConfigs.id, input.sourceId))
+        .where(
+          and(
+            eq(signalSourceConfigs.id, input.sourceId),
+            eq(signalSourceConfigs.workspaceId, wsId),
+          ),
+        )
         .returning({ id: signalSourceConfigs.id });
 
       if (!updated) {
@@ -83,9 +90,16 @@ export const signalsRouter = router({
   deleteSource: protectedProcedure
     .input(z.object({ sourceId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+
       const [deleted] = await ctx.db
         .delete(signalSourceConfigs)
-        .where(eq(signalSourceConfigs.id, input.sourceId))
+        .where(
+          and(
+            eq(signalSourceConfigs.id, input.sourceId),
+            eq(signalSourceConfigs.workspaceId, wsId),
+          ),
+        )
         .returning({ id: signalSourceConfigs.id });
 
       if (!deleted) {
@@ -98,6 +112,15 @@ export const signalsRouter = router({
     .input(z.object({ brandId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+
+      const [brand] = await ctx.db
+        .select({ id: brands.id })
+        .from(brands)
+        .where(and(eq(brands.id, input.brandId), eq(brands.workspaceId, wsId)))
+        .limit(1);
+      if (!brand) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Brand not in this workspace" });
+      }
 
       await inngest.send(
         CorpusBackfill.create({

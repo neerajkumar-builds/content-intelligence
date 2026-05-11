@@ -5,6 +5,14 @@ import { verifyHmac, payloadHash } from "@/lib/webhooks/verify-hmac";
 import { batchPayloadSchema, signalPayloadSchema } from "@/lib/webhooks/schemas";
 import { inngest } from "@/server/inngest/client";
 import { SignalIngested } from "@/server/inngest/events";
+import { sql } from "drizzle-orm";
+
+function isUniqueViolation(err: unknown): boolean {
+  if (typeof err === "object" && err !== null && "code" in err) {
+    return (err as { code: string }).code === "23505";
+  }
+  return false;
+}
 
 export async function POST(req: NextRequest) {
   const secret = process.env.N8N_WEBHOOK_SECRET;
@@ -26,7 +34,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const isBatch = typeof parsed === "object" && parsed !== null && "signals" in parsed;
+  const isBatch =
+    typeof parsed === "object" && parsed !== null && "signals" in parsed;
   const payloads = isBatch
     ? batchPayloadSchema.parse(parsed).signals
     : [signalPayloadSchema.parse(parsed)];
@@ -37,45 +46,56 @@ export async function POST(req: NextRequest) {
   for (const payload of payloads) {
     const hash = payloadHash(JSON.stringify(payload));
 
+    let signalId: string;
     try {
-      await db.insert(webhookDeliveries).values({
-        workspaceId: payload.workspaceId,
-        source: "n8n",
-        payloadHash: hash,
-      });
-    } catch (err: unknown) {
-      if (
-        err instanceof Error &&
-        err.message.includes("unique") || err instanceof Error && err.message.includes("duplicate")
-      ) {
+      const result = await db.execute(sql`
+        WITH delivery AS (
+          INSERT INTO webhook_deliveries (workspace_id, source, payload_hash)
+          VALUES (${payload.workspaceId}::uuid, 'n8n', ${hash})
+          ON CONFLICT (payload_hash) DO NOTHING
+          RETURNING id
+        ),
+        sig AS (
+          INSERT INTO signals (workspace_id, source, source_url, title, body, metadata)
+          SELECT
+            ${payload.workspaceId}::uuid,
+            ${payload.source}::signal_source,
+            ${payload.sourceUrl ?? null},
+            ${payload.title},
+            ${payload.body},
+            ${JSON.stringify(payload.metadata ?? {})}::jsonb
+          WHERE EXISTS (SELECT 1 FROM delivery)
+          RETURNING id
+        )
+        SELECT sig.id FROM sig
+      `);
+
+      const rows = result as unknown as { id: string }[];
+      if (!rows.length) {
+        skipped.push(hash);
+        continue;
+      }
+      signalId = rows[0].id;
+    } catch (err) {
+      if (isUniqueViolation(err)) {
         skipped.push(hash);
         continue;
       }
       throw err;
     }
 
-    const [signal] = await db
-      .insert(signals)
-      .values({
-        workspaceId: payload.workspaceId,
-        source: payload.source,
-        sourceUrl: payload.sourceUrl ?? null,
-        title: payload.title,
-        body: payload.body,
-        metadata: payload.metadata ?? {},
-      })
-      .returning({ id: signals.id });
-
     await inngest
       .send(
         SignalIngested.create({
-          signalId: signal.id,
+          signalId,
           workspaceId: payload.workspaceId,
         }),
       )
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Inngest send failed for signal", signalId, err);
+      });
 
-    accepted.push(signal.id);
+    accepted.push(signalId);
   }
 
   return NextResponse.json(

@@ -123,10 +123,14 @@ export const processSignalFn = inngest.createFunction(
       const topDup = dupMatches.length > 0 ? dupMatches[0] : null;
       const isDuplicate = topDup && Number(topDup.similarity) > 0.85;
 
-      const freshness = computeFreshness(signal.metadata as Record<string, unknown>);
-      const hotScore = computeHotScore(signal.metadata as Record<string, unknown>, freshness);
+      if (isDuplicate) continue;
+
+      const meta = signal.metadata as Record<string, unknown>;
+      const freshness = computeFreshness(meta);
+      const hotScore = computeHotScore(meta, freshness);
       const icpFit = Math.round(avgSimilarity * 100) / 100;
       const score = Math.round((0.5 * icpFit + 0.3 * (hotScore / 100) + 0.2 * 0.5) * 100) / 100;
+      const citation = meta.citation ? String(meta.citation) : null;
 
       await step.run(`create-idea-${brand.id}`, async () => {
         const [idea] = await db
@@ -136,20 +140,16 @@ export const processSignalFn = inngest.createFunction(
             brandId: brand.id,
             signalId,
             hook: signal.title,
-            angle: inferAngle(signal.source, signal.metadata as Record<string, unknown>),
+            angle: inferAngle(signal.source, meta),
             sourceKind: signal.source,
-            sourceLabel: String((signal.metadata as Record<string, unknown>).sourceLabel ?? signal.source),
-            sourceCitation: String((signal.metadata as Record<string, unknown>).citation ?? ""),
+            sourceLabel: String(meta.sourceLabel ?? signal.source),
+            sourceCitation: citation,
             sourceUrl: signal.sourceUrl,
             icpFit: String(icpFit),
             hotScore,
             freshness,
             formats: inferFormats(signal.source, signal.body.length),
-            tags: Array.isArray((signal.metadata as Record<string, unknown>).tags)
-              ? ((signal.metadata as Record<string, unknown>).tags as string[])
-              : [],
-            dedupScore: isDuplicate ? String(topDup!.similarity) : null,
-            dedupPriorId: isDuplicate ? topDup!.id : null,
+            tags: Array.isArray(meta.tags) ? (meta.tags as string[]) : [],
             score: String(score),
           })
           .returning({ id: ideas.id });

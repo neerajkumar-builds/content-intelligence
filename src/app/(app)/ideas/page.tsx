@@ -11,6 +11,8 @@ export default function IdeaWallPage() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState<"hot" | "icp" | "fresh">("hot");
 
+  const utils = trpc.useUtils();
+
   const { data, isLoading } = trpc.ideas.list.useQuery({
     source: filter === "all" ? undefined : filter,
     sort,
@@ -18,7 +20,10 @@ export default function IdeaWallPage() {
   });
 
   const dismissMut = trpc.ideas.dismiss.useMutation({
-    onSuccess: () => toast.success("Idea dismissed"),
+    onSuccess: () => {
+      toast.success("Idea dismissed");
+      void utils.ideas.list.invalidate();
+    },
   });
 
   const items = data?.items ?? [];

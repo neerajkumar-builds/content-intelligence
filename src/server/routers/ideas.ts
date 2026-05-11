@@ -35,7 +35,6 @@ export const ideasRouter = router({
       const conditions = [eq(ideas.workspaceId, wsId)];
       if (input?.brandId) conditions.push(eq(ideas.brandId, input.brandId));
       if (input?.source) conditions.push(eq(ideas.sourceKind, input.source));
-      if (input?.cursor) conditions.push(lt(ideas.id, input.cursor));
 
       const orderBy =
         input?.sort === "icp"
@@ -48,8 +47,9 @@ export const ideasRouter = router({
         .select()
         .from(ideas)
         .where(and(...conditions))
-        .orderBy(orderBy)
-        .limit(limit + 1);
+        .orderBy(orderBy, desc(ideas.createdAt))
+        .limit(limit + 1)
+        .offset(input?.cursor ? 1 : 0);
 
       const hasMore = rows.length > limit;
       const items = hasMore ? rows.slice(0, limit) : rows;
@@ -63,10 +63,12 @@ export const ideasRouter = router({
   getById: protectedProcedure
     .input(z.object({ ideaId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+
       const [idea] = await ctx.db
         .select()
         .from(ideas)
-        .where(eq(ideas.id, input.ideaId))
+        .where(and(eq(ideas.id, input.ideaId), eq(ideas.workspaceId, wsId)))
         .limit(1);
 
       if (!idea) throw new TRPCError({ code: "NOT_FOUND", message: "Idea not found" });
@@ -95,10 +97,12 @@ export const ideasRouter = router({
   dismiss: protectedProcedure
     .input(z.object({ ideaId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceUuid(ctx.db, ctx.workspaceId!);
+
       const [updated] = await ctx.db
         .update(ideas)
-        .set({ hotScore: -1 })
-        .where(eq(ideas.id, input.ideaId))
+        .set({ hotScore: 0, score: "0.00" })
+        .where(and(eq(ideas.id, input.ideaId), eq(ideas.workspaceId, wsId)))
         .returning({ id: ideas.id });
 
       if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Idea not found" });

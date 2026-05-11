@@ -100,6 +100,12 @@ async function embedBatch(
     }
 
     return data.embeddings.map((e) => e.values);
+  } catch (err) {
+    if (status === "success") {
+      status = "error";
+      errorCode = errorCode ?? "NETWORK_ERROR";
+    }
+    throw err;
   } finally {
     const latencyMs = Math.round(performance.now() - start);
     const totalChars = texts.reduce((sum, t) => sum + t.length, 0);
