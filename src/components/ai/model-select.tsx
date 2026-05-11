@@ -11,6 +11,8 @@ const MODELS: ModelOption[] = [
   { id: "gemini-2.0-flash", label: "Gemini Flash", tier: "Fast", costEstimate: "~$0.01" },
   { id: "claude-sonnet-4-20250514", label: "Claude Sonnet 4", tier: "Balanced", costEstimate: "~$0.08" },
   { id: "claude-opus-4-20250514", label: "Claude Opus 4", tier: "Best", costEstimate: "~$0.40" },
+  { id: "openai/gpt-4.1", label: "GPT-4.1", tier: "Balanced", costEstimate: "~$0.05" },
+  { id: "google/gemini-2.5-flash-preview", label: "Gemini 2.5 Flash", tier: "Fast", costEstimate: "~$0.02" },
 ];
 
 const TIER_COLORS: Record<string, string> = {

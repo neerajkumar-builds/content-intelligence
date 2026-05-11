@@ -44,6 +44,28 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     envKey: "ANTHROPIC_API_KEY",
     maxOutputTokens: 4096,
   },
+  {
+    id: "openai/gpt-4.1",
+    label: "GPT-4.1",
+    provider: "openrouter",
+    tier: "balanced",
+    description: "Strong alternative via OpenRouter",
+    costPer1kInput: 0.2,
+    costPer1kOutput: 0.8,
+    envKey: "OPENROUTER_API_KEY",
+    maxOutputTokens: 4096,
+  },
+  {
+    id: "google/gemini-2.5-flash-preview",
+    label: "Gemini 2.5 Flash",
+    provider: "openrouter",
+    tier: "fast",
+    description: "Latest Gemini via OpenRouter",
+    costPer1kInput: 0.015,
+    costPer1kOutput: 0.06,
+    envKey: "OPENROUTER_API_KEY",
+    maxOutputTokens: 4096,
+  },
 ];
 
 export const DEFAULT_MODEL_ID = "gemini-2.0-flash";
