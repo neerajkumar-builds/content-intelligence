@@ -50,6 +50,42 @@ export const signalsRouter = router({
       return config;
     }),
 
+  updateSource: protectedProcedure
+    .input(
+      z.object({
+        sourceId: z.string().uuid(),
+        label: z.string().min(1).max(200).optional(),
+        configUrl: z.string().min(1).max(2000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db, workspaceId } = ctx.scoped;
+
+      const updates: Record<string, string> = {};
+      if (input.label) updates.label = input.label;
+      if (input.configUrl) updates.configUrl = input.configUrl;
+
+      if (Object.keys(updates).length === 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Nothing to update" });
+      }
+
+      const [updated] = await db
+        .update(signalSourceConfigs)
+        .set(updates)
+        .where(
+          and(
+            eq(signalSourceConfigs.id, input.sourceId),
+            eq(signalSourceConfigs.workspaceId, workspaceId),
+          ),
+        )
+        .returning();
+
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Source config not found" });
+      }
+      return updated;
+    }),
+
   toggleSource: protectedProcedure
     .input(
       z.object({
