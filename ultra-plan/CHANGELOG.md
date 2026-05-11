@@ -24,6 +24,21 @@
 - **[CLEANUP] Dead code removed** — standalone `workspaceScope()` and `workspaceScopeAnd()` exports removed from scoped-db.ts, manual ws lookup removed from corpus.ts
   - Impact: Less dead code, cleaner API surface
 
+### Phase 5E: n8n Signal Harvester Workflow
+
+- **[FEATURE] n8n workflow "CI - Signal Harvester" deployed** — Fetches RSS feeds, normalizes articles, HMAC-signs, POSTs to CI webhook
+  - Workflow ID: `qrnItYAUlVcgchZO` on full-funnel.app.n8n.cloud
+  - Schedule: Every 30 min, Mon-Fri 8am-6pm
+  - Flow: Schedule → Supabase (get configs) → Loop → RSS Read → Normalize + HMAC → POST webhook
+  - Auto-assigned existing Supabase credential
+
+- **[DATA] Corpus backfill triggered** — All 13 corpus items across 3 brands now have Gemini embeddings
+  - Verified: 3 new ai_calls logged, all status=success
+
+- **[DATA] Signal source configs seeded** — 5 RSS feeds across 2 workspaces
+  - FF workspace: SaaStr, HubSpot Marketing, First Round Review
+  - FullFunnel workspace: SaaStr, HubSpot Marketing
+
 ---
 
 ## 2026-05-11 (Session 6)

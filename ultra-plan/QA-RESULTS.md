@@ -25,6 +25,10 @@
 | SCOPE-FIX | `npx tsc --noEmit` | PASS | Zero type errors after async scopedDb change |
 | SCOPE-FIX | `pnpm build` | PASS | All routes compile, all routers registered |
 | SCOPE-FIX | Self-review agent | PASS (1 bug found + fixed) | corpus.delete cross-tenant vuln caught and fixed |
+| 5E-BACKFILL | Inngest corpus.backfill x3 | PASS | 13/13 items embedded, 3 ai_calls logged |
+| 5E-SEED | Supabase INSERT signal_source_configs | PASS | 5 RSS configs across 2 workspaces |
+| 5E-WORKFLOW | n8n validate_workflow | PASS | 8 nodes, 0 warnings |
+| 5E-WORKFLOW | n8n create_workflow_from_code | PASS | Workflow qrnItYAUlVcgchZO created, Supabase cred auto-assigned |
 
 ### 2026-05-11 (Session 6)
 

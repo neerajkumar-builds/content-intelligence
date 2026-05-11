@@ -39,8 +39,9 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Phase 3.5 (Onboarding):** COMPLETE. Merged PR #5. 4-step wizard, Clerk auth, middleware.
 - **Phase 4A (Connector OAuth):** COMPLETE. Merged PR #6. LinkedIn OAuth, encrypt, sign-in/sign-up pages.
 - **Phase 4A-wire (Onboarding DB Wiring):** COMPLETE. E2E verified. 5 mutations wired, Clerk org creation, postgres-js driver, Supavisor pooler, toast notifications, dark theme.
-- **Phase 5 (Signal Ingestion):** 5A-5D COMPLETE. E2E verified. Inngest (3 functions), Gemini embeddings (halfvec 3072), webhook, signal pipeline, Idea Wall UI. 5E (n8n workflow) NOT STARTED.
-- **Next:** Phase 5E (n8n workflow deployment) → Phase 4B (Connector Publishing)
+- **Phase 5 (Signal Ingestion):** ALL COMPLETE (5A-5E). E2E verified. Inngest (3 functions), Gemini embeddings (halfvec 3072), webhook, signal pipeline, Idea Wall UI. n8n workflow deployed (qrnItYAUlVcgchZO).
+- **Scope Fix (Session 7):** Systemic workspace scoping bug fixed — scopedDb() now async, resolves Clerk orgId→UUID. 8 routers (24 procedures) fixed with zero per-router changes. corpus.delete cross-tenant vuln fixed.
+- **Next:** Phase 4B (Connector Publishing)
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
 
@@ -52,7 +53,8 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 4. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
 5. All work on `main` branch (all PRs merged). No stale branches.
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
-7. **FIRST TASK next session:** Phase 5E (n8n Signal Ingestion Workflow deployment) — then Phase 4B (Connector Publishing)
+7. **FIRST TASK next session:** Phase 4B (Connector Publishing) — LinkedIn adapter first
+8. **Key context:** `ctx.workspaceId` = Clerk orgId (for OAuth). `ctx.scoped.workspaceId` = UUID (for DB). Never confuse them.
 
 ## Task Completion Protocol (MANDATORY after every task)
 
@@ -137,6 +139,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Dev seed script | `src/db/seed.ts` (uses pg, not neon HTTP) |
 | Reference code (paste-ready) | `ultra-plan/reference/01-06*.md` |
 | n8n workflow code (ready) | `ultra-plan/n8n-workflows/` |
+| n8n Signal Harvester (LIVE) | Workflow `qrnItYAUlVcgchZO` on full-funnel.app.n8n.cloud |
 | Blotato references | `knowledge_base/blotato_references/` |
 | Brand guidelines PDF | `knowledge_base/FullFunnel_Brand Guidelines.pdf` |
 
@@ -178,9 +181,9 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | 3.5 | Onboarding Wizard (4 steps, Clerk auth, middleware, voice templates) | DONE |
 | 4A | Connector OAuth (LinkedIn OAuth, encrypt, sign-in/sign-up, connectors page) | DONE |
 | 4A-wire | Onboarding DB wiring (5 mutations, Clerk org, postgres-js, Supavisor, toast, dark theme) | DONE |
-| 5 (5A-5D) | Signal Ingestion (Inngest, Gemini embed, webhook, pipeline, Idea Wall UI) | DONE |
-| 5E | n8n Signal Ingestion Workflow deployment | NEXT |
-| 4B | Connector Publishing Adapters (publish, verify, ghost detect per platform) | NOT STARTED |
+| 5 (5A-5E) | Signal Ingestion (Inngest, Gemini embed, webhook, pipeline, Idea Wall, n8n workflow) | DONE |
+| SCOPE-FIX | Workspace UUID retrofit (scopedDb async, 8 routers fixed, cross-tenant vuln fixed) | DONE |
+| 4B | Connector Publishing Adapters (publish, verify, ghost detect per platform) | NEXT |
 | 6 | Drafts + 7-Dim Grading (core surface, glass-box) | NOT STARTED |
 | 7 | Schedule + Publish (idempotency, fan-out, ghost detection) | NOT STARTED |
 | 8 | Insights + Remaining (home, competitors, prompt studio) | NOT STARTED |
