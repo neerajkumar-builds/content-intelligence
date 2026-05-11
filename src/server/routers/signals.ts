@@ -7,7 +7,76 @@ import { signalSourceConfigs, brands } from "@/db/schema";
 import { inngest } from "@/server/inngest/client";
 import { CorpusBackfill } from "@/server/inngest/events";
 
+async function probeUrl(url: string): Promise<{
+  reachable: boolean;
+  isRss: boolean;
+  contentType: string | null;
+  statusCode: number | null;
+  error: string | null;
+}> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, {
+      method: "GET",
+      signal: controller.signal,
+      headers: { "User-Agent": "ContentIntelligence/1.0 (RSS validator)" },
+      redirect: "follow",
+    });
+    clearTimeout(timeout);
+
+    const contentType = res.headers.get("content-type") ?? "";
+    const body = await res.text();
+    const first500 = body.slice(0, 500).toLowerCase();
+
+    const isRss =
+      contentType.includes("xml") ||
+      contentType.includes("rss") ||
+      contentType.includes("atom") ||
+      first500.includes("<rss") ||
+      first500.includes("<feed") ||
+      first500.includes("<atom");
+
+    return {
+      reachable: true,
+      isRss,
+      contentType,
+      statusCode: res.status,
+      error: null,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return {
+      reachable: false,
+      isRss: false,
+      contentType: null,
+      statusCode: null,
+      error: msg.includes("abort") ? "Timeout after 8s" : msg,
+    };
+  }
+}
+
 export const signalsRouter = router({
+  validateSourceUrl: protectedProcedure
+    .input(z.object({ url: z.string().url(), source: z.string() }))
+    .query(async ({ input }) => {
+      const result = await probeUrl(input.url);
+
+      if (!result.reachable) {
+        return { valid: false, warning: `URL unreachable: ${result.error}` };
+      }
+      if (result.statusCode && result.statusCode >= 400) {
+        return { valid: false, warning: `URL returned HTTP ${result.statusCode}` };
+      }
+      if (input.source === "rss" && !result.isRss) {
+        return {
+          valid: false,
+          warning: `Not an RSS/Atom feed (content-type: ${result.contentType}). Try finding the /feed or /rss URL.`,
+        };
+      }
+      return { valid: true, warning: null };
+    }),
+
   listSources: protectedProcedure.query(async ({ ctx }) => {
     const { db, workspaceId } = ctx.scoped;
     return db
@@ -36,6 +105,28 @@ export const signalsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { db, workspaceId } = ctx.scoped;
+
+      if (input.source === "rss") {
+        const probe = await probeUrl(input.configUrl);
+        if (!probe.reachable) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `URL unreachable: ${probe.error}`,
+          });
+        }
+        if (probe.statusCode && probe.statusCode >= 400) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `URL returned HTTP ${probe.statusCode}`,
+          });
+        }
+        if (!probe.isRss) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Not a valid RSS/Atom feed. Content-type: ${probe.contentType}. Try finding the /feed or /rss URL.`,
+          });
+        }
+      }
 
       const [config] = await db
         .insert(signalSourceConfigs)

@@ -82,8 +82,23 @@ export function AddSourceDialog({ open, onClose }: Props) {
   const [sourceType, setSourceType] = useState<SourceType>("rss");
   const [url, setUrl] = useState("");
   const [label, setLabel] = useState("");
+  const [urlChecked, setUrlChecked] = useState(false);
 
   const utils = trpc.useUtils();
+
+  const isValidUrl = (() => {
+    try {
+      return url.trim().length > 0 && !!new URL(url.trim());
+    } catch {
+      return false;
+    }
+  })();
+
+  const { data: validation, isFetching: isValidating } =
+    trpc.signals.validateSourceUrl.useQuery(
+      { url: url.trim(), source: sourceType },
+      { enabled: isValidUrl && url.trim().length > 10, retry: false },
+    );
 
   const addMut = trpc.signals.addSource.useMutation({
     onSuccess: () => {
@@ -92,6 +107,7 @@ export function AddSourceDialog({ open, onClose }: Props) {
       setUrl("");
       setLabel("");
       setSourceType("rss");
+      setUrlChecked(false);
       onClose();
     },
     onError: (err) => {
@@ -105,10 +121,13 @@ export function AddSourceDialog({ open, onClose }: Props) {
     e.preventDefault();
     if (!url.trim() || !label.trim()) return;
 
-    try {
-      new URL(url.trim());
-    } catch {
+    if (!isValidUrl) {
       toast.error("Enter a valid URL");
+      return;
+    }
+
+    if (validation && !validation.valid) {
+      toast.error(validation.warning ?? "URL validation failed");
       return;
     }
 
@@ -215,6 +234,18 @@ export function AddSourceDialog({ open, onClose }: Props) {
                 boxSizing: "border-box",
               }}
             />
+            {/* URL validation indicator */}
+            {isValidUrl && (
+              <div style={{ marginTop: 4, fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
+                {isValidating ? (
+                  <span style={{ color: "var(--ink-tertiary)" }}>Checking URL...</span>
+                ) : validation?.valid ? (
+                  <span style={{ color: "#16a34a" }}>Valid RSS feed</span>
+                ) : validation && !validation.valid ? (
+                  <span style={{ color: "#ef4444" }}>{validation.warning}</span>
+                ) : null}
+              </div>
+            )}
           </div>
 
           {/* Label field */}
@@ -270,7 +301,7 @@ export function AddSourceDialog({ open, onClose }: Props) {
             </button>
             <button
               type="submit"
-              disabled={addMut.isPending || !selected.available}
+              disabled={addMut.isPending || !selected.available || isValidating || (validation != null && !validation.valid)}
               style={{
                 padding: "8px 16px",
                 borderRadius: 6,
@@ -278,12 +309,12 @@ export function AddSourceDialog({ open, onClose }: Props) {
                 background: "var(--accent)",
                 color: "white",
                 fontSize: 12,
-                cursor: addMut.isPending ? "wait" : "pointer",
+                cursor: addMut.isPending || isValidating ? "wait" : "pointer",
                 fontWeight: 600,
-                opacity: addMut.isPending ? 0.7 : 1,
+                opacity: addMut.isPending || (validation != null && !validation.valid) ? 0.5 : 1,
               }}
             >
-              {addMut.isPending ? "Adding..." : "Add Source"}
+              {addMut.isPending ? "Adding..." : isValidating ? "Validating..." : "Add Source"}
             </button>
           </div>
         </form>
