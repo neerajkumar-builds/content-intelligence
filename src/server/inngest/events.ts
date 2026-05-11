@@ -31,3 +31,38 @@ export const CorpusItemAdded = eventType(
     }),
   },
 );
+
+export const PostPublish = eventType(
+  "content-intelligence/post.publish",
+  {
+    schema: z.object({
+      postId: z.string().uuid(),
+      draftId: z.string().uuid(),
+      channel: z.string(),
+      workspaceId: z.string().uuid(),
+      connectorId: z.string().uuid(),
+    }),
+  },
+);
+
+export const PostVerify = eventType(
+  "content-intelligence/post.verify",
+  {
+    schema: z.object({
+      postId: z.string().uuid(),
+      platformPostId: z.string(),
+      channel: z.string(),
+      workspaceId: z.string().uuid(),
+      connectorId: z.string().uuid(),
+    }),
+  },
+);
+
+export const TokenRefreshDue = eventType(
+  "content-intelligence/token.refresh-due",
+  {
+    schema: z.object({
+      workspaceId: z.string().uuid().optional(),
+    }),
+  },
+);

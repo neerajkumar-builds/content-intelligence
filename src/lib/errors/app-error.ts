@@ -104,6 +104,10 @@ export const ErrorCodes = {
   TOKEN_REFRESH_FAILED: "TOKEN_REFRESH_FAILED",
   TOKEN_DECRYPT_FAILED: "TOKEN_DECRYPT_FAILED",
 
+  // Account
+  ACCOUNT_RESTRICTED: "ACCOUNT_RESTRICTED",
+  ACCOUNT_WARMUP_REQUIRED: "ACCOUNT_WARMUP_REQUIRED",
+
   // Publish
   PUBLISH_FAILED: "PUBLISH_FAILED",
   PUBLISH_GHOST: "PUBLISH_GHOST",
@@ -114,6 +118,8 @@ export const ErrorCodes = {
   VALIDATION_ERROR: "VALIDATION_ERROR",
   NOT_IMPLEMENTED: "NOT_IMPLEMENTED",
 } as const;
+
+export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 
 export function classifyHttpStatus(
   status: number,
@@ -137,4 +143,154 @@ export function classifyHttpStatus(
     return { errorClass: "permanent", retryable: false };
   }
   return { errorClass: "ambiguous", retryable: false };
+}
+
+export interface PlatformErrorResponse {
+  httpStatus: number;
+  body: unknown;
+  headers?: Record<string, string>;
+}
+
+/**
+ * Maps a raw platform HTTP response to an AppError with platform-specific
+ * code extraction. Each platform encodes errors differently — this handles
+ * LinkedIn serviceErrorCode, X error arrays, Meta error.code/error_subcode,
+ * Reddit json.errors, and generic fallbacks.
+ */
+export function mapPlatformError(
+  platform: Platform,
+  response: PlatformErrorResponse,
+): AppError {
+  const { httpStatus, body } = response;
+  const base = classifyHttpStatus(httpStatus);
+
+  const platformCode = extractPlatformCode(platform, body);
+  const platformMessage = extractPlatformMessage(platform, body);
+
+  const override = getCodeOverride(platform, httpStatus, platformCode);
+
+  return new AppError({
+    code: override?.code ?? mapHttpToErrorCode(httpStatus),
+    message: platformMessage || `${platform} API returned ${httpStatus}`,
+    errorClass: override?.errorClass ?? base.errorClass,
+    retryable: override?.retryable ?? base.retryable,
+    platform,
+    httpStatus,
+    platformCode: platformCode ?? undefined,
+    platformMessage: platformMessage ?? undefined,
+    raw: body,
+  });
+}
+
+function extractPlatformCode(
+  platform: Platform,
+  body: unknown,
+): string | number | null {
+  if (!body || typeof body !== "object") return null;
+  const b = body as Record<string, unknown>;
+
+  switch (platform) {
+    case "linkedin":
+      return (b.serviceErrorCode as number) ?? null;
+    case "twitter": {
+      const errors = (b.errors ?? b.detail) as
+        | Array<{ code?: number }>
+        | undefined;
+      return errors?.[0]?.code ?? null;
+    }
+    case "facebook":
+    case "instagram":
+    case "threads": {
+      const err = b.error as Record<string, unknown> | undefined;
+      return err?.code as number ?? null;
+    }
+    case "reddit": {
+      const json = b.json as Record<string, unknown> | undefined;
+      const errors = json?.errors as Array<[string, string, string]> | undefined;
+      return errors?.[0]?.[0] ?? null;
+    }
+    case "tiktok":
+      return (b.error as Record<string, unknown>)?.code as string ?? null;
+    default:
+      return (b.code as string | number) ?? null;
+  }
+}
+
+function extractPlatformMessage(
+  platform: Platform,
+  body: unknown,
+): string | null {
+  if (!body || typeof body !== "object") return null;
+  const b = body as Record<string, unknown>;
+
+  switch (platform) {
+    case "linkedin":
+      return (b.message as string) ?? null;
+    case "twitter": {
+      const errors = b.errors as Array<{ message?: string }> | undefined;
+      return errors?.[0]?.message ?? (b.detail as string) ?? null;
+    }
+    case "facebook":
+    case "instagram":
+    case "threads": {
+      const err = b.error as Record<string, unknown> | undefined;
+      return (err?.message as string) ?? null;
+    }
+    case "reddit": {
+      const json = b.json as Record<string, unknown> | undefined;
+      const errors = json?.errors as Array<[string, string, string]> | undefined;
+      return errors?.[0]?.[1] ?? null;
+    }
+    default:
+      return (b.message as string) ?? (b.error as string) ?? null;
+  }
+}
+
+interface ErrorOverride {
+  code: string;
+  errorClass: ErrorClass;
+  retryable: boolean;
+}
+
+function getCodeOverride(
+  platform: Platform,
+  httpStatus: number,
+  platformCode: string | number | null,
+): ErrorOverride | null {
+  if (httpStatus === 429) {
+    return { code: ErrorCodes.RATE_LIMITED, errorClass: "transient", retryable: true };
+  }
+
+  if (httpStatus === 401) {
+    return { code: ErrorCodes.AUTH_EXPIRED, errorClass: "permanent", retryable: false };
+  }
+
+  if (platform === "facebook" || platform === "instagram" || platform === "threads") {
+    if (platformCode === 190) {
+      return { code: ErrorCodes.AUTH_EXPIRED, errorClass: "permanent", retryable: false };
+    }
+    if (platformCode === 4) {
+      return { code: ErrorCodes.RATE_LIMITED, errorClass: "transient", retryable: true };
+    }
+    if (platformCode === 506) {
+      return { code: ErrorCodes.PLATFORM_DUPLICATE, errorClass: "permanent", retryable: false };
+    }
+  }
+
+  if (platform === "linkedin" && platformCode === 100) {
+    return { code: ErrorCodes.RATE_LIMITED, errorClass: "transient", retryable: true };
+  }
+
+  return null;
+}
+
+function mapHttpToErrorCode(httpStatus: number): string {
+  if (httpStatus === 429) return ErrorCodes.RATE_LIMITED;
+  if (httpStatus === 401) return ErrorCodes.AUTH_EXPIRED;
+  if (httpStatus === 403) return ErrorCodes.AUTH_INSUFFICIENT_SCOPES;
+  if (httpStatus === 404) return ErrorCodes.PLATFORM_NOT_FOUND;
+  if (httpStatus === 409) return ErrorCodes.PLATFORM_DUPLICATE;
+  if (httpStatus === 413) return ErrorCodes.MEDIA_TOO_LARGE;
+  if (httpStatus >= 500) return ErrorCodes.PLATFORM_INTERNAL;
+  return ErrorCodes.PUBLISH_FAILED;
 }
