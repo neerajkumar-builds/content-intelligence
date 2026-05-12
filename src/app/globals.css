@@ -469,6 +469,23 @@ a {
   animation: fadeIn 0.18s ease-out;
 }
 
+/* ─── Spinner ─── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 /* ─── KVP labels ─── */
 .kvp {
   display: flex;

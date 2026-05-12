@@ -7,6 +7,30 @@ import { toast } from "sonner";
 import { ModelSelect, getModelLabel, MODELS } from "@/components/ai/model-select";
 import { getCharLimit, getChannelLabel } from "@/lib/config";
 
+function DriveIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M8.01 18.26L2 8.66l4-6.86h8l-5.99 10.46z" fill="#0066DA" />
+      <path d="M22 8.66l-4-6.86h-8l6 10.46 6-3.6z" fill="#00AC47" />
+      <path d="M8.01 18.26h12L22 8.66l-6 3.6-7.99 6z" fill="#EA4335" />
+      <path d="M8.01 18.26l2 3.46h8l2-3.46h-12z" fill="#00832D" />
+      <path d="M2 8.66l2 3.46 4.01 6.14L14 8.66H2z" fill="#2684FC" />
+      <path d="M14 8.66L8.01 18.26h12L22 8.66H14z" fill="#FFBA00" />
+    </svg>
+  );
+}
+
+function SlackIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M5.042 15.166a2.126 2.126 0 0 1-2.126 2.125A2.126 2.126 0 0 1 .79 15.166a2.126 2.126 0 0 1 2.126-2.125h2.126v2.125zm1.063 0a2.126 2.126 0 0 1 2.125-2.125 2.126 2.126 0 0 1 2.126 2.125v5.315A2.126 2.126 0 0 1 8.23 22.61a2.126 2.126 0 0 1-2.125-2.129v-5.315z" fill="#E01E5A" />
+      <path d="M8.23 5.042a2.126 2.126 0 0 1-2.125-2.126A2.126 2.126 0 0 1 8.23.79a2.126 2.126 0 0 1 2.126 2.126v2.126H8.23zm0 1.078a2.126 2.126 0 0 1 2.126 2.11 2.126 2.126 0 0 1-2.126 2.126H2.916A2.126 2.126 0 0 1 .79 8.23a2.126 2.126 0 0 1 2.126-2.11H8.23z" fill="#36C5F0" />
+      <path d="M18.958 8.23a2.126 2.126 0 0 1 2.126-2.11A2.126 2.126 0 0 1 23.21 8.23a2.126 2.126 0 0 1-2.126 2.126h-2.126V8.23zm-1.063 0a2.126 2.126 0 0 1-2.125 2.126 2.126 2.126 0 0 1-2.126-2.126V2.916A2.126 2.126 0 0 1 15.77.79a2.126 2.126 0 0 1 2.125 2.126V8.23z" fill="#2EB67D" />
+      <path d="M15.77 18.958a2.126 2.126 0 0 1 2.125 2.126A2.126 2.126 0 0 1 15.77 23.21a2.126 2.126 0 0 1-2.126-2.126v-2.126h2.126zm0-1.063a2.126 2.126 0 0 1-2.126-2.125 2.126 2.126 0 0 1 2.126-2.126h5.314A2.126 2.126 0 0 1 23.21 15.77a2.126 2.126 0 0 1-2.126 2.125H15.77z" fill="#ECB22E" />
+    </svg>
+  );
+}
+
 function relativeTime(date: string | Date): string {
   const diff = Date.now() - new Date(date).getTime();
   const mins = Math.floor(diff / 60_000);
@@ -78,7 +102,7 @@ export default function DraftEditorPage() {
 
   const { data: publishStatus } = trpc.drafts.getPublishStatus.useQuery(
     { draftId: id },
-    { refetchInterval: 5000 },
+    { enabled: false },
   );
 
   const updateMut = trpc.drafts.update.useMutation({
@@ -127,6 +151,70 @@ export default function DraftEditorPage() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const [pendingExportId, setPendingExportId] = useState<string | null>(null);
+
+  const exportDriveMut = trpc.drafts.exportToDrive.useMutation({
+    onSuccess: (data) => {
+      if (data.skipped) {
+        toast.info("Export already in progress");
+      } else {
+        toast.success("Exporting to Google Drive...");
+      }
+      setPendingExportId(data.exportId);
+      void utils.drafts.listDraftExports.invalidate({ draftId: id });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const sendSlackMut = trpc.drafts.sendToSlack.useMutation({
+    onSuccess: (data) => {
+      if (data.skipped) {
+        toast.info("Send already in progress");
+      } else {
+        toast.success("Sending to Slack...");
+      }
+      setPendingExportId(data.exportId);
+      void utils.drafts.listDraftExports.invalidate({ draftId: id });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const { data: exportStatus } = trpc.drafts.getExportStatus.useQuery(
+    { exportId: pendingExportId! },
+    {
+      enabled: !!pendingExportId,
+      refetchInterval: (query) => {
+        const s = query.state.data?.status;
+        if (s && s !== "pending" && s !== "processing") return false;
+        return 2000;
+      },
+    },
+  );
+
+  useEffect(() => {
+    if (!exportStatus) return;
+    if (exportStatus.status === "completed") {
+      const dest = exportStatus.destination === "google_drive" ? "Google Drive" : "Slack";
+      toast.success(`Exported to ${dest}`);
+      setPendingExportId(null);
+      void utils.drafts.listDraftExports.invalidate({ draftId: id });
+    } else if (exportStatus.status === "failed") {
+      toast.error(exportStatus.errorMessage ?? "Export failed");
+      setPendingExportId(null);
+      void utils.drafts.listDraftExports.invalidate({ draftId: id });
+    }
+  }, [exportStatus?.status]);
+
+  const { data: driveConfig } = trpc.integrations.getConfig.useQuery({ integrationType: "google_drive" });
+  const { data: slackConfig } = trpc.integrations.getConfig.useQuery({ integrationType: "slack" });
+  const driveReady = !!driveConfig?.enabled && !!driveConfig?.hasSecret;
+  const slackReady = !!slackConfig?.enabled && !!slackConfig?.hasSecret;
+
+  const { data: draftExports } = trpc.drafts.listDraftExports.useQuery(
+    { draftId: id },
+    { refetchInterval: false },
+  );
 
   const { data: connectorsList } = trpc.connectors.list.useQuery();
   const linkedInConnector = connectorsList?.find(
@@ -662,32 +750,60 @@ export default function DraftEditorPage() {
           )}
 
           {status === "approved" && (
-            <button
-              onClick={handlePublish}
-              disabled={!linkedInConnector || publishMut.isPending}
-              title={
-                !linkedInConnector
-                  ? "Connect LinkedIn first"
-                  : undefined
-              }
-              style={{
-                padding: "7px 16px",
-                fontSize: 12,
-                fontWeight: 600,
-                borderRadius: 6,
-                border: "none",
-                background: linkedInConnector ? "#0a66c2" : "#6b7280",
-                color: "#fff",
-                cursor: linkedInConnector ? "pointer" : "not-allowed",
-                opacity: linkedInConnector ? 1 : 0.6,
-              }}
-            >
-              {publishMut.isPending
-                ? "Publishing..."
-                : !linkedInConnector
-                  ? "Connect LinkedIn first"
-                  : "Publish to LinkedIn"}
-            </button>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <button
+                onClick={() => exportDriveMut.mutate({ draftId: id })}
+                disabled={!driveReady || exportDriveMut.isPending}
+                title={!driveReady ? "Configure Google Drive in Settings" : "Export to Google Drive"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "7px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  border: "none",
+                  background: driveReady ? "#1a73e8" : "#6b7280",
+                  color: "#fff",
+                  cursor: driveReady ? "pointer" : "not-allowed",
+                  opacity: driveReady ? 1 : 0.6,
+                }}
+              >
+                {exportDriveMut.isPending ? (
+                  <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                ) : (
+                  <DriveIcon size={14} />
+                )}
+                {exportDriveMut.isPending ? "Exporting..." : "Export to Drive"}
+              </button>
+              <button
+                onClick={() => sendSlackMut.mutate({ draftId: id })}
+                disabled={!slackReady || sendSlackMut.isPending}
+                title={!slackReady ? "Configure Slack in Settings" : "Send to Slack"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "7px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  border: "none",
+                  background: slackReady ? "#4a154b" : "#6b7280",
+                  color: "#fff",
+                  cursor: slackReady ? "pointer" : "not-allowed",
+                  opacity: slackReady ? 1 : 0.6,
+                }}
+              >
+                {sendSlackMut.isPending ? (
+                  <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                ) : (
+                  <SlackIcon size={14} />
+                )}
+                {sendSlackMut.isPending ? "Sending..." : "Send to Slack"}
+              </button>
+            </div>
           )}
 
           {/* Content actions */}
@@ -732,32 +848,10 @@ export default function DraftEditorPage() {
             </div>
           )}
 
-          {livePost && (
-            <a
-              href={livePost.platformPostUrl ?? "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#16a34a",
-                textDecoration: "none",
-                marginLeft: "auto",
-              }}
-            >
-              Live on LinkedIn &rarr;
-            </a>
-          )}
-
-          {!livePost && publishingPost && (
-            <span
-              style={{
-                fontSize: 12,
-                color: "#f59e0b",
-                marginLeft: "auto",
-              }}
-            >
-              Publishing...
+          {pendingExportId && exportStatus && (exportStatus.status === "pending" || exportStatus.status === "processing") && (
+            <span style={{ fontSize: 12, color: "#f59e0b", display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ display: "inline-block", width: 10, height: 10, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+              {exportStatus.destination === "google_drive" ? "Exporting to Drive..." : "Sending to Slack..."}
             </span>
           )}
         </div>
@@ -944,6 +1038,59 @@ export default function DraftEditorPage() {
             >
               View source idea
             </button>
+          </div>
+        )}
+
+        {draftExports && draftExports.length > 0 && (
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              Export History
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {draftExports.map((exp) => (
+                <div
+                  key={exp.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 8px",
+                    borderRadius: 6,
+                    border: "1px solid var(--border-subtle)",
+                    fontSize: 11,
+                  }}
+                >
+                  {exp.destination === "google_drive" ? <DriveIcon size={12} /> : <SlackIcon size={12} />}
+                  <span style={{ color: "var(--ink-secondary)", flex: 1 }}>
+                    {exp.destination === "google_drive" ? "Drive" : "Slack"}
+                  </span>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: "1px 6px",
+                    borderRadius: 3,
+                    background: exp.status === "completed" ? "rgba(34,197,94,0.12)" : exp.status === "failed" ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)",
+                    color: exp.status === "completed" ? "#22c55e" : exp.status === "failed" ? "#ef4444" : "#f59e0b",
+                  }}>
+                    {exp.status}
+                  </span>
+                  {exp.externalUrl && exp.status === "completed" && (
+                    <a
+                      href={exp.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ fontSize: 10, color: "var(--accent)", textDecoration: "none" }}
+                    >
+                      Open
+                    </a>
+                  )}
+                  <span style={{ fontSize: 9, color: "var(--ink-tertiary)" }}>
+                    {relativeTime(exp.createdAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

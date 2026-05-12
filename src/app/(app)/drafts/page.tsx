@@ -1,11 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getChannelLabel } from "@/lib/config";
+
+function MiniDriveIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+      <path d="M8.01 18.26L2 8.66l4-6.86h8l-5.99 10.46z" fill="#0066DA" />
+      <path d="M22 8.66l-4-6.86h-8l6 10.46 6-3.6z" fill="#00AC47" />
+      <path d="M8.01 18.26h12L22 8.66l-6 3.6-7.99 6z" fill="#EA4335" />
+      <path d="M8.01 18.26l2 3.46h8l2-3.46h-12z" fill="#00832D" />
+      <path d="M2 8.66l2 3.46 4.01 6.14L14 8.66H2z" fill="#2684FC" />
+      <path d="M14 8.66L8.01 18.26h12L22 8.66H14z" fill="#FFBA00" />
+    </svg>
+  );
+}
+
+function MiniSlackIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+      <path d="M5.042 15.166a2.126 2.126 0 0 1-2.126 2.125A2.126 2.126 0 0 1 .79 15.166a2.126 2.126 0 0 1 2.126-2.125h2.126v2.125zm1.063 0a2.126 2.126 0 0 1 2.125-2.125 2.126 2.126 0 0 1 2.126 2.125v5.315A2.126 2.126 0 0 1 8.23 22.61a2.126 2.126 0 0 1-2.125-2.129v-5.315z" fill="#E01E5A" />
+      <path d="M8.23 5.042a2.126 2.126 0 0 1-2.125-2.126A2.126 2.126 0 0 1 8.23.79a2.126 2.126 0 0 1 2.126 2.126v2.126H8.23zm0 1.078a2.126 2.126 0 0 1 2.126 2.11 2.126 2.126 0 0 1-2.126 2.126H2.916A2.126 2.126 0 0 1 .79 8.23a2.126 2.126 0 0 1 2.126-2.11H8.23z" fill="#36C5F0" />
+      <path d="M18.958 8.23a2.126 2.126 0 0 1 2.126-2.11A2.126 2.126 0 0 1 23.21 8.23a2.126 2.126 0 0 1-2.126 2.126h-2.126V8.23zm-1.063 0a2.126 2.126 0 0 1-2.125 2.126 2.126 2.126 0 0 1-2.126-2.126V2.916A2.126 2.126 0 0 1 15.77.79a2.126 2.126 0 0 1 2.125 2.126V8.23z" fill="#2EB67D" />
+      <path d="M15.77 18.958a2.126 2.126 0 0 1 2.125 2.126A2.126 2.126 0 0 1 15.77 23.21a2.126 2.126 0 0 1-2.126-2.126v-2.126h2.126zm0-1.063a2.126 2.126 0 0 1-2.126-2.125 2.126 2.126 0 0 1 2.126-2.126h5.314A2.126 2.126 0 0 1 23.21 15.77a2.126 2.126 0 0 1-2.126 2.125H15.77z" fill="#ECB22E" />
+    </svg>
+  );
+}
 
 type StatusFilter = "all" | "draft" | "approved" | "live" | "failed";
 
@@ -62,6 +86,18 @@ export default function DraftsPage() {
   });
 
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+
+  const { data: allExports } = trpc.integrations.listExports.useQuery({ limit: 100 });
+  const exportsByDraft = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    if (!allExports) return map;
+    for (const exp of allExports) {
+      if (exp.status !== "completed" || !exp.draftId) continue;
+      if (!map.has(exp.draftId)) map.set(exp.draftId, new Set());
+      map.get(exp.draftId)!.add(exp.destination);
+    }
+    return map;
+  }, [allExports]);
 
   const items = data?.items ?? [];
 
@@ -239,6 +275,13 @@ export default function DraftsPage() {
                   }}
                 >
                   <StatusBadge status={draft.status} />
+
+                  {exportsByDraft.has(draft.id) && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                      {exportsByDraft.get(draft.id)!.has("google_drive") && <MiniDriveIcon />}
+                      {exportsByDraft.get(draft.id)!.has("slack") && <MiniSlackIcon />}
+                    </span>
+                  )}
 
                   <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 4, background: "var(--bg-muted)", color: "var(--ink-secondary)", fontWeight: 500 }}>
                     {getChannelLabel(draft.channel)}
