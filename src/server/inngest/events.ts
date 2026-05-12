@@ -82,3 +82,15 @@ export const TokenRefreshDue = eventType(
     }),
   },
 );
+
+export const DraftExport = eventType(
+  "content-intelligence/draft.export",
+  {
+    schema: z.object({
+      exportId: z.string().uuid(),
+      draftId: z.string().uuid(),
+      workspaceId: z.string().uuid(),
+      destination: z.enum(["google_drive", "slack"]),
+    }),
+  },
+);
