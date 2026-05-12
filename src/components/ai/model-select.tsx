@@ -11,7 +11,7 @@ interface ModelOption {
 }
 
 const MODELS: ModelOption[] = [
-  { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "google", category: "standard", costEstimate: "~$0.01" },
+  { id: "gemini-2.0-flash", label: "Gemini 3.0 Flash", provider: "google", category: "standard", costEstimate: "~$0.01" },
   { id: "claude-sonnet-4-20250514", label: "Sonnet 4.6", provider: "anthropic", category: "standard", costEstimate: "~$0.08" },
   { id: "openai/gpt-5.4", label: "GPT-5.4", provider: "openai", category: "standard", costEstimate: "~$0.06" },
   { id: "claude-opus-4-20250514", label: "Opus 4.6", provider: "anthropic", category: "thinking", costEstimate: "~$0.40" },

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 
 type StatusFilter = "all" | "draft" | "approved" | "live" | "failed";
 
@@ -48,6 +49,15 @@ export default function DraftsPage() {
   const { data, isLoading } = trpc.drafts.list.useQuery(
     filter === "all" ? undefined : { status: filter },
   );
+
+  const utils = trpc.useUtils();
+  const deleteMut = trpc.drafts.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Draft deleted");
+      void utils.drafts.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const items = data?.items ?? [];
 
@@ -277,6 +287,21 @@ export default function DraftsPage() {
                     {draft.content}
                   </p>
                 )}
+
+                {/* Actions */}
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`Delete "${draft.title || "this draft"}"?`)) {
+                        deleteMut.mutate({ draftId: draft.id });
+                      }
+                    }}
+                    style={{ fontSize: 11, color: "#ef4444", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>

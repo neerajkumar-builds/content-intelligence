@@ -455,4 +455,20 @@ export const draftsRouter = router({
 
       return updated;
     }),
+
+  delete: protectedProcedure
+    .input(z.object({ draftId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+
+      const [deleted] = await db
+        .delete(drafts)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .returning({ id: drafts.id });
+
+      if (!deleted) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      }
+      return { deleted: true };
+    }),
 });

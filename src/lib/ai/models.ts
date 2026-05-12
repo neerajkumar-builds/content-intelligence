@@ -13,7 +13,7 @@ export interface ModelConfig {
 export const AVAILABLE_MODELS: ModelConfig[] = [
   {
     id: "gemini-2.0-flash",
-    label: "Gemini Flash",
+    label: "Gemini 3.0 Flash",
     provider: "google",
     tier: "fast",
     description: "Fast, cost-effective",
