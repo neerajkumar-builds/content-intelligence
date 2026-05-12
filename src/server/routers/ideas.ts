@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, desc, and, inArray } from "drizzle-orm";
+import { eq, desc, and, inArray, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
@@ -15,6 +15,8 @@ export const ideasRouter = router({
           sort: z.enum(["relevance", "icp", "hot", "fresh"]).default("relevance"),
           limit: z.number().int().min(1).max(100).default(20),
           cursor: z.string().uuid().optional(),
+          dateFrom: z.string().date().optional(),
+          dateTo: z.string().date().optional(),
         })
         .optional(),
     )
@@ -25,6 +27,16 @@ export const ideasRouter = router({
       const conditions = [eq(ideas.workspaceId, workspaceId)];
       if (input?.brandId) conditions.push(eq(ideas.brandId, input.brandId));
       if (input?.source) conditions.push(eq(ideas.sourceKind, input.source));
+      if (input?.dateFrom) {
+        conditions.push(
+          sql`COALESCE(${ideas.publishedAt}, ${ideas.createdAt}) >= ${new Date(input.dateFrom).toISOString()}::timestamptz`,
+        );
+      }
+      if (input?.dateTo) {
+        conditions.push(
+          sql`COALESCE(${ideas.publishedAt}, ${ideas.createdAt}) <= (${input.dateTo}::date + interval '1 day')`,
+        );
+      }
 
       const orderBy =
         input?.sort === "icp"

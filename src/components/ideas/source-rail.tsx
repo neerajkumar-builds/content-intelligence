@@ -42,6 +42,17 @@ export function SourceRail() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [cooldownUntil, setCooldownUntil] = useState<number>(0);
+  const isCoolingDown = Date.now() < cooldownUntil;
+
+  const syncMut = trpc.signals.triggerSync.useMutation({
+    onSuccess: () => {
+      toast.success("Signal sync triggered — new ideas will appear shortly");
+      setCooldownUntil(Date.now() + 2 * 60 * 1000);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const sourceCounts = (sources ?? []).reduce(
     (acc, s) => {
       acc[s.source] = (acc[s.source] ?? 0) + 1;
@@ -70,6 +81,32 @@ export function SourceRail() {
               <span style={{ fontSize: 11, color: "var(--ink-tertiary)" }}>
                 {sources?.length ?? 0}
               </span>
+              <button
+                onClick={() => syncMut.mutate()}
+                disabled={syncMut.isPending || isCoolingDown}
+                title={isCoolingDown ? "Sync cooling down (2 min)" : "Trigger signal sync now"}
+                style={{
+                  padding: "3px 10px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  borderRadius: 5,
+                  border: "1px solid var(--border-subtle)",
+                  background: syncMut.isPending ? "var(--bg-muted)" : "transparent",
+                  color: isCoolingDown ? "var(--ink-tertiary)" : "var(--ink-secondary)",
+                  cursor: isCoolingDown || syncMut.isPending ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                  <path d="M16 16h5v5" />
+                </svg>
+                {syncMut.isPending ? "Syncing..." : "Sync"}
+              </button>
               <button
                 onClick={() => setShowAdd(true)}
                 style={{

@@ -76,6 +76,7 @@ export const brandRouter = router({
         data: z.object({
           name: z.string().min(1).optional(),
           active: z.boolean().optional(),
+          websiteUrl: z.string().url().nullish(),
         }),
       }),
     )

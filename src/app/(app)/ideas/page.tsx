@@ -10,6 +10,8 @@ import { FilterBar } from "@/components/ideas/filter-bar";
 export default function IdeaWallPage() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState<"relevance" | "hot" | "icp" | "fresh">("relevance");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const router = useRouter();
   const utils = trpc.useUtils();
@@ -18,6 +20,8 @@ export default function IdeaWallPage() {
     source: filter === "all" ? undefined : filter,
     sort,
     limit: 50,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
   });
 
   const dismissMut = trpc.ideas.dismiss.useMutation({
@@ -72,8 +76,12 @@ export default function IdeaWallPage() {
           filter={filter}
           sort={sort}
           count={items.length}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
           onFilterChange={setFilter}
           onSortChange={(s) => setSort(s as "hot" | "icp" | "fresh")}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
           onAddIdea={handleAddIdea}
         />
 

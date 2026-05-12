@@ -25,6 +25,7 @@ export const brands = pgTable(
     voiceScore: numeric("voice_score", { precision: 5, scale: 2 }),
     active: boolean("active").notNull().default(true),
     strictMode: boolean("strict_mode").notNull().default(false),
+    websiteUrl: text("website_url"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

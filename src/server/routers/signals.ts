@@ -247,4 +247,49 @@ export const signalsRouter = router({
       );
       return { triggered: true };
     }),
+
+  triggerSync: protectedProcedure.mutation(async () => {
+    const apiKey = process.env.N8N_API_KEY;
+    const baseUrl = process.env.N8N_INSTANCE_URL;
+    if (!apiKey || !baseUrl) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "n8n API not configured",
+      });
+    }
+
+    const workflowId = "qrnItYAUlVcgchZO";
+    const url = `${baseUrl}/api/v1/workflows/${workflowId}/run`;
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "X-N8N-API-KEY": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `n8n returned ${res.status}: ${errText.slice(0, 200)}`,
+        });
+      }
+
+      return { triggered: true };
+    } catch (err) {
+      if (err instanceof TRPCError) throw err;
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: msg.includes("abort")
+          ? "n8n request timed out after 10s"
+          : `n8n sync failed: ${msg}`,
+      });
+    }
+  }),
 });

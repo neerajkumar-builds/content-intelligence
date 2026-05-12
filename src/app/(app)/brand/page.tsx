@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { BriefCards } from "@/components/brand/brief-cards";
@@ -18,6 +18,7 @@ export default function BrandBriefPage() {
   const [editVoiceTraits, setEditVoiceTraits] = useState("");
   const [editAntiPositioning, setEditAntiPositioning] = useState("");
   const [editChangelog, setEditChangelog] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
 
   const utils = trpc.useUtils();
 
@@ -64,6 +65,30 @@ export default function BrandBriefPage() {
       toast.error(err.message);
     },
   });
+
+  const autoGenMut = trpc.brief.autoGenerate.useMutation({
+    onSuccess: (data) => {
+      setEditWedge(data.wedge);
+      setEditIcp(data.icp);
+      setEditVoiceTraits(data.voiceTraits);
+      setEditAntiPositioning(data.antiPositioning);
+      setEditChangelog("Auto-generated from website analysis");
+      setIsEditing(true);
+      toast.success(
+        `Brief generated (${data.model}, ${data.tokens} tokens, $${(data.costCents / 100).toFixed(3)})`,
+      );
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  useEffect(() => {
+    if (brands?.[0]?.websiteUrl) setWebsiteUrl(brands[0].websiteUrl);
+  }, [brands]);
+
+  function handleAutoGenerate() {
+    if (!brandId || !websiteUrl) return;
+    autoGenMut.mutate({ brandId, websiteUrl });
+  }
 
   // --- Handlers ---
   function startEditing() {
@@ -212,6 +237,56 @@ export default function BrandBriefPage() {
           )}
         </div>
       </div>
+
+      {/* Website URL + Auto-generate */}
+      {!isEditing && (
+        <div style={{
+          padding: "8px 28px",
+          borderBottom: "1px solid var(--border-subtle)",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-secondary)", whiteSpace: "nowrap" }}>
+            Website
+          </label>
+          <input
+            type="url"
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            placeholder="https://example.com"
+            style={{
+              flex: 1,
+              maxWidth: 360,
+              height: 30,
+              fontSize: 12,
+              padding: "0 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border-subtle)",
+              background: "var(--bg-surface)",
+              color: "var(--ink-primary)",
+              fontFamily: "var(--font-mono)",
+            }}
+          />
+          <button
+            onClick={handleAutoGenerate}
+            disabled={!websiteUrl || autoGenMut.isPending || !brandId}
+            style={{
+              padding: "6px 12px",
+              fontSize: 11,
+              fontWeight: 600,
+              borderRadius: 6,
+              border: "none",
+              background: autoGenMut.isPending ? "var(--bg-muted)" : "var(--accent)",
+              color: autoGenMut.isPending ? "var(--ink-tertiary)" : "white",
+              cursor: !websiteUrl || autoGenMut.isPending ? "not-allowed" : "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {autoGenMut.isPending ? "Analyzing..." : "Auto-generate brief"}
+          </button>
+        </div>
+      )}
 
       {/* Version banner when viewing old version */}
       {isViewingOldVersion && !isEditing && (

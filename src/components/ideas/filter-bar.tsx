@@ -20,15 +20,23 @@ export function FilterBar({
   filter,
   sort,
   count,
+  dateFrom,
+  dateTo,
   onFilterChange,
   onSortChange,
+  onDateFromChange,
+  onDateToChange,
   onAddIdea,
 }: {
   filter: string;
   sort: string;
   count: number;
+  dateFrom: string;
+  dateTo: string;
   onFilterChange: (filter: string) => void;
   onSortChange: (sort: string) => void;
+  onDateFromChange: (date: string) => void;
+  onDateToChange: (date: string) => void;
   onAddIdea: () => void;
 }) {
   return (
@@ -96,6 +104,62 @@ export function FilterBar({
           </option>
         ))}
       </select>
+
+      {/* Date range */}
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => onDateFromChange(e.target.value)}
+          style={{
+            height: 30,
+            fontSize: 11,
+            padding: "0 6px",
+            borderRadius: 6,
+            border: "1px solid var(--border-subtle)",
+            background: "var(--bg-surface)",
+            color: "var(--ink-primary)",
+            cursor: "pointer",
+            colorScheme: "dark light",
+          }}
+          title="From date"
+        />
+        <span style={{ fontSize: 10, color: "var(--ink-tertiary)" }}>to</span>
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => onDateToChange(e.target.value)}
+          style={{
+            height: 30,
+            fontSize: 11,
+            padding: "0 6px",
+            borderRadius: 6,
+            border: "1px solid var(--border-subtle)",
+            background: "var(--bg-surface)",
+            color: "var(--ink-primary)",
+            cursor: "pointer",
+            colorScheme: "dark light",
+          }}
+          title="To date"
+        />
+        {(dateFrom || dateTo) && (
+          <button
+            onClick={() => { onDateFromChange(""); onDateToChange(""); }}
+            style={{
+              fontSize: 10,
+              padding: "2px 6px",
+              borderRadius: 4,
+              border: "1px solid var(--border-subtle)",
+              background: "transparent",
+              color: "var(--ink-tertiary)",
+              cursor: "pointer",
+            }}
+            title="Clear date filter"
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       <button
         onClick={onAddIdea}
