@@ -340,6 +340,52 @@ export const draftsRouter = router({
       return { draftId: draft.id };
     }),
 
+  regenerate: protectedProcedure
+    .input(
+      z.object({
+        draftId: z.string().uuid(),
+        modelId: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db, workspaceId, scopeAnd } = ctx.scoped;
+
+      const [draft] = await db
+        .select()
+        .from(drafts)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .limit(1);
+
+      if (!draft) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      }
+      if (!draft.ideaId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Cannot regenerate a manually created draft",
+        });
+      }
+
+      await db
+        .update(drafts)
+        .set({ content: "", title: draft.title, status: "draft" })
+        .where(eq(drafts.id, input.draftId));
+
+      await inngest
+        .send(
+          DraftGenerate.create({
+            draftId: input.draftId,
+            ideaId: draft.ideaId,
+            brandId: draft.brandId,
+            workspaceId,
+            modelId: input.modelId,
+          }),
+        )
+        .catch(() => {});
+
+      return { draftId: input.draftId };
+    }),
+
   create: protectedProcedure
     .input(
       z.object({

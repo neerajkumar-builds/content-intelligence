@@ -89,10 +89,11 @@ export default function DraftEditorPage() {
     onError: (err) => toast.error(err.message),
   });
 
-  const regenerateMut = trpc.drafts.generate.useMutation({
-    onSuccess: (data) => {
-      toast.success("Regenerating with fresh AI output...");
-      router.push(`/drafts/${data.draftId}`);
+  const regenerateMut = trpc.drafts.regenerate.useMutation({
+    onSuccess: () => {
+      toast.success("Regenerating...");
+      setDirty(false);
+      void utils.drafts.get.invalidate({ draftId: id });
     },
     onError: (err) => toast.error(err.message),
   });
@@ -429,9 +430,7 @@ export default function DraftEditorPage() {
               <button
                 onClick={() => {
                   regenerateMut.mutate({
-                    ideaId: draft.ideaId!,
-                    brandId: draft.brandId,
-                    channel,
+                    draftId: id,
                     modelId: regenModelId,
                   });
                 }}
