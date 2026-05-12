@@ -29,10 +29,14 @@ export const integrationsRouter = router({
 
       if (!row) return null;
 
+      const hasDbSecret = !!row.encryptedSecret;
+      const hasEnvSecret =
+        input.integrationType === "google_drive" && !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+
       return {
         id: row.id,
         integrationType: row.integrationType,
-        hasSecret: !!row.encryptedSecret,
+        hasSecret: hasDbSecret || hasEnvSecret,
         config: row.config as Record<string, unknown>,
         enabled: row.enabled,
         createdAt: row.createdAt,
@@ -123,14 +127,25 @@ export const integrationsRouter = router({
         )
         .limit(1);
 
-      if (!integration || !integration.encryptedSecret) {
+      const dbSecret = integration?.encryptedSecret
+        ? decryptToken(integration.encryptedSecret)
+        : null;
+
+      const envFallback =
+        input.integrationType === "google_drive"
+          ? process.env.GOOGLE_SERVICE_ACCOUNT_JSON
+          : input.integrationType === "slack"
+            ? process.env.SLACK_WEBHOOK_URL
+            : null;
+
+      const secret = dbSecret ?? envFallback;
+
+      if (!secret) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: `${input.integrationType} is not configured. Save credentials first.`,
         });
       }
-
-      const secret = decryptToken(integration.encryptedSecret);
 
       if (input.integrationType === "google_drive") {
         const folderId =

@@ -9,3 +9,7 @@ out/
 next-env.d.ts
 .vercel
 .playwright-mcp/
+
+# Service account keys (NEVER commit)
+knowledge_base/*.json
+*.gserviceaccount.json

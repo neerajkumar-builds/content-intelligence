@@ -132,11 +132,13 @@ export const exportDraftFn = inngest.createFunction(
           return { fileId: existing.externalId, webViewLink: "", skipped: true };
         }
 
-        if (!integration.encryptedSecret) {
-          throw new Error("Google Drive service account not configured");
-        }
+        const secret = integration.encryptedSecret
+          ? decryptToken(integration.encryptedSecret)
+          : process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 
-        const secret = decryptToken(integration.encryptedSecret);
+        if (!secret) {
+          throw new Error("Google Drive service account not configured — set GOOGLE_SERVICE_ACCOUNT_JSON env var or configure per-workspace");
+        }
         const folderId = (integration.config.folderId as string) || process.env.GOOGLE_DRIVE_FOLDER_ID || "";
 
         if (!folderId) {
@@ -175,11 +177,13 @@ export const exportDraftFn = inngest.createFunction(
           return { ok: true, truncated: false, skipped: true };
         }
 
-        if (!integration.encryptedSecret) {
-          throw new Error("Slack webhook URL not configured");
-        }
+        const webhookUrl = integration.encryptedSecret
+          ? decryptToken(integration.encryptedSecret)
+          : process.env.SLACK_WEBHOOK_URL;
 
-        const webhookUrl = decryptToken(integration.encryptedSecret);
+        if (!webhookUrl) {
+          throw new Error("Slack webhook URL not configured — set SLACK_WEBHOOK_URL env var or configure per-workspace");
+        }
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
           : "http://localhost:3000";

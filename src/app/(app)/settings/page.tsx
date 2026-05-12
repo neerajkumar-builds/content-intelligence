@@ -71,12 +71,12 @@ export default function SettingsPage() {
   const { data: slackConfig, isLoading: slackLoading } = trpc.integrations.getConfig.useQuery({ integrationType: "slack" });
 
   const [driveFolderId, setDriveFolderId] = useState("");
-  const [driveEnabled, setDriveEnabled] = useState(true);
+  const [driveEnabled, setDriveEnabled] = useState(false);
   const [driveTestResult, setDriveTestResult] = useState<string | null>(null);
 
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [slackChannelName, setSlackChannelName] = useState("");
-  const [slackEnabled, setSlackEnabled] = useState(true);
+  const [slackEnabled, setSlackEnabled] = useState(false);
 
   useEffect(() => {
     if (driveConfig) {
@@ -93,18 +93,27 @@ export default function SettingsPage() {
     }
   }, [slackConfig]);
 
-  const updateMut = trpc.integrations.updateConfig.useMutation({
+  const driveUpdateMut = trpc.integrations.updateConfig.useMutation({
     onSuccess: (data) => {
-      toast.success(data.updated ? "Settings saved" : "Integration created");
+      toast.success(data.updated ? "Drive settings saved" : "Drive integration created");
       void utils.integrations.getConfig.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const testMut = trpc.integrations.testConnection.useMutation();
+  const slackUpdateMut = trpc.integrations.updateConfig.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.updated ? "Slack settings saved" : "Slack integration created");
+      void utils.integrations.getConfig.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const driveTestMut = trpc.integrations.testConnection.useMutation();
+  const slackTestMut = trpc.integrations.testConnection.useMutation();
 
   function handleDriveSave() {
-    updateMut.mutate({
+    driveUpdateMut.mutate({
       integrationType: "google_drive",
       config: { folderId: driveFolderId },
       enabled: driveEnabled,
@@ -113,7 +122,7 @@ export default function SettingsPage() {
 
   function handleDriveTest() {
     setDriveTestResult(null);
-    testMut.mutate(
+    driveTestMut.mutate(
       { integrationType: "google_drive" },
       {
         onSuccess: (result) => {
@@ -131,7 +140,7 @@ export default function SettingsPage() {
 
   function handleSlackSave() {
     const secret = slackWebhookUrl === "********" ? undefined : slackWebhookUrl;
-    updateMut.mutate({
+    slackUpdateMut.mutate({
       integrationType: "slack",
       secret,
       config: { channelName: slackChannelName },
@@ -140,7 +149,7 @@ export default function SettingsPage() {
   }
 
   function handleSlackTest() {
-    testMut.mutate(
+    slackTestMut.mutate(
       { integrationType: "slack" },
       {
         onSuccess: () => toast.success("Test message sent to Slack"),
@@ -280,21 +289,21 @@ export default function SettingsPage() {
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
             <button
               onClick={handleDriveTest}
-              disabled={testMut.isPending || !driveConfig?.hasSecret}
+              disabled={driveTestMut.isPending || !driveFolderId}
               style={{
                 ...buttonSecondaryStyle,
-                opacity: !driveConfig?.hasSecret ? 0.5 : 1,
-                cursor: !driveConfig?.hasSecret ? "not-allowed" : "pointer",
+                opacity: !driveFolderId ? 0.5 : 1,
+                cursor: !driveFolderId ? "not-allowed" : "pointer",
               }}
             >
-              {testMut.isPending ? "Testing..." : "Test Connection"}
+              {driveTestMut.isPending ? "Testing..." : "Test Connection"}
             </button>
             <button
               onClick={handleDriveSave}
-              disabled={updateMut.isPending}
+              disabled={driveUpdateMut.isPending}
               style={buttonPrimaryStyle}
             >
-              {updateMut.isPending ? "Saving..." : "Save"}
+              {driveUpdateMut.isPending ? "Saving..." : "Save"}
             </button>
           </div>
 
@@ -374,21 +383,21 @@ export default function SettingsPage() {
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
             <button
               onClick={handleSlackTest}
-              disabled={testMut.isPending || !slackConfig?.hasSecret}
+              disabled={slackTestMut.isPending || !slackConfig?.hasSecret}
               style={{
                 ...buttonSecondaryStyle,
                 opacity: !slackConfig?.hasSecret ? 0.5 : 1,
                 cursor: !slackConfig?.hasSecret ? "not-allowed" : "pointer",
               }}
             >
-              {testMut.isPending ? "Sending..." : "Send Test Message"}
+              {slackTestMut.isPending ? "Sending..." : "Send Test Message"}
             </button>
             <button
               onClick={handleSlackSave}
-              disabled={updateMut.isPending}
+              disabled={slackUpdateMut.isPending}
               style={buttonPrimaryStyle}
             >
-              {updateMut.isPending ? "Saving..." : "Save"}
+              {slackUpdateMut.isPending ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
