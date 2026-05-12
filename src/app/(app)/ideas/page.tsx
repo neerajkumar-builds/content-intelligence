@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { IdeaCard } from "@/components/ideas/idea-card";
 import { SourceRail } from "@/components/ideas/source-rail";
 import { FilterBar } from "@/components/ideas/filter-bar";
-import { ModelSelect } from "@/components/ai/model-select";
+import { ModelSelect, MODELS } from "@/components/ai/model-select";
 
 export default function IdeaWallPage() {
   const [filter, setFilter] = useState("all");
@@ -15,7 +15,13 @@ export default function IdeaWallPage() {
   const [modelId, setModelId] = useState("gemini-2.0-flash");
   useEffect(() => {
     const saved = localStorage.getItem("cia.preferredModel");
-    if (saved) setModelId(saved);
+    if (saved) {
+      if (MODELS.find((m) => m.id === saved)) {
+        setModelId(saved);
+      } else {
+        localStorage.removeItem("cia.preferredModel");
+      }
+    }
   }, []);
 
   const router = useRouter();
@@ -37,6 +43,7 @@ export default function IdeaWallPage() {
   const generateMut = trpc.drafts.generate.useMutation({
     onSuccess: (data) => {
       toast.success("Generating draft...");
+      void utils.ideas.list.invalidate();
       router.push(`/drafts/${data.draftId}`);
     },
     onError: (err) => {
@@ -66,6 +73,10 @@ export default function IdeaWallPage() {
 
   function handleDismiss(ideaId: string) {
     dismissMut.mutate({ ideaId });
+  }
+
+  function handleViewDraft(draftId: string) {
+    router.push(`/drafts/${draftId}`);
   }
 
   function handleAddIdea() {
@@ -131,7 +142,7 @@ export default function IdeaWallPage() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 12 }}>
               {items.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} onGenerate={handleGenerate} onDismiss={handleDismiss} />
+                <IdeaCard key={idea.id} idea={idea} latestDraft={idea.latestDraft} onGenerate={handleGenerate} onDismiss={handleDismiss} onViewDraft={handleViewDraft} />
               ))}
             </div>
           )}

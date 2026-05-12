@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
-import { ModelSelect, getModelLabel } from "@/components/ai/model-select";
+import { ModelSelect, getModelLabel, MODELS } from "@/components/ai/model-select";
 
 function ProviderDot({ provider }: { provider: string }) {
   if (provider.includes("claude") || provider.includes("opus") || provider.includes("sonnet"))
@@ -58,7 +58,13 @@ export default function DraftEditorPage() {
   const [regenModelId, setRegenModelId] = useState("gemini-2.0-flash");
   useEffect(() => {
     const saved = localStorage.getItem("cia.preferredModel");
-    if (saved) setRegenModelId(saved);
+    if (saved) {
+      if (MODELS.find((m) => m.id === saved)) {
+        setRegenModelId(saved);
+      } else {
+        localStorage.removeItem("cia.preferredModel");
+      }
+    }
   }, []);
 
   // Determine if we should poll (content still being generated)
@@ -351,7 +357,7 @@ export default function DraftEditorPage() {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 10,
                   }}>
-                    <ProviderDot provider={regenModelId} />
+                    <ProviderDot provider={draft?.modelId ?? regenModelId} />
                   </div>
                 </div>
 
@@ -359,7 +365,7 @@ export default function DraftEditorPage() {
                   Writing your draft
                 </h3>
                 <p style={{ margin: "0 0 24px", fontSize: 13, color: "var(--ink-tertiary)" }}>
-                  Using <strong style={{ color: "var(--ink-secondary)" }}>{getModelLabel(regenModelId)}</strong> to craft content in your brand voice
+                  Using <strong style={{ color: "var(--ink-secondary)" }}>{getModelLabel(draft?.modelId ?? regenModelId)}</strong> to craft content in your brand voice
                 </p>
 
                 {/* Animated progress steps */}
@@ -786,7 +792,7 @@ export default function DraftEditorPage() {
               AI Model
             </div>
             <div style={{ fontSize: 13, color: "var(--ink-primary)", fontWeight: 500 }}>
-              {getModelLabel(regenModelId)}
+              {getModelLabel(draft.modelId ?? regenModelId)}
             </div>
           </div>
         )}

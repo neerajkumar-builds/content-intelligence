@@ -6,6 +6,16 @@ import type { ideas } from "@/db/schema";
 
 type Idea = InferSelectModel<typeof ideas>;
 
+const DRAFT_STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+  draft: { bg: "rgba(99,102,241,0.12)", color: "#6366f1", label: "Draft" },
+  graded: { bg: "rgba(99,102,241,0.12)", color: "#6366f1", label: "Graded" },
+  approved: { bg: "rgba(34,197,94,0.12)", color: "#22c55e", label: "Approved" },
+  scheduled: { bg: "rgba(245,158,11,0.12)", color: "#f59e0b", label: "Scheduled" },
+  publishing: { bg: "rgba(245,158,11,0.12)", color: "#f59e0b", label: "Publishing" },
+  live: { bg: "rgba(22,163,74,0.15)", color: "#16a34a", label: "Live" },
+  failed: { bg: "rgba(239,68,68,0.12)", color: "#ef4444", label: "Failed" },
+};
+
 const SOURCE_COLORS: Record<string, string> = {
   reddit: "#FF4500",
   linkedin: "#0A66C2",
@@ -19,12 +29,16 @@ const SOURCE_COLORS: Record<string, string> = {
 
 export function IdeaCard({
   idea,
+  latestDraft,
   onGenerate,
   onDismiss,
+  onViewDraft,
 }: {
   idea: Idea;
+  latestDraft?: { draftId: string; draftStatus: string } | null;
   onGenerate: (id: string) => void;
   onDismiss: (id: string) => void;
+  onViewDraft?: (draftId: string) => void;
 }) {
   const [hover, setHover] = useState(false);
   const sourceColor = SOURCE_COLORS[idea.sourceKind] ?? "var(--ink-secondary)";
@@ -81,6 +95,23 @@ export function IdeaCard({
           <span style={{ fontSize: 10, color: "var(--ink-tertiary)", fontFamily: "var(--font-mono)" }}>· {idea.freshness}</span>
         </div>
       </div>
+
+      {/* Draft status badge */}
+      {latestDraft && (
+        <div style={{ marginBottom: 8 }}>
+          <span style={{
+            display: "inline-block",
+            padding: "2px 8px",
+            borderRadius: 4,
+            fontSize: 10,
+            fontWeight: 600,
+            background: DRAFT_STATUS_STYLES[latestDraft.draftStatus]?.bg ?? "var(--bg-muted)",
+            color: DRAFT_STATUS_STYLES[latestDraft.draftStatus]?.color ?? "var(--ink-secondary)",
+          }}>
+            {DRAFT_STATUS_STYLES[latestDraft.draftStatus]?.label ?? latestDraft.draftStatus}
+          </span>
+        </div>
+      )}
 
       {/* Hook */}
       <p style={{ fontSize: 13.5, lineHeight: 1.45, color: "var(--ink-primary)", margin: "0 0 11px", fontWeight: 500 }}>
@@ -179,24 +210,45 @@ export function IdeaCard({
           >
             Dismiss
           </button>
-          <button
-            onClick={() => onGenerate(idea.id)}
-            style={{
-              padding: "4px 10px",
-              fontSize: 11,
-              background: "var(--accent)",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-            }}
-          >
-            ✦ Generate
-          </button>
+          {latestDraft && onViewDraft ? (
+            <button
+              onClick={() => onViewDraft(latestDraft.draftId)}
+              style={{
+                padding: "4px 10px",
+                fontSize: 11,
+                background: "var(--bg-surface)",
+                color: "var(--accent)",
+                border: "1px solid var(--accent)",
+                borderRadius: 4,
+                cursor: "pointer",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              View Draft
+            </button>
+          ) : (
+            <button
+              onClick={() => onGenerate(idea.id)}
+              style={{
+                padding: "4px 10px",
+                fontSize: 11,
+                background: "var(--accent)",
+                color: "white",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              ✦ Generate
+            </button>
+          )}
         </div>
       </div>
     </div>

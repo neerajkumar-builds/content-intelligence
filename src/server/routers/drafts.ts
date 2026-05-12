@@ -368,7 +368,7 @@ export const draftsRouter = router({
 
       await db
         .update(drafts)
-        .set({ content: "", title: draft.title, status: "draft" })
+        .set({ content: "", title: draft.title, status: "draft", modelId: null })
         .where(eq(drafts.id, input.draftId));
 
       await inngest

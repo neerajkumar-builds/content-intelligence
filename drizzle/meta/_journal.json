@@ -15,6 +15,13 @@
       "when": 1778453761509,
       "tag": "0001_sparkling_red_wolf",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778547678909,
+      "tag": "0002_silly_magma",
+      "breakpoints": true
     }
   ]
 }

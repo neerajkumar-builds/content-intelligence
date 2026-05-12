@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { ideas, signals } from "@/db/schema";
+import { ideas, signals, drafts } from "@/db/schema";
 
 export const ideasRouter = router({
   list: protectedProcedure
@@ -44,8 +44,38 @@ export const ideasRouter = router({
       const hasMore = rows.length > limit;
       const items = hasMore ? rows.slice(0, limit) : rows;
 
+      const ideaIds = items.map((i) => i.id);
+      const draftMap = new Map<string, { draftId: string; draftStatus: string }>();
+
+      if (ideaIds.length > 0) {
+        const ideaDrafts = await db
+          .select({
+            ideaId: drafts.ideaId,
+            id: drafts.id,
+            status: drafts.status,
+            createdAt: drafts.createdAt,
+          })
+          .from(drafts)
+          .where(
+            and(
+              inArray(drafts.ideaId, ideaIds),
+              eq(drafts.workspaceId, workspaceId),
+            ),
+          )
+          .orderBy(desc(drafts.createdAt));
+
+        for (const d of ideaDrafts) {
+          if (d.ideaId && !draftMap.has(d.ideaId)) {
+            draftMap.set(d.ideaId, { draftId: d.id, draftStatus: d.status });
+          }
+        }
+      }
+
       return {
-        items,
+        items: items.map((i) => ({
+          ...i,
+          latestDraft: draftMap.get(i.id) ?? null,
+        })),
         nextCursor: hasMore ? items[items.length - 1]?.id : null,
       };
     }),

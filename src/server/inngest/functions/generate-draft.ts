@@ -29,7 +29,7 @@ export const generateDraftFn = inngest.createFunction(
     triggers: [{ event: DraftGenerate }],
   },
   async ({ event, step }) => {
-    const { draftId, ideaId, brandId, workspaceId } = event.data;
+    const { draftId, ideaId, brandId, workspaceId, modelId } = event.data;
     const traceId = createTraceId();
 
     // Step 1: Fetch idea, brand, latest brief, corpus matches, anti-AI rules
@@ -147,7 +147,7 @@ export const generateDraftFn = inngest.createFunction(
       const userPrompt = interpolate(prompt.userPromptTemplate, vars);
 
       return callLLM({
-        modelId: (event.data as Record<string, unknown>).modelId as string | undefined,
+        modelId,
         systemPrompt,
         userPrompt,
         workspaceId,
@@ -166,6 +166,7 @@ export const generateDraftFn = inngest.createFunction(
         .set({
           title,
           content: body,
+          modelId: generation.model,
         })
         .where(eq(drafts.id, draftId));
 
