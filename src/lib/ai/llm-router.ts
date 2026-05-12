@@ -32,7 +32,7 @@ export interface LLMResult {
 
 export async function callLLM(opts: LLMCallOptions): Promise<LLMResult> {
   const modelId = opts.modelId ?? DEFAULT_MODEL_ID;
-  const config = getModelConfig(modelId);
+  const config = getModelConfig(modelId) ?? getModelConfig(DEFAULT_MODEL_ID)!;
   if (!config) {
     throw new Error(`Unknown model: ${modelId}`);
   }
