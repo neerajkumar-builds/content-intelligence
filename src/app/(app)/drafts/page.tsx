@@ -10,6 +10,21 @@ type StatusFilter = "all" | "draft" | "approved" | "live" | "failed";
 
 const STATUS_FILTERS: StatusFilter[] = ["all", "draft", "approved", "live", "failed"];
 
+const CHANNEL_LABELS: Record<string, string> = {
+  linkedin: "LinkedIn",
+  twitter: "X / Twitter",
+  instagram: "Instagram",
+  threads: "Threads",
+  facebook: "Facebook",
+  newsletter: "Newsletter",
+  blog: "Blog",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  reddit: "Reddit",
+  bluesky: "Bluesky",
+  beehiiv: "Beehiiv",
+};
+
 const STATUS_BADGE_STYLES: Record<
   string,
   { bg: string; color: string; label: string }
@@ -233,31 +248,27 @@ export default function DraftsPage() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 8,
+                    gap: 6,
                     flexWrap: "wrap",
                   }}
                 >
                   <StatusBadge status={draft.status} />
 
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: "var(--ink-tertiary)",
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {draft.channel}
+                  <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 4, background: "var(--bg-muted)", color: "var(--ink-secondary)", fontWeight: 500 }}>
+                    {CHANNEL_LABELS[draft.channel] ?? draft.channel}
                   </span>
 
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: "var(--ink-tertiary)",
-                      fontFamily: "var(--font-mono)",
-                    }}
-                  >
-                    v{draft.version}
-                  </span>
+                  {draft.format && (
+                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 4, border: "1px solid var(--border-subtle)", color: "var(--ink-tertiary)" }}>
+                      {draft.format.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                    </span>
+                  )}
+
+                  {draft.modelId && (
+                    <span style={{ fontSize: 10, color: "var(--ink-tertiary)", fontFamily: "var(--font-mono)" }}>
+                      {draft.modelId.split("/").pop()?.split("-").slice(0, 2).join(" ") ?? draft.modelId}
+                    </span>
+                  )}
 
                   <span
                     style={{
@@ -292,15 +303,20 @@ export default function DraftsPage() {
                 )}
 
                 {/* Actions */}
-                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "flex-end" }}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeleteTarget({ id: draft.id, title: draft.title || "Untitled draft" });
                     }}
-                    style={{ fontSize: 11, color: "#ef4444", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}
+                    title="Delete draft"
+                    style={{ padding: 4, background: "none", border: "none", cursor: "pointer", color: "var(--ink-tertiary)", borderRadius: 4, display: "flex", alignItems: "center" }}
                   >
-                    Delete
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    </svg>
                   </button>
                 </div>
               </div>

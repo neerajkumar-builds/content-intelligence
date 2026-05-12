@@ -160,7 +160,11 @@ export const generateDraftFn = inngest.createFunction(
       };
 
       const systemPrompt = interpolate(prompt.systemPrompt, vars);
-      const userPrompt = interpolate(prompt.userPromptTemplate, vars);
+      let userPrompt = interpolate(prompt.userPromptTemplate, vars);
+
+      if (!prompt.userPromptTemplate.includes("{format_guidelines}")) {
+        userPrompt += `\n\nFORMAT: ${vars.format_guidelines}\nFollow these format guidelines strictly for structure and length.`;
+      }
 
       return callLLM({
         modelId,

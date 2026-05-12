@@ -19,6 +19,10 @@ const CHAR_LIMITS: Record<string, number> = {
   twitter: 280,
   threads: 500,
   bluesky: 300,
+  instagram: 2200,
+  newsletter: 10000,
+  blog: 15000,
+  facebook: 63206,
 };
 
 const CHANNEL_LABELS: Record<string, string> = {
