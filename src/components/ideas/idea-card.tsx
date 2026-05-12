@@ -106,13 +106,19 @@ export function IdeaCard({
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-            <span style={{ fontSize: 11, color: hotScore >= 80 ? "var(--danger)" : hotScore >= 60 ? "var(--warn)" : "var(--ink-tertiary)" }}>
-              🔥
+          {hotScore > 0 && (
+            <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <span style={{ fontSize: 10, color: hotScore >= 70 ? "var(--danger, #ef4444)" : hotScore >= 50 ? "var(--warn, #f59e0b)" : "var(--ink-tertiary)" }}>
+                {hotScore >= 70 ? "🔥" : hotScore >= 50 ? "🔶" : "·"}
+              </span>
+              <span style={{ fontSize: 10, color: "var(--ink-secondary)", fontFamily: "var(--font-mono)" }}>{hotScore}</span>
             </span>
-            <span style={{ fontSize: 10, color: "var(--ink-secondary)", fontFamily: "var(--font-mono)" }}>{hotScore}</span>
+          )}
+          <span style={{ fontSize: 10, color: "var(--ink-tertiary)" }} title={`Published: ${idea.publishedAt ? new Date(idea.publishedAt).toLocaleDateString() : "unknown"}\nSynced: ${new Date(idea.createdAt).toLocaleDateString()}`}>
+            {idea.publishedAt
+              ? new Date(idea.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+              : idea.freshness}
           </span>
-          <span style={{ fontSize: 10, color: "var(--ink-tertiary)", fontFamily: "var(--font-mono)" }}>· {idea.freshness}</span>
         </div>
       </div>
 

@@ -77,6 +77,7 @@ export const ideas = pgTable(
     dedupScore: numeric("dedup_score", { precision: 5, scale: 4 }),
     dedupPriorId: uuid("dedup_prior_id"),
     score: numeric("score", { precision: 5, scale: 2 }).notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

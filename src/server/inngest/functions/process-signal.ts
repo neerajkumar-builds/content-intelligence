@@ -13,24 +13,34 @@ function truncate(text: string): string {
 }
 
 function computeHotScore(metadata: Record<string, unknown>, freshness: string): number {
-  let score = 50;
+  let score = 30;
   const upvotes = Number(metadata.score ?? metadata.upvotes ?? 0);
   const comments = Number(metadata.numComments ?? metadata.comments ?? 0);
-  if (upvotes > 100) score += 15;
-  else if (upvotes > 20) score += 8;
-  if (comments > 20) score += 10;
-  else if (comments > 5) score += 5;
-  if (freshness === "hot") score += 15;
-  else if (freshness === "warm") score += 5;
+  if (upvotes > 100) score += 20;
+  else if (upvotes > 20) score += 10;
+  else if (upvotes > 0) score += 5;
+  if (comments > 20) score += 15;
+  else if (comments > 5) score += 8;
+  else if (comments > 0) score += 3;
+  const freshMatch = freshness.match(/^(\d+)(h|d|w)$/);
+  if (freshMatch) {
+    const num = parseInt(freshMatch[1]);
+    const unit = freshMatch[2];
+    if (unit === "h" && num <= 6) score += 25;
+    else if (unit === "h") score += 15;
+    else if (unit === "d" && num <= 1) score += 10;
+    else if (unit === "d" && num <= 3) score += 5;
+  }
   return Math.min(score, 100);
 }
 
 function computeFreshness(metadata: Record<string, unknown>): string {
-  const published = metadata.publishedAt ?? metadata.published_at ?? metadata.created;
+  const published = metadata.pubDate ?? metadata.publishedAt ?? metadata.published_at ?? metadata.created ?? metadata.isoDate;
   if (!published) return "1d";
   const hours = (Date.now() - new Date(published as string).getTime()) / 3_600_000;
-  if (hours < 6) return `${Math.max(1, Math.round(hours))}h`;
-  if (hours < 48) return `${Math.round(hours / 24)}d`;
+  if (hours < 1) return "now";
+  if (hours < 24) return `${Math.round(hours)}h`;
+  if (hours < 168) return `${Math.round(hours / 24)}d`;
   return `${Math.round(hours / 168)}w`;
 }
 
@@ -132,6 +142,8 @@ export const processSignalFn = inngest.createFunction(
       const icpFit = Math.round(avgSimilarity * 100) / 100;
       const score = Math.round((0.5 * icpFit + 0.3 * (hotScore / 100) + 0.2 * 0.5) * 100) / 100;
       const citation = meta.citation ? String(meta.citation) : null;
+      const pubDateRaw = meta.pubDate ?? meta.publishedAt ?? meta.published_at ?? meta.created ?? meta.isoDate;
+      const publishedAt = pubDateRaw ? new Date(pubDateRaw as string) : null;
 
       await step.run(`create-idea-${brand.id}`, async () => {
         const [idea] = await db
@@ -145,6 +157,7 @@ export const processSignalFn = inngest.createFunction(
             sourceKind: signal.source,
             sourceLabel: String(meta.sourceLabel ?? signal.source),
             sourceCitation: citation,
+            publishedAt: publishedAt && !isNaN(publishedAt.getTime()) ? publishedAt : null,
             sourceUrl: signal.sourceUrl,
             icpFit: String(icpFit),
             hotScore,
