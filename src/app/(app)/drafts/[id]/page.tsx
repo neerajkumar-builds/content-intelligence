@@ -203,9 +203,19 @@ export default function DraftEditorPage() {
   // Publish status helpers
   const livePost = publishStatus?.posts?.find((p) => p.status === "live");
   const publishingPost = publishStatus?.posts?.find((p) => p.status === "publishing");
-  const stuckGeneration = generating && draft
-    ? (Date.now() - new Date(draft.updatedAt).getTime()) > 90_000
-    : false;
+  const [elapsedSec, setElapsedSec] = useState(0);
+
+  useEffect(() => {
+    if (!generating || !draft) { setElapsedSec(0); return; }
+    const start = new Date(draft.updatedAt).getTime();
+    setElapsedSec(Math.floor((Date.now() - start) / 1000));
+    const interval = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [generating, draft?.updatedAt]);
+
+  const stuckGeneration = elapsedSec > 90;
 
   if (isLoading) {
     return (
@@ -376,36 +386,62 @@ export default function DraftEditorPage() {
 
                 <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 600, color: "var(--ink-primary)" }}>
                   Writing your draft
+                  <span style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-tertiary)", marginLeft: 8, fontFamily: "var(--font-mono)" }}>
+                    {elapsedSec}s
+                  </span>
                 </h3>
-                <p style={{ margin: "0 0 24px", fontSize: 13, color: "var(--ink-tertiary)" }}>
+                <p style={{ margin: "0 0 4px", fontSize: 13, color: "var(--ink-tertiary)" }}>
                   Using <strong style={{ color: "var(--ink-secondary)" }}>{getModelLabel(draft?.modelId ?? regenModelId)}</strong> to craft content in your brand voice
+                </p>
+
+                {/* Progressive status message */}
+                <p style={{ margin: "0 0 24px", fontSize: 11.5, color: elapsedSec > 60 ? "#f59e0b" : "var(--ink-tertiary)" }}>
+                  {elapsedSec < 15
+                    ? "Usually takes 10–30 seconds"
+                    : elapsedSec < 30
+                      ? "Still working — AI is generating content..."
+                      : elapsedSec < 60
+                        ? "Taking a bit longer than usual. Model may be processing a complex topic."
+                        : "This is taking longer than expected. You can wait, retry, or go back."}
                 </p>
 
                 {/* Animated progress steps */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, textAlign: "left", maxWidth: 280, margin: "0 auto" }}>
                   {[
-                    { label: "Reading brand voice & corpus", delay: "0s" },
-                    { label: "Analyzing source idea", delay: "0.3s" },
-                    { label: "Generating draft content", delay: "0.6s" },
+                    { label: "Reading brand voice & corpus", done: elapsedSec >= 3 },
+                    { label: "Analyzing source idea", done: elapsedSec >= 6 },
+                    { label: "Generating draft content", done: false },
                   ].map((step, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0, animation: `fadeIn 0.5s ease ${step.delay} forwards` }}>
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{
                         width: 6, height: 6, borderRadius: "50%",
-                        background: "var(--accent)",
-                        animation: `pulse 1.5s ease-in-out ${step.delay} infinite`,
+                        background: step.done ? "var(--good, #22c55e)" : "var(--accent)",
+                        animation: step.done ? "none" : "pulse 1.5s ease-in-out infinite",
                       }} />
-                      <span style={{ fontSize: 12, color: "var(--ink-secondary)" }}>{step.label}</span>
+                      <span style={{ fontSize: 12, color: step.done ? "var(--ink-secondary)" : "var(--ink-tertiary)" }}>{step.label}</span>
+                      {step.done && <span style={{ fontSize: 10, color: "var(--good, #22c55e)" }}>done</span>}
                     </div>
                   ))}
                 </div>
 
-                {/* Inline keyframes */}
-                <style>{`
-                  @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(4px); }
-                    to { opacity: 1; transform: translateY(0); }
-                  }
-                `}</style>
+                {/* Action buttons after 30s */}
+                {elapsedSec >= 30 && (
+                  <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 20 }}>
+                    <button
+                      onClick={() => router.push("/ideas")}
+                      style={{ padding: "6px 14px", fontSize: 11.5, fontWeight: 500, borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+                    >
+                      Back to Idea Wall
+                    </button>
+                    <button
+                      onClick={() => regenerateMut.mutate({ draftId: id, modelId: regenModelId })}
+                      disabled={regenerateMut.isPending}
+                      style={{ padding: "6px 14px", fontSize: 11.5, fontWeight: 600, borderRadius: 6, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}
+                    >
+                      {regenerateMut.isPending ? "Retrying..." : "Retry now"}
+                    </button>
+                  </div>
+                )}
                 </>
               )}
               </div>
