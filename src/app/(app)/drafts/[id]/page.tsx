@@ -6,6 +6,14 @@ import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { ModelSelect, getModelLabel } from "@/components/ai/model-select";
 
+function ProviderDot({ provider }: { provider: string }) {
+  if (provider.includes("claude") || provider.includes("opus") || provider.includes("sonnet"))
+    return <span style={{ color: "#d4a574", fontWeight: 700 }}>A</span>;
+  if (provider.includes("gpt") || provider.includes("openai"))
+    return <span style={{ color: "#9ca3af", fontWeight: 700 }}>O</span>;
+  return <span style={{ color: "#4285f4", fontWeight: 700 }}>G</span>;
+}
+
 const CHAR_LIMITS: Record<string, number> = {
   linkedin: 3000,
   twitter: 280,
@@ -86,6 +94,11 @@ export default function DraftEditorPage() {
       toast.success("Draft approved");
       void utils.drafts.get.invalidate({ draftId: id });
     },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteMut = trpc.drafts.delete.useMutation({
+    onSuccess: () => toast.success("Draft deleted"),
     onError: (err) => toast.error(err.message),
   });
 
@@ -171,6 +184,9 @@ export default function DraftEditorPage() {
   // Publish status helpers
   const livePost = publishStatus?.posts?.find((p) => p.status === "live");
   const publishingPost = publishStatus?.posts?.find((p) => p.status === "publishing");
+  const stuckGeneration = generating && draft
+    ? (Date.now() - new Date(draft.createdAt).getTime()) > 90_000
+    : false;
 
   if (isLoading) {
     return (
@@ -284,46 +300,95 @@ export default function DraftEditorPage() {
         {/* Editor area */}
         <div style={{ flex: 1, overflowY: "auto", padding: "24px 24px 100px" }}>
           {generating ? (
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <div
-                style={{
-                  width: "100%",
-                  maxWidth: 500,
-                  margin: "0 auto",
-                }}
-              >
-                <div
-                  style={{
-                    height: 24,
-                    width: "60%",
-                    borderRadius: 6,
-                    background: "var(--bg-muted)",
-                    animation: "pulse 1.5s ease-in-out infinite",
-                    marginBottom: 16,
-                  }}
-                />
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      height: 14,
-                      width: `${85 - i * 8}%`,
-                      borderRadius: 4,
-                      background: "var(--bg-muted)",
-                      animation: "pulse 1.5s ease-in-out infinite",
-                      marginBottom: 10,
-                    }}
-                  />
-                ))}
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "var(--ink-tertiary)",
-                    marginTop: 24,
-                  }}
-                >
-                  AI is generating your draft...
+            <div style={{ textAlign: "center", padding: "80px 20px" }}>
+              <div style={{ width: "100%", maxWidth: 440, margin: "0 auto" }}>
+              {stuckGeneration ? (
+                <>
+                  <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.4 }}>!</div>
+                  <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600, color: "var(--ink-primary)" }}>
+                    Generation timed out
+                  </h3>
+                  <p style={{ margin: "0 0 20px", fontSize: 13, color: "var(--ink-tertiary)", lineHeight: 1.5 }}>
+                    The AI didn't respond in time. This can happen if the Inngest dev server isn't running or the model is overloaded.
+                  </p>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                    {draft?.ideaId && (
+                      <button
+                        onClick={() => regenerateMut.mutate({ draftId: id, modelId: regenModelId })}
+                        disabled={regenerateMut.isPending}
+                        style={{ padding: "7px 16px", fontSize: 12, fontWeight: 600, borderRadius: 6, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}
+                      >
+                        {regenerateMut.isPending ? "Retrying..." : "Retry"}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { deleteMut.mutate({ draftId: id }); router.push("/drafts"); }}
+                      style={{ padding: "7px 16px", fontSize: 12, fontWeight: 500, borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                {/* Animated writing icon */}
+                <div style={{ position: "relative", width: 56, height: 56, margin: "0 auto 24px" }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: "50%",
+                    background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1))",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    animation: "pulse 2s ease-in-out infinite",
+                  }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838.838-2.872a2 2 0 0 1 .506-.855z" />
+                    </svg>
+                  </div>
+                  <div style={{
+                    position: "absolute", bottom: -2, right: -2,
+                    width: 20, height: 20, borderRadius: "50%",
+                    background: "var(--bg-surface)", border: "2px solid var(--border-subtle)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10,
+                  }}>
+                    <ProviderDot provider={regenModelId} />
+                  </div>
+                </div>
+
+                <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 600, color: "var(--ink-primary)" }}>
+                  Writing your draft
+                </h3>
+                <p style={{ margin: "0 0 24px", fontSize: 13, color: "var(--ink-tertiary)" }}>
+                  Using <strong style={{ color: "var(--ink-secondary)" }}>{getModelLabel(regenModelId)}</strong> to craft content in your brand voice
                 </p>
+
+                {/* Animated progress steps */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, textAlign: "left", maxWidth: 280, margin: "0 auto" }}>
+                  {[
+                    { label: "Reading brand voice & corpus", delay: "0s" },
+                    { label: "Analyzing source idea", delay: "0.3s" },
+                    { label: "Generating draft content", delay: "0.6s" },
+                  ].map((step, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0, animation: `fadeIn 0.5s ease ${step.delay} forwards` }}>
+                      <div style={{
+                        width: 6, height: 6, borderRadius: "50%",
+                        background: "var(--accent)",
+                        animation: `pulse 1.5s ease-in-out ${step.delay} infinite`,
+                      }} />
+                      <span style={{ fontSize: 12, color: "var(--ink-secondary)" }}>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Inline keyframes */}
+                <style>{`
+                  @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(4px); }
+                    to { opacity: 1; transform: translateY(0); }
+                  }
+                `}</style>
+                </>
+              )}
               </div>
             </div>
           ) : (
