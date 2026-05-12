@@ -128,3 +128,13 @@
 14. **Clerk dev-browser cookie blocks webhooks on Vercel** — Clerk Development instance adds `x-clerk-auth-reason: dev-browser-missing` to ALL requests through middleware, causing 500 on webhook POSTs. Fix: exclude /api/webhooks, /api/health, /api/inngest from matcher entirely (not just isPublicRoute). (Session 7)
 15. **Inngest concurrency must match plan** — Free plan caps at 5 concurrent. Setting higher (e.g., 20) causes sync Error and functions won't register. Always check plan limits before deploying. (Session 7)
 16. **Inngest events lost before function registration** — Events fired before Inngest Cloud syncs functions are lost. Must re-fire via `POST https://inn.gs/e/{EVENT_KEY}` for signals ingested during this gap. (Session 7)
+
+---
+
+## Session 8 Learnings (Multi-Model + UI Polish)
+
+17. **Inngest `{{ event.data.x }}` template syntax does NOT work in Node SDK** — The `{{ }}` template string syntax for concurrency keys is a Go/Elixir SDK pattern, NOT the Node SDK pattern. In Node SDK v4, pass a plain function `key: (event) => event.data.workspaceId` or use a simple numeric limit. Using `{{ }}` causes a validation error in Inngest Cloud and functions won't register. Always check which SDK you're using before copying concurrency examples. (Session 8, VS-C4 fix)
+
+18. **Stuck drafts need explicit timeout handling on the client** — If an Inngest generate-draft function fails silently (no retries left, DLQ, or cloud outage), the draft stays in `draft` status with no content forever. The editor auto-poll loop will spin indefinitely. Always set a client-side timeout (e.g., 90 seconds) after which polling stops and Retry/Delete buttons appear. Never assume background functions always complete. (Session 8, UP.5)
+
+19. **Native `confirm()` is unusable in production web apps** — `window.confirm()` is blocked in cross-origin iframes (Vercel preview URLs), overridden by browser extensions, and doesn't respect app dark themes. It also can't be styled or internationalized. Always use a custom modal component for any destructive action confirmation. Build one early and reuse it — `ConfirmDialog` is now at `src/components/ui/confirm-dialog.tsx`. (Session 8, UP.7)

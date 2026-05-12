@@ -358,6 +358,44 @@ Inngest Cloud (Updated Session 8 — Vertical Slice)
   └── NOTE: 6th function (generate-draft) may not register on free plan
 ```
 
+## Session 8 Multi-Model + UI Polish New Files
+
+```
+src/lib/ai/llm-router.ts (NEW — replaces single-provider generate.ts for routing)
+  └── Uses: src/lib/ai/models.ts (model config lookup)
+  └── Uses: @google/generative-ai (Google AI provider)
+  └── Uses: @anthropic-ai/sdk (Anthropic provider)
+  └── Uses: OpenRouter API via fetch (GPT-5.4 + others via OpenRouter)
+  └── Uses: src/db/index.ts, src/db/schema (aiCalls — glass-box logging)
+  └── Used by: src/server/inngest/functions/generate-draft.ts
+  └── NOTE: generate.ts (single-provider Gemini utility) is superseded by this router
+
+src/lib/ai/models.ts (NEW — model registry)
+  └── Uses: nothing (pure config)
+  └── Used by: src/lib/ai/llm-router.ts (lookup by modelId)
+  └── Used by: src/components/ui/model-select.tsx (display name, provider, thinking flag)
+  └── Models: gemini-3-flash (standard), claude-sonnet-4 (standard), claude-opus-4 (thinking), gpt-5.4 (thinking), gemini-3.1-pro (thinking)
+
+src/components/ui/model-select.tsx (NEW — model picker dropdown)
+  └── Uses: src/lib/ai/models.ts (model list, providerId, thinking flag)
+  └── Uses: Provider SVG logos (Anthropic, OpenAI, Google — inline SVG)
+  └── Props: value, onChange, dropUp (boolean)
+  └── Used by: src/app/(app)/ideas/page.tsx (generate button)
+  └── Used by: src/app/(app)/drafts/[id]/page.tsx (regenerate button)
+
+src/components/ui/confirm-dialog.tsx (NEW — styled modal confirmation)
+  └── Uses: React state (open/close), Tailwind CSS
+  └── Props: open, onClose, onConfirm, title, message, confirmLabel
+  └── Used by: src/components/ideas/source-rail.tsx (delete source)
+  └── Used by: src/app/(app)/drafts/[id]/page.tsx (delete draft)
+  └── Replaces: native browser confirm() — consistent UX, dark theme compatible
+
+Session 8 New Env Vars
+  └── ANTHROPIC_API_KEY — Anthropic SDK for Claude Sonnet 4 + Claude Opus 4
+  └── OPENROUTER_API_KEY — OpenRouter API for GPT-5.4 + other OpenRouter models
+  └── (GEMINI_API_KEY already present from Session 6)
+```
+
 ## Critical: Files That Break Everything If Wrong
 
 1. `src/db/schema/enums.ts` — Every other schema file imports from here

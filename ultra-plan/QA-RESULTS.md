@@ -55,6 +55,28 @@
 | VS-C4 Inngest concurrency fix | `npx tsc --noEmit` | PASS | Simple numeric limits, no template syntax |
 | VS full build | `pnpm build` | PASS | All routes compile, 6 Inngest functions registered |
 
+### Multi-Model LLM Router + UI Polish (Session 8 continued)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| llm-router.ts | `npx tsc --noEmit` | PASS | Google AI + Anthropic + OpenRouter providers compile clean |
+| models.ts | `npx tsc --noEmit` | PASS | 5 model entries, typed correctly |
+| generate-draft (updated) | `npx tsc --noEmit` | PASS | Uses llm-router.ts, modelId threaded from event |
+| model-select.tsx | `npx tsc --noEmit` | PASS | dropUp prop, grouped sections, SVG logos |
+| confirm-dialog.tsx | `npx tsc --noEmit` | PASS | Modal confirm component |
+| Model picker (Idea Wall) | Browser | PASS | Dropdown opens, provider logos visible, Standard/Thinking groups |
+| Model picker (Draft editor) | Browser | PASS | dropUp renders above action bar |
+| Lora font on draft body | Browser | PASS | Font-serif / Lora applied to textarea |
+| Channel label mapping | Browser | PASS | "LinkedIn" displayed instead of "linkedin" |
+| Animated generation loader | Browser | PASS | 5 steps animate in sequence during polling |
+| Stuck draft timeout (>90s) | Browser | PASS | Retry + Delete buttons appear after timeout |
+| Title textarea wrap | Browser | PASS | Long titles wrap vertically |
+| ConfirmDialog (delete source) | Browser | PASS | Styled modal replaces native confirm() |
+| Copy action | Browser | PASS | Clipboard.writeText fires, success toast |
+| Download action | Browser | PASS | .txt file downloads with draft content |
+| Share action | Browser | PASS | Web Share API fires; fallback to copy on unsupported |
+| Session 8 final build | `pnpm build` | PASS | All routes compile, zero type errors |
+
 ### 2026-05-11 (Session 7)
 
 | Task | Command | Result | Notes |

@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-12 (Session 8 — Vertical Slice)
-> Current phase: Vertical Slice DONE (Idea → Draft → LinkedIn publish, end-to-end)
-> Next action: Prompt Studio UI → LinkedIn E2E publish test → Phase 6 (7-dim grading)
+> Last updated: 2026-05-12 (Session 8 — Multi-Model LLM Router + UI Polish)
+> Current phase: Multi-Model Router DONE. Vertical Slice DONE. UI Polish DONE.
+> Next action: Prompt Studio UI → LinkedIn E2E publish test (production) → Phase 6 (7-dim grading) → Custom model picker improvements
 
 ---
 
@@ -27,6 +27,8 @@
 | CP1 — Publishing Foundation (adapter interface, publish pipeline, tRPC mutations) | DONE | `main` | Session 8 |
 | Add Source UI — dialog + SourceRail actions | DONE | `main` | Session 8 |
 | VS — Vertical Slice (Idea→Draft→LinkedIn publish, end-to-end) | DONE | `main` | Session 8 |
+| Multi-Model — LLM Router (3 providers, 5 models, custom picker) | DONE | `main` | Session 8 |
+| UI Polish — Lora font, stuck draft timeout, channel labels, loader, title wrap | DONE | `main` | Session 8 |
 | 4B — Connector Publishing | IN PROGRESS (LinkedIn adapter done) | `main` | Session 8 |
 | 6 — Drafts + Grading | IN PROGRESS (generation done, grading NOT STARTED) | `main` | Session 8 |
 | 7 — Schedule + Publish | NOT STARTED | — | — |
@@ -276,6 +278,31 @@
 | VS-C2 | Token decrypt + inline refresh in publish-post Inngest function | `src/server/inngest/functions/publish-post.ts` | DONE | pnpm build OK | c6673d2 | 2026-05-12 |
 | VS-C3 | Publish button wired to real LinkedIn connector | `src/app/(app)/drafts/[id]/page.tsx` | DONE | pnpm build OK | c6673d2 | 2026-05-12 |
 | VS-C4 | Inngest concurrency key fix ({{ }} template syntax → simple limits) | `src/server/inngest/functions/*.ts` | DONE | pnpm build OK | c6673d2 | 2026-05-12 |
+
+## Multi-Model LLM Router (DONE — Session 8)
+
+| # | Task | Files | Status | Verified | Committed | Session |
+|---|------|-------|--------|----------|-----------|---------|
+| MM.1 | LLM Router (llm-router.ts) — Google AI, Anthropic, OpenRouter providers | `src/lib/ai/llm-router.ts` | DONE | pnpm build OK | Session 8 | 2026-05-12 |
+| MM.2 | Models config (models.ts) — Gemini 3.0 Flash, Claude Sonnet 4, Claude Opus 4, GPT-5.4, Gemini 3.1 Pro | `src/lib/ai/models.ts` | DONE | pnpm build OK | Session 8 | 2026-05-12 |
+| MM.3 | generate-draft Inngest function updated to use llm-router.ts | `src/server/inngest/functions/generate-draft.ts` | DONE | pnpm build OK | Session 8 | 2026-05-12 |
+| MM.4 | Custom model picker dropdown with provider SVG logos (Anthropic/OpenAI/Google) | `src/components/ui/model-select.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| MM.5 | Model picker groups: Standard Models + Thinking Models | `src/components/ui/model-select.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| MM.6 | dropUp prop for action bar placement | `src/components/ui/model-select.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| MM.7 | Model picker wired on Idea Wall (generate button) + Draft editor (regenerate) | `ideas/page.tsx`, `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+
+## UI Polish (DONE — Session 8)
+
+| # | Task | Files | Status | Verified | Committed | Session |
+|---|------|-------|--------|----------|-----------|---------|
+| UP.1 | Lora font applied to draft body textarea (brand guideline) | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| UP.2 | Channel label mapping (linkedin → LinkedIn) | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| UP.3 | Consistent button styles across action bar | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| UP.4 | Improved generation loader with animated progress steps | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| UP.5 | Stuck draft handling (>90s timeout → Retry/Delete buttons) | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| UP.6 | Title textarea wraps instead of truncating | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| UP.7 | ConfirmDialog component (styled, replaces native confirm()) | `src/components/ui/confirm-dialog.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+| UP.8 | Copy/Download/Share actions on draft editor | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
 
 ---
 

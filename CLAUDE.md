@@ -48,7 +48,9 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Checkpoint 1 (Session 8):** Publishing Foundation DONE. ConnectorAdapter interface, BaseAdapter, adapter registry, 3 Inngest events (PostPublish, PostVerify, TokenRefreshDue), publish-post function (10-step pipeline + ghost detection), verify-post function, 3 tRPC mutations (publish, publishMulti, getPublishStatus). 5 Inngest functions total (was 3). Idempotency keys: `idem_{draftId}_v{version}_{channel}_{yyyymmdd}`.
 - **Add Source UI (Session 8):** Add Source dialog with 6 source types (RSS active, others "coming soon"). SourceRail + button, toggle live/paused, delete with confirm. E2E tested: "Sam Altman Blog" RSS added successfully.
 - **Vertical Slice (Session 8):** End-to-end Idea → Draft → LinkedIn publish complete. 8 commits, ~2,500 lines. Draft generation via Gemini 2.0 Flash (glass-box), generate-draft Inngest function (5 steps), drafts list page (status filter tabs), draft editor page (auto-poll, edit, approve, publish), LinkedIn publishing adapter (publish/verify/delete/refresh/healthProbe), token decrypt + inline refresh in publish-post. 6 Inngest functions total.
-- **Next:** Prompt Studio UI → LinkedIn E2E publish test → Phase 6 (7-dim grading)
+- **Multi-Model LLM Router (Session 8):** 3 providers (Google AI, Anthropic, OpenRouter), 5 models (Gemini 3.0 Flash, Claude Sonnet 4, Claude Opus 4, GPT-5.4, Gemini 3.1 Pro). Custom model picker dropdown with provider SVG logos and Standard/Thinking groups. llm-router.ts replaces single-provider generate.ts. generate-draft Inngest function updated to use router with per-request modelId. Inngest free plan at 6 functions — at capacity.
+- **UI Polish (Session 8):** Lora font on draft body, channel label mapping, animated generation loader (5 steps), stuck draft timeout (>90s → Retry/Delete), title textarea wrap, ConfirmDialog component (replaces native confirm()), Copy/Download/Share actions on editor.
+- **Next:** Prompt Studio UI → LinkedIn E2E publish test (production) → Phase 6 (7-dim grading) → Custom model picker improvements
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
@@ -62,7 +64,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 4. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
 5. All work on `main` branch (all PRs merged). No stale branches.
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
-7. **FIRST TASK next session:** Prompt Studio UI (basic: list prompts from DB, edit + save, linked from Draft editor glass-box panel) → then LinkedIn E2E publish test (live post to LinkedIn via connected account) → then Phase 6 (7-dim grading: grade-draft Inngest function, GradePanel UI on editor)
+7. **FIRST TASK next session:** Prompt Studio UI (basic: list prompts from DB, edit + save, linked from Draft editor glass-box panel) → then LinkedIn E2E publish test (live post to LinkedIn via connected account) → then Phase 6 (7-dim grading: grade-draft Inngest function, GradePanel UI on editor). **NOTE: Inngest free plan at 6 functions (at capacity) — adding a grade-draft function requires plan upgrade or consolidation.**
 8. **Key context:** `ctx.workspaceId` = Clerk orgId (for OAuth). `ctx.scoped.workspaceId` = UUID (for DB). Never confuse them.
 9. **Production is LIVE:** content-intelligence-eight.vercel.app auto-deploys from main. Inngest Cloud + n8n workflow are active. Test locally before pushing.
 10. **Connector strategy plan:** Read `/Users/neerajkumar/.claude/plans/unified-sniffing-island.md` for the 13-part deep research plan before starting Phase 4B.
@@ -139,7 +141,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Default anti-AI rules (62) | `src/lib/rules/default-rules.ts` |
 | Voice style templates | `src/components/onboarding/voice-templates.ts` |
 | Inngest client + events | `src/server/inngest/client.ts`, `events.ts` |
-| Inngest functions (6) | `src/server/inngest/functions/*.ts` (corpus-backfill, corpus-embed-item, process-signal, publish-post, verify-post, generate-draft) |
+| Inngest functions (6, AT FREE PLAN LIMIT) | `src/server/inngest/functions/*.ts` (corpus-backfill, corpus-embed-item, process-signal, publish-post, verify-post, generate-draft) |
 | Inngest serve route | `src/app/api/inngest/route.ts` |
 | Gemini embedding utility | `src/lib/ai/embed.ts` (gemini-embedding-001, 3072 dims, glass-box) |
 | n8n webhook endpoint | `src/app/api/webhooks/n8n/route.ts` (HMAC-SHA256) |
@@ -152,11 +154,15 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Inngest publish function | `src/server/inngest/functions/publish-post.ts` (10-step pipeline + token decrypt/refresh) |
 | Inngest verify function | `src/server/inngest/functions/verify-post.ts` (ghost detection) |
 | Inngest generate-draft function | `src/server/inngest/functions/generate-draft.ts` (5-step: context→prompt→LLM→save) |
-| LLM generation utility | `src/lib/ai/generate.ts` (Gemini 2.0 Flash, glass-box, structured JSON output) |
+| LLM generation utility | `src/lib/ai/generate.ts` (Gemini 2.0 Flash, glass-box, structured JSON output — single-provider, superseded by llm-router) |
+| LLM Router | `src/lib/ai/llm-router.ts` (Google AI + Anthropic + OpenRouter, routes by modelId, glass-box) |
+| Models config | `src/lib/ai/models.ts` (5 models, 3 providers, Standard + Thinking categories) |
+| Model picker dropdown | `src/components/ui/model-select.tsx` (provider SVG logos, dropUp prop, grouped sections) |
+| Confirm dialog | `src/components/ui/confirm-dialog.tsx` (styled modal, replaces native confirm()) |
 | Prompt seed utility | `src/lib/ai/seed.ts` (DB-stored prompts, hardcoded fallback) |
 | Add Source dialog | `src/components/ideas/add-source-dialog.tsx` |
 | Drafts list page | `src/app/(app)/drafts/page.tsx` (status filter tabs, replaced stub) |
-| Draft editor page | `src/app/(app)/drafts/[id]/page.tsx` (auto-poll, edit, approve, publish) |
+| Draft editor page | `src/app/(app)/drafts/[id]/page.tsx` (auto-poll, edit, approve, publish, model picker, copy/download/share) |
 | Supabase RPC functions | `match_brand_corpus()`, `match_signal_ideas()` (in DB, not files) |
 | Dev seed script | `src/db/seed.ts` (uses pg, not neon HTTP) |
 | Reference code (paste-ready) | `ultra-plan/reference/01-06*.md` |

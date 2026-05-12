@@ -84,11 +84,59 @@
   - Files: All 6 Inngest functions in `src/server/inngest/functions/`
   - Impact: Functions now register cleanly in Inngest Cloud
 
-- **Summary:**
+- **Summary (Vertical Slice):**
   - Commits: 8 commits (`229ba7d` → `c6673d2`)
   - Lines added: ~2,500
   - New files: `adapter.ts`, `registry.ts`, `generate.ts`, `seed.ts`, `generate-draft.ts`, `linkedin.ts`, `add-source-dialog.tsx`, `drafts/[id]/page.tsx`
   - Modified files: `app-error.ts`, `events.ts`, `functions/index.ts`, `publish-post.ts`, `verify-post.ts`, `drafts.ts`, `source-rail.tsx`, `ideas/page.tsx`, `drafts/page.tsx`, `signals.ts`
+
+### Multi-Model LLM Router
+
+- **[FEATURE] LLM Router (llm-router.ts)** — Provider-agnostic generation wrapper supporting Google AI (Gemini), Anthropic (Claude), and OpenRouter (GPT-5.4 + others). Routes by modelId, injects API keys per provider, glass-box logs to ai_calls with provider name + cost + latency.
+  - Files: `src/lib/ai/llm-router.ts` (new)
+  - Impact: Single entry point for all generation tasks. generate-draft Inngest function updated to use this instead of the old generate.ts.
+
+- **[FEATURE] Models config (models.ts)** — 5 models across 3 providers. Standard: Gemini 3.0 Flash, Claude Sonnet 4. Thinking: Claude Opus 4, GPT-5.4, Gemini 3.1 Pro. Each entry includes providerId, displayName, context window, cost-per-1k tokens, thinking flag.
+  - Files: `src/lib/ai/models.ts` (new)
+
+- **[FEATURE] Custom model picker (model-select.tsx)** — Dropdown with per-provider SVG logos (Anthropic, OpenAI, Google). Grouped into Standard Models and Thinking Models sections. `dropUp` prop for placing above action bar. Accessible, keyboard-navigable.
+  - Files: `src/components/ui/model-select.tsx` (new)
+  - Impact: Wired on Idea Wall (generate button) and Draft editor (regenerate button). Operator can choose model per generation action — satisfies glass-box AI rule.
+
+- **[UPDATE] generate-draft Inngest function** — Now delegates to llm-router.ts instead of the earlier single-provider generate.ts. ModelId threaded from DraftGenerate event → Inngest step → llm-router.
+  - Files: `src/server/inngest/functions/generate-draft.ts` (modified)
+
+### UI Polish
+
+- **[POLISH] Lora font for draft body** — Draft editor textarea now uses Lora (brand guideline font for longform content). Applied via Tailwind font-serif utility mapped to Lora in globals.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`
+
+- **[POLISH] Channel label mapping** — Raw platform keys (`linkedin`) now display as readable labels (`LinkedIn`) throughout editor and drafts list. Single mapping object, reused across components.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`, `src/app/(app)/drafts/page.tsx`
+
+- **[POLISH] Animated generation loader** — Replaces plain spinner with 5-step animated progress list ("Fetching idea context...", "Loading brand brief...", "Building prompt...", "Calling LLM...", "Saving draft..."). Steps animate in sequence as polling detects status.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`
+
+- **[POLISH] Stuck draft timeout handling** — If draft status remains `draft` (no content) for >90s, auto-poll stops and shows Retry (re-fires generation) + Delete buttons. Prevents infinite spinner on Inngest failures.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`
+
+- **[POLISH] Title textarea wraps** — Draft title input expands vertically instead of truncating long headlines. Prevents content loss on longer titles.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`
+
+- **[FEATURE] ConfirmDialog component** — Styled modal confirmation dialog (title + message + Cancel/Confirm buttons) to replace native browser `confirm()`. Used for delete actions in SourceRail and draft editor.
+  - Files: `src/components/ui/confirm-dialog.tsx` (new)
+  - Impact: Consistent UX, works in all browsers, respects app dark theme.
+
+- **[FEATURE] Copy/Download/Share actions on editor** — Action bar additions: Copy copies draft body to clipboard, Download triggers .txt download, Share uses Web Share API with fallback to copy.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`
+
+- **Session 8 Final Summary:**
+  - Total commits: ~20
+  - Total lines added: ~4,000+
+  - Inngest functions: 6 (was 3 at session start)
+  - AI providers: 3 (Google AI, Anthropic, OpenRouter)
+  - AI models available: 5
+  - New files this session: `adapter.ts`, `registry.ts`, `generate.ts`, `seed.ts`, `generate-draft.ts`, `linkedin.ts`, `add-source-dialog.tsx`, `drafts/[id]/page.tsx`, `llm-router.ts`, `models.ts`, `model-select.tsx`, `confirm-dialog.tsx`
 
 ---
 
