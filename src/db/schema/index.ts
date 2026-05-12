@@ -36,3 +36,5 @@ export {
   webhookDeliveries,
   deadLetterQueue,
 } from "./ops";
+
+export { workspaceIntegrations, draftExports } from "./integrations";
