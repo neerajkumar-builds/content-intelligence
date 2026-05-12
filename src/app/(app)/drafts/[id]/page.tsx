@@ -191,7 +191,7 @@ export default function DraftEditorPage() {
   const livePost = publishStatus?.posts?.find((p) => p.status === "live");
   const publishingPost = publishStatus?.posts?.find((p) => p.status === "publishing");
   const stuckGeneration = generating && draft
-    ? (Date.now() - new Date(draft.createdAt).getTime()) > 90_000
+    ? (Date.now() - new Date(draft.updatedAt).getTime()) > 90_000
     : false;
 
   if (isLoading) {

@@ -59,7 +59,7 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     id: "google/gemini-2.5-flash-preview-05-20",
     label: "Gemini 2.5 Flash",
     provider: "openrouter",
-    tier: "thinking",
+    tier: "fast",
     description: "Latest Gemini via OpenRouter",
     costPer1kInput: 0.015,
     costPer1kOutput: 0.06,
