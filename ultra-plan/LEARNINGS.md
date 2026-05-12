@@ -160,3 +160,11 @@
 28. **Inngest Cloud can silently lose function registrations** — After multiple Vercel deploys, Inngest showed only 3 of 6 functions. `generate-draft`, `publish-post`, `verify-post` were missing. Events arrived (visible in Events tab) but "Functions triggered: —". Root cause: "Unattached syncs" — Inngest couldn't match deploy-time syncs to the existing app. Fix: manual resync from Inngest dashboard (Apps → resync). ALWAYS check Inngest dashboard after deploy if functions aren't executing. (Session 10, production debugging)
 
 29. **n8n Cloud REST API doesn't support workflow execution** — `POST /api/v1/workflows/{id}/run` returns 405 "Method not allowed". n8n MCP `execute_workflow` uses internal mechanism not available via REST. Fix: create a separate webhook trigger workflow in n8n that calls Execute Sub-workflow on the main workflow. Production webhook URL: `https://full-funnel.app.n8n.cloud/webhook/ci-manual-sync`. No API key needed — webhook path is the auth. (Session 10, sync button fix)
+
+## Session 10 Strategic Learnings
+
+30. **Product pivot can invalidate weeks of work — but doesn't have to.** The "first 100 miles" pivot (eliminate publishing, focus on creation) actually validates 90% of what Sessions 1-10 built. The signal pipeline, idea wall, draft generation, brand brief, prompt studio — all core. Only the "last mile" (publishing, scheduling, connectors) is deprioritized. Lesson: build the core value loop first, distribution layer last. (Session 10, product meeting)
+
+31. **Existing manual workflows are the best product spec.** Luke's existing n8n workflows (social listening → analysis → blog generation) reveal exactly what the team needs, how they work, and what the output looks like. Reverse-engineering these workflows gave us more actionable requirements than any spec document could. Always ask: "What are users doing manually today?" (Session 10, workflow analysis)
+
+32. **Brand Brief is too thin for enterprise content.** 4 fields (wedge, ICP, voiceTraits, antiPositioning) vs Luke's Positioning Guide with 11 sections (pillars, benefits, tone, phrases, audience-specific language). The positioning guide should be the FOUNDATION of all content creation. When CI resumes, upgrading Brand Brief to Positioning Guide is the highest-ROI change. (Session 10, Positioning Agent analysis)

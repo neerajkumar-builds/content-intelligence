@@ -1,0 +1,90 @@
+WEBVTT
+
+0
+00:00:00.750 --> 00:00:13.659
+Hey guys, quick walkthrough of the positioning agent that I just chatted through. So, essentially starts with social listening data. I've mentioned the last year of social listening, but it can be shorter term.
+
+1
+00:00:13.970 --> 00:00:17.010
+Especially if we're looking at clay, it will have to be shorter term.
+
+2
+00:00:17.370 --> 00:00:29.220
+Look at things like what competitors are saying, what the market is saying, what we're saying, thought leaders and what decision makers are saying as well. Then, take that social listening data and analyze what the market is saying.
+
+3
+00:00:29.310 --> 00:00:44.379
+And that will output a key insight stock. It's a very similar process to what we're doing for the content engine, content agent, just the difference being, instead of market analysis prompt to identify 3…
+
+4
+00:00:44.500 --> 00:00:48.880
+content opportunities. We're just analyzing what the market is saying.
+
+5
+00:00:48.990 --> 00:00:52.679
+And potentially identifying some positioning opportunities.
+
+6
+00:00:52.970 --> 00:01:12.929
+Then, we move into the positioning prompts, so analyzing our current positioning, what the market is currently saying, where there's some white space, and then identifying where there are gaps within our current positioning, and what the market is actually saying to identify this updated and new positioning statement.
+
+7
+00:01:13.290 --> 00:01:21.739
+There will be a bit of QAQC needed, and then if we're happy with that, we'll move through. If not, we'll feed back and sort of continue revising that.
+
+8
+00:01:21.890 --> 00:01:34.280
+Once a statement is approved, then identifying, leveraging that positioning statement document to develop out this positioning guide. Positioning guide will identify, like, key challenges.
+
+9
+00:01:34.520 --> 00:01:39.130
+Problems, messaging pillars, tone of voice, etc, etc.
+
+10
+00:01:39.450 --> 00:01:49.780
+A crucial thing to note is that this position guide should then be the foundation of all content creation moving forward.
+
+11
+00:01:49.780 --> 00:02:08.470
+As it will ensure that all of the content created, whether that be ad copy creative, landing page copy creative, sales enablement material, blog content, etc, etc, will all be driven by this one document in terms of what we want to say, how we want to say it, and how we want to be positioned when saying that.
+
+12
+00:02:08.949 --> 00:02:16.439
+So, this will ultimately be one of the most important things, to add to the mix.
+
+13
+00:02:16.640 --> 00:02:23.529
+And then, obviously, QAQC, guide approved, yes, no. If the guide is approved, obviously, you have the guide at the end.
+
+14
+00:02:23.530 --> 00:02:37.729
+And then that can be leveraged in all of the content creation moving forward. Neeraj, I think why this is quite important to reference is because it will influence some of the content engine, content agent work that we're doing moving forward here.
+
+15
+00:02:37.820 --> 00:02:44.319
+Just a couple examples of some of the outputs. So, this is just a repositioning guide, brief.
+
+16
+00:02:44.560 --> 00:02:51.200
+Positioning statement that I've identified or pulled using…
+
+17
+00:02:51.450 --> 00:02:58.409
+40 social posts from Kay that I was able to identify around agent AI and AI as a service.
+
+18
+00:02:59.050 --> 00:03:02.510
+And then this is an example of what the positioning guide looks like.
+
+19
+00:03:02.750 --> 00:03:11.600
+So, definitely by no means, like, the final fully-baked output, but just a good reference point for…
+
+20
+00:03:12.490 --> 00:03:18.650
+The positioning agent as we're trying to get this built out in conjunction with the content agent.
+
+21
+00:03:18.990 --> 00:03:20.960
+If you have any questions, let me know.
+

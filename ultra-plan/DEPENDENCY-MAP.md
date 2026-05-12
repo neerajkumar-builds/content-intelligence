@@ -4,6 +4,41 @@
 
 ---
 
+## Strategic Dependencies (Post-Pivot)
+
+### Module execution order (strict sequence)
+```
+Module 1 (Core Loop) → MUST complete before Module 2
+  - Google Drive + Slack output needs workspace settings
+  - Home page needs signal count + draft count queries
+
+Module 2 (Signal Intelligence) → MUST complete before Module 3
+  - Competitor/leader profiles provide data for positioning analysis
+  - Multi-platform signals provide market context
+
+Module 3 (Content Excellence + Positioning Guide) → depends on Module 2 signals
+  - Positioning Guide generated FROM accumulated signal data
+  - Prompt overhaul uses positioning guide sections
+  - Brand Brief schema upgrade affects all generation
+
+Module 4 (SEO/AEO) → independent of Module 3 but benefits from it
+  - Keywords can be added without positioning guide
+  - SEO scoring is standalone
+
+Module 5 (Polish) → all other modules done
+```
+
+### Key reference files for next session
+```
+Strategic direction: memory/project_pivot_2026_05_12.md
+Positioning concept: memory/reference_positioning_agent.md
+Existing workflows: memory/reference_existing_workflows.md
+Full roadmap: ~/.claude/plans/unified-sniffing-island.md
+Build state: memory/project_build_state.md
+```
+
+---
+
 ## Session 10 Changes
 
 ### Manual sync button

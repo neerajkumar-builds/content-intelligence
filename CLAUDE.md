@@ -54,27 +54,45 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Session 9B (4 checkpoints + UX + data):** A) Source link + dedup score. B) Config consolidation (3 config files). C) Brand Brief wired (edit, version history, diff). D) Regenerate with instructions + draft_snapshots. Plus: instruction area UX, version preview, hot score fix, freshness fix, publishedAt column, relevance sort. 18 commits, ~2,200 lines.
 - **Session 10 (6 commits, +450 lines, production verified):** Manual sync button (n8n webhook trigger), date range filter (COALESCE), Brand Brief auto-generate (Gemini Flash), progressive generation loader (timer + escape hatch), brand name in header, websiteUrl persisted. Fixed: n8n REST API 405 (created webhook wrapper workflow qKxPjg3Cl2VetQ51), Inngest lost 3 functions (manual resync), URL auto-prepend. n8n has 2 workflows now: Signal Harvester (qrnItYAUlVcgchZO) + Manual Sync Trigger (qKxPjg3Cl2VetQ51).
 - **Session 10 part 2 (+671 lines):** Prompt Studio (prompts router + full editor page with variable reference + interpolated preview). Signal Explorer (listSignals query + table page with filters/pagination/expand + nav entry). 12 routers now (was 11). 24 routes (was 23).
-- **Next:** More RSS sources → Phase 6 (grading, needs Inngest upgrade) → Deep onboarding redesign
-- **Full product vision:** See `memory/project_product_vision.md` — deep onboarding, knowledge base, competitor detection
-- **Schema now:** 30 tables (29 + draft_snapshots). brands.websiteUrl added. ideas.publishedAt added. drafts.format + drafts.modelId added.
+- **PRODUCT PIVOT (May 12, 2026):** Eliminate native social publishing/scheduling. Focus on "first 100 miles" — research, create, approve. Output via Google Drive + Slack. CI paused while Meeting Intelligence ships. See `memory/project_pivot_2026_05_12.md`.
+- **Luke's Positioning Agent (May 13):** Brand Brief must evolve into 11-section Positioning Guide (pillars, benefits, tone, phrases, audience language). Signals → Market Analysis → Positioning Statement → Guide → feeds ALL content. See `memory/reference_positioning_agent.md`.
+- **Existing n8n workflows analyzed:** Social Listening V2 (8 Sheets tabs, 5 audience segments) + Blog Generator (topics → Gemini Pro → Google Docs → Slack). See `memory/reference_existing_workflows.md`.
+- **Next (when CI resumes):** Module 1 (complete output loop: Drive + Slack) → Module 2 (signal intelligence: multi-platform, competitors, leaders) → Module 3 (content excellence + positioning guide upgrade) → Module 4 (SEO/AEO) → Module 5 (polish)
+- **Full roadmap:** See plan file `~/.claude/plans/unified-sniffing-island.md` — 5 modules, depth-first
+- **Schema now:** 30 tables. brands.websiteUrl added. 12 routers. 24 routes. 6 Inngest functions.
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
 - **Inngest:** app.inngest.com (Vercel integration, auto-injected keys)
 
-## How to Resume
+## How to Resume (Reading Order for Maximum Context)
 
-1. Read `ultra-plan/PROGRESS.md` for current state and next task
-2. Read `ultra-plan/LEARNINGS.md` for mistakes NOT to repeat
-3. Read memory `feedback_ui_testing.md` for 8 critical UX lessons from Session 4
-4. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
-5. All work on `main` branch (all PRs merged). No stale branches.
-6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
-7. **FIRST TASK next session:** Prompt Studio UI (placeholder exists at `src/app/(app)/prompts/page.tsx`, need: list prompts from DB, edit + save, linked from Draft editor glass-box panel) → then Signal Explorer page → then LinkedIn E2E publish test → then Phase 6 (7-dim grading: grade-draft Inngest function, GradePanel UI on editor). **NOTE: Inngest free plan at 6 functions (at capacity) — adding a grade-draft function requires plan upgrade or consolidation.**
-8. **Key context:** `ctx.workspaceId` = Clerk orgId (for OAuth). `ctx.scoped.workspaceId` = UUID (for DB). Never confuse them.
-9. **Production is LIVE:** content-intelligence-eight.vercel.app auto-deploys from main. Inngest Cloud + n8n workflow are active. Test locally before pushing.
-10. **DANGER: NEVER use drizzle-kit push** — Supabase DB has 7 tables from another project. `drizzle-kit push` tries to DELETE them (~2,200 rows). Schema changes: edit Drizzle schema file + apply SQL directly via postgres-js or Supabase MCP.
-10. **Connector strategy plan:** Read `/Users/neerajkumar/.claude/plans/unified-sniffing-island.md` for the 13-part deep research plan before starting Phase 4B.
+**STEP 1: Understand the strategic direction (READ FIRST)**
+1. Read `memory/project_pivot_2026_05_12.md` — CRITICAL product pivot: no publishing, focus on creation + research
+2. Read `memory/reference_positioning_agent.md` — Luke's Positioning Agent concept, Brand Brief → Positioning Guide upgrade
+3. Read `~/.claude/plans/unified-sniffing-island.md` — 5-module roadmap (Drive+Slack → Signals → Content+Positioning → SEO → Polish)
+
+**STEP 2: Understand current build state**
+4. Read `ultra-plan/PROGRESS.md` — what's DONE (Session 10: 9 commits, +1,100 lines, Prompt Studio + Signal Explorer)
+5. Read `memory/project_build_state.md` — infrastructure summary (30 tables, 12 routers, 24 routes, 6 Inngest functions)
+6. Read `ultra-plan/DEPENDENCY-MAP.md` — what depends on what, before modifying any file
+
+**STEP 3: Understand mistakes NOT to repeat**
+7. Read `ultra-plan/LEARNINGS.md` — 29 learnings, especially #26 (drizzle-kit push danger), #28 (Inngest sync loss), #29 (n8n REST API)
+8. Read `memory/feedback_production_coding.md` — 10 non-negotiable production rules
+
+**STEP 4: Understand existing workflows being productized**
+9. Read `memory/reference_existing_workflows.md` — two n8n workflows (social listening + blog generator) that CI makes 10x better
+10. Optionally: `knowledge_base/FullFunnel - Positioning Guide.docx` — example Positioning Guide output
+
+**Key constraints:**
+- All work on `main` branch. Git clean at commit `a7656c6`.
+- `ctx.workspaceId` = Clerk orgId (OAuth). `ctx.scoped.workspaceId` = UUID (DB). Never confuse.
+- Production LIVE: content-intelligence-eight.vercel.app (auto-deploys from main)
+- Inngest Cloud: 6 functions (at capacity). Check dashboard after every deploy.
+- n8n Cloud: 2 workflows — Signal Harvester (qrnItYAUlVcgchZO) + Manual Sync Trigger (qKxPjg3Cl2VetQ51)
+- **DANGER: NEVER use drizzle-kit push** — shared Supabase DB would delete other project's tables
+- CI is PAUSED while Meeting Intelligence ships. When it resumes, start with Module 1 (complete output loop).
 
 ## Task Completion Protocol (MANDATORY after every task)
 

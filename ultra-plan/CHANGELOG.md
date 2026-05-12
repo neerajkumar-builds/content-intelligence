@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-05-13 (Session 10 — Strategic Planning)
+
+- **[PIVOT] Product direction changed** — Eliminate native social publishing/scheduling. Focus on "first 100 miles": research, create, approve. Output via Google Drive + Slack. CI paused for Meeting Intelligence.
+  - Files: `memory/project_pivot_2026_05_12.md`
+
+- **[PLAN] 5-module roadmap created** — M1: Core Loop (Drive+Slack), M2: Signal Intelligence (multi-platform), M3: Content Excellence + Positioning Guide, M4: SEO/AEO, M5: Polish. Depth-first execution.
+  - Files: `~/.claude/plans/unified-sniffing-island.md`
+
+- **[ANALYSIS] Existing n8n workflows reverse-engineered** — Social Listening V2 (8 Sheets tabs, 5 audience segments, AI analysis → Drive → Slack) + Blog Generator (topics → Gemini Pro → Google Docs). These are what CI productizes 10x better.
+  - Files: `memory/reference_existing_workflows.md`
+
+- **[ANALYSIS] Luke's Positioning Agent integrated** — Social listening → market analysis → positioning statement → positioning guide (11 sections). Brand Brief must evolve into this. The guide feeds ALL content creation.
+  - Files: `memory/reference_positioning_agent.md`, `knowledge_base/FullFunnel - Positioning Guide.docx`, `knowledge_base/FullFunnel - Positioning Agent.pdf`
+
+- **[ANALYSIS] Signal strategy expanded** — Not RSS-only. Multi-platform: RSS + YouTube RSS + Reddit RSS + Google News RSS (free), plus Apify for LinkedIn/Twitter/Instagram (paid). Profile-based tracking: user adds person/company + platform URLs, system determines fetch method.
+
+---
+
 ## 2026-05-12 (Session 10 — Sync + Filter + Auto-Generate + Prompt Studio + Signal Explorer)
 
 ### Prompt Studio
