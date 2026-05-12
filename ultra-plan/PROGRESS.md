@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-12 (Session 9 — UX Bug Fixes + Draft Status Indicators)
-> Current phase: Session 8 bugs FIXED. Draft status on Idea Wall DONE.
-> Next action: Prompt Studio UI → LinkedIn E2E publish test (production) → Phase 6 (7-dim grading)
+> Last updated: 2026-05-12 (Session 9B — Config Consolidation + Generate Popover + Bug Fixes)
+> Current phase: Config consolidated. Generate Popover shipped. Dedup improved. Brand Brief wiring next.
+> Next action: Checkpoint C (Brand Brief wiring + auto-generate) → Checkpoint D (Regenerate + versions)
 
 ---
 
@@ -30,6 +30,10 @@
 | Multi-Model — LLM Router (3 providers, 5 models, custom picker) | DONE | `main` | Session 8 |
 | UI Polish — Lora font, stuck draft timeout, channel labels, loader, title wrap | DONE | `main` | Session 8 |
 | S9-Fix — Model display bug + Idea Wall draft status + SourceRail icons | DONE | `main` | Session 9 |
+| S9-Popover — Generate Popover (channel + format + model selection) | DONE | `main` | Session 9 |
+| S9-Limits — Verified char limits against official API docs | DONE | `main` | Session 9 |
+| S9-CkptA — Source link on IdeaCard + dedupScore for near-misses | DONE | `main` | Session 9B |
+| S9-CkptB — Config consolidation (3 config files, 5 consumers updated) | DONE | `main` | Session 9B |
 | 4B — Connector Publishing | IN PROGRESS (LinkedIn adapter done) | `main` | Session 8 |
 | 6 — Drafts + Grading | IN PROGRESS (generation done, grading NOT STARTED) | `main` | Session 8 |
 | 7 — Schedule + Publish | NOT STARTED | — | — |

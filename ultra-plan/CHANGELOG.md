@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-05-12 (Session 9B — Config Consolidation + Quick Wins)
+
+### Checkpoint A: Quick Wins
+
+- **[FEATURE] Source link on IdeaCard** — Source label now clickable when sourceUrl present. Opens original post in new tab with external link icon (↗).
+  - Files: `src/components/ideas/idea-card.tsx`
+
+- **[FIX] Dedup score populated for near-duplicates** — process-signal now sets dedupScore (0.70-0.85 range) and dedupPriorId on created ideas. Previously these schema fields were never populated. IdeaCard dedup warning badge now has data to display. Dedup skip at >0.85 unchanged.
+  - Files: `src/server/inngest/functions/process-signal.ts`
+
+### Checkpoint B: Config Consolidation
+
+- **[REFACTOR] Platform config single source of truth** — 13 scattered platform constants across 5+ files consolidated into 3 config files. Zero behavior changes.
+  - New: `src/lib/config/platforms.ts` (13 platforms, charLimit, formats, guidelines, tier, oauthReady)
+  - New: `src/lib/config/display.ts` (colors, icons per platform)
+  - New: `src/lib/config/index.ts` (8 helper functions)
+  - Updated: `drafts/[id]/page.tsx`, `drafts/page.tsx`, `generate-popover.tsx`, `generate-draft.ts`, `connectors/page.tsx`
+  - Eliminated: CHAR_LIMITS, CHANNEL_LABELS (2 copies), CHANNELS, CHANNEL_FORMATS, FORMAT_GUIDELINES, PLATFORM_DISPLAY (2 copies), OAUTH_READY
+
+### Earlier Session 9 (Generate Popover + Bug Fixes)
+
+- **[FEATURE] Generate Popover** — Channel + format + model selection when clicking Generate on Idea Wall. 6 channels, format per channel, model selector. Format stored on draft and passed to LLM prompt.
+- **[FIX] Regenerate timeout** — Used updatedAt instead of createdAt for stuck detection
+- **[FIX] Gemini 2.5 Flash** — Moved from Thinking to Standard category
+- **[FIX] Char limits verified** — All 13 platforms verified against official API docs
+- **[FIX] Format guidelines injected** — Appended to prompt even when old DB template lacks placeholders
+- **[FEATURE] Drafts list enhanced** — Shows channel label, format tag, model ID per card
+
+---
+
 ## 2026-05-12 (Session 9 — UX Bug Fixes)
 
 ### Fix: Model Display Bug

@@ -18,6 +18,14 @@
 
 ## Results Log
 
+### Session 9B — Config Consolidation + Quick Wins (2026-05-12)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| Checkpoint A (source link + dedup) | `pnpm build` | PASS | Zero type errors |
+| Checkpoint B (config consolidation) | `pnpm build` | PASS | 8 files changed, 429 additions |
+| Checkpoint B push | `git push` | PASS | Commit ce834e1, Vercel deploy triggered |
+
 ### Session 9 — UX Bug Fixes (2026-05-12)
 
 | Task | Command | Result | Notes |

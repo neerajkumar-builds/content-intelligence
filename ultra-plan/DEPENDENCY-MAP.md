@@ -4,12 +4,25 @@
 
 ---
 
-## Session 9 Changes
+## Session 9B Changes
 
-- `content.ts:drafts` now has `modelId` column — `generate-draft.ts` writes it, `drafts/[id]/page.tsx` reads it
-- `ideas.ts:list` now imports `drafts` and `inArray` from drizzle-orm — returns `latestDraft` per item
-- `idea-card.tsx` now accepts `latestDraft` and `onViewDraft` props — Ideas page must pass them
-- `source-rail.tsx` Edit/Remove changed from text to icons — no dependency change
+### Config consolidation (single source of truth)
+- `src/lib/config/platforms.ts` — ALL platform configs (charLimit, formats, guidelines, tier, oauthReady)
+- `src/lib/config/display.ts` — UI colors, icons per platform
+- `src/lib/config/index.ts` — helper functions (getCharLimit, getChannelLabel, etc.)
+- **Consumers (import from config, NOT local constants):**
+  - `drafts/[id]/page.tsx` → `getCharLimit`, `getChannelLabel`
+  - `drafts/page.tsx` → `getChannelLabel`
+  - `generate-popover.tsx` → `getAllChannels`, `getFormats`
+  - `generate-draft.ts` → `getFormatGuidelines`
+  - `connectors/page.tsx` → `PLATFORMS`, `getOAuthReadyPlatforms`
+- **Adding a new platform:** Edit ONLY `src/lib/config/platforms.ts` + optionally `display.ts`
+
+### Session 9 Changes (earlier)
+- `content.ts:drafts` has `modelId` + `format` columns
+- `ideas.ts:list` imports `drafts` + `inArray` — returns `latestDraft` per item
+- `idea-card.tsx` accepts `latestDraft`, `onViewDraft`, `generatePending` props + GeneratePopover
+- `process-signal.ts` populates `dedupScore` (0.70-0.85) and `dedupPriorId` on near-duplicate ideas
 
 ## Schema Dependencies (change cascades downward)
 
