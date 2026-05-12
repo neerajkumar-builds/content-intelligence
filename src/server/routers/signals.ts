@@ -249,25 +249,21 @@ export const signalsRouter = router({
     }),
 
   triggerSync: protectedProcedure.mutation(async () => {
-    const apiKey = process.env.N8N_API_KEY;
-    const baseUrl = process.env.N8N_INSTANCE_URL;
-    if (!apiKey || !baseUrl) {
+    const webhookUrl =
+      process.env.N8N_SYNC_WEBHOOK_URL ??
+      `${process.env.N8N_INSTANCE_URL?.replace(/\/+$/, "")}/webhook/ci-manual-sync`;
+
+    if (!webhookUrl || webhookUrl === "/webhook/ci-manual-sync") {
       throw new TRPCError({
         code: "PRECONDITION_FAILED",
-        message: "n8n API not configured",
+        message: "n8n sync webhook not configured",
       });
     }
 
-    const workflowId = "qrnItYAUlVcgchZO";
-    const url = `${baseUrl}/api/v1/workflows/${workflowId}/run`;
-
     try {
-      const res = await fetch(url, {
+      const res = await fetch(webhookUrl, {
         method: "POST",
-        headers: {
-          "X-N8N-API-KEY": apiKey,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
         signal: AbortSignal.timeout(10_000),
       });
@@ -276,7 +272,7 @@ export const signalsRouter = router({
         const errText = await res.text();
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `n8n returned ${res.status}: ${errText.slice(0, 200)}`,
+          message: `Sync failed (${res.status}): ${errText.slice(0, 200)}`,
         });
       }
 
@@ -287,8 +283,8 @@ export const signalsRouter = router({
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: msg.includes("abort")
-          ? "n8n request timed out after 10s"
-          : `n8n sync failed: ${msg}`,
+          ? "Sync request timed out"
+          : `Sync failed: ${msg}`,
       });
     }
   }),

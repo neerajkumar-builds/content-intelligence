@@ -74,8 +74,9 @@ export default function BrandBriefPage() {
       setEditAntiPositioning(data.antiPositioning);
       setEditChangelog("Auto-generated from website analysis");
       setIsEditing(true);
+      const modelName = data.model.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
       toast.success(
-        `Brief generated (${data.model}, ${data.tokens} tokens, $${(data.costCents / 100).toFixed(3)})`,
+        `Brief auto-generated using ${modelName} (${data.tokens.toLocaleString()} tokens, $${(data.costCents / 100).toFixed(3)})`,
       );
     },
     onError: (err) => toast.error(err.message),
@@ -87,7 +88,10 @@ export default function BrandBriefPage() {
 
   function handleAutoGenerate() {
     if (!brandId || !websiteUrl) return;
-    autoGenMut.mutate({ brandId, websiteUrl });
+    let url = websiteUrl.trim();
+    if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+    setWebsiteUrl(url);
+    autoGenMut.mutate({ brandId, websiteUrl: url });
   }
 
   // --- Handlers ---
