@@ -211,7 +211,7 @@ export function SourceRail() {
                           Edit
                         </button>
                         <button
-                          onClick={() => setDeleteTarget({ id: s.id, label: s.label })}}
+                          onClick={() => setDeleteTarget({ id: s.id, label: s.label })}
                           style={{ fontSize: 10, color: "#ef4444", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}
                         >
                           Remove
