@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { signalSourceConfigs, brands } from "@/db/schema";
+import { signalSourceConfigs, brands, signals } from "@/db/schema";
 import { inngest } from "@/server/inngest/client";
 import { CorpusBackfill } from "@/server/inngest/events";
 
@@ -246,6 +246,59 @@ export const signalsRouter = router({
         }),
       );
       return { triggered: true };
+    }),
+
+  listSignals: protectedProcedure
+    .input(
+      z
+        .object({
+          source: z.enum(["rss", "reddit", "linkedin", "twitter", "apify", "manual", "competitor", "thought_leader"]).optional(),
+          processed: z.boolean().optional(),
+          limit: z.number().int().min(1).max(200).default(50),
+          offset: z.number().int().min(0).default(0),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const { db, workspaceId } = ctx.scoped;
+      const limit = input?.limit ?? 50;
+      const offset = input?.offset ?? 0;
+
+      const conditions = [eq(signals.workspaceId, workspaceId)];
+      if (input?.source) conditions.push(eq(signals.source, input.source));
+      if (input?.processed !== undefined)
+        conditions.push(eq(signals.processed, input.processed));
+
+      const rows = await db
+        .select({
+          id: signals.id,
+          source: signals.source,
+          sourceUrl: signals.sourceUrl,
+          title: signals.title,
+          body: sql<string>`LEFT(${signals.body}, 200)`,
+          metadata: signals.metadata,
+          processed: signals.processed,
+          createdAt: signals.createdAt,
+        })
+        .from(signals)
+        .where(and(...conditions))
+        .orderBy(desc(signals.createdAt))
+        .limit(limit + 1)
+        .offset(offset);
+
+      const hasMore = rows.length > limit;
+      const items = hasMore ? rows.slice(0, limit) : rows;
+
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(signals)
+        .where(and(...conditions));
+
+      return {
+        items,
+        total: countResult?.count ?? 0,
+        hasMore,
+      };
     }),
 
   triggerSync: protectedProcedure.mutation(async () => {

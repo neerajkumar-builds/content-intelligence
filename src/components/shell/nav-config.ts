@@ -28,6 +28,7 @@ export const NAV: NavGroup[] = [
   {
     group: "Learn",
     items: [
+      { id: "signals", label: "Signals", icon: "activity" },
       { id: "insights", label: "Insights", icon: "chart" },
       { id: "competitors", label: "Competitors", icon: "flag" },
       { id: "leaders", label: "Thought leaders", icon: "sparkle" },
@@ -55,6 +56,7 @@ export const TITLE_MAP: Record<string, string> = {
   ideas: "Idea Wall",
   drafts: "Drafts",
   schedule: "Schedule",
+  signals: "Signals",
   insights: "Insights",
   competitors: "Competitors",
   leaders: "Thought leaders",
@@ -76,6 +78,7 @@ export const API_MAP: Record<string, string> = {
   ideas: "GET /v1/ideas",
   drafts: "GET /v1/drafts/:id",
   schedule: "GET /v1/schedule?range=week",
+  signals: "GET /v1/signals",
   insights: "GET /v1/insights/overview",
   competitors: "GET /v1/competitors",
   leaders: "GET /v1/leaders",
