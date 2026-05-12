@@ -50,6 +50,7 @@ export default function DraftEditorPage() {
   const [regenModelId, setRegenModelId] = useState("gemini-2.0-flash");
   const [instructions, setInstructions] = useState("");
   const [showInstructions, setShowInstructions] = useState(false);
+  const [expandedSnapshotId, setExpandedSnapshotId] = useState<string | null>(null);
   useEffect(() => {
     const saved = localStorage.getItem("cia.preferredModel");
     if (saved) {
@@ -109,6 +110,7 @@ export default function DraftEditorPage() {
       setInstructions("");
       setShowInstructions(false);
       void utils.drafts.get.invalidate({ draftId: id });
+      void utils.drafts.listSnapshots.invalidate({ draftId: id });
     },
     onError: (err) => toast.error(err.message),
   });
@@ -470,32 +472,45 @@ export default function DraftEditorPage() {
 
         {/* Instruction input for regeneration */}
         {status === "draft" && !generating && content.trim() !== "" && draft.ideaId && (
-          <div style={{ padding: "0 24px", flexShrink: 0 }}>
+          <div style={{ padding: "8px 24px 0", flexShrink: 0 }}>
             {!showInstructions ? (
               <button
                 onClick={() => setShowInstructions(true)}
                 style={{
                   width: "100%",
-                  padding: "8px 16px",
+                  padding: "10px 14px",
                   fontSize: 12,
                   color: "var(--ink-tertiary)",
-                  background: "var(--bg-muted)",
-                  border: "none",
+                  background: "var(--bg-surface)",
+                  border: "1px dashed var(--border-default)",
                   borderRadius: 8,
                   cursor: "pointer",
                   textAlign: "left",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
-                Add instructions for regeneration...
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>Add AI instructions for regeneration...</span>
               </button>
             ) : (
               <div
                 style={{
-                  background: "var(--bg-muted)",
+                  background: "var(--bg-surface)",
                   borderRadius: 8,
-                  padding: "8px 16px",
+                  padding: "10px 14px",
+                  border: "1px solid var(--accent)",
                 }}
               >
+                <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--accent)", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  AI Instructions
+                </div>
                 <textarea
                   autoFocus
                   value={instructions}
@@ -915,69 +930,68 @@ export default function DraftEditorPage() {
               No previous versions
             </p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {snapshots.map((snap) => (
-                <div
-                  key={snap.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: 6,
-                  }}
-                >
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 11, lineHeight: 1.4 }}>
-                      <span style={{ fontWeight: 700, color: "var(--ink-primary)" }}>
-                        v{snap.version}
-                      </span>
-                      <span style={{ color: "var(--ink-tertiary)", margin: "0 4px" }}>·</span>
-                      <span style={{ color: "var(--ink-secondary)" }}>
-                        {getModelLabel(snap.modelId ?? "unknown")}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "var(--ink-tertiary)",
-                        lineHeight: 1.4,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {snap.instructions
-                        ? `"${snap.instructions.length > 40 ? snap.instructions.slice(0, 40) + "..." : snap.instructions}"`
-                        : "Fresh generation"}
-                      <span style={{ margin: "0 4px" }}>·</span>
-                      {relativeTime(snap.createdAt)}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() =>
-                      restoreMut.mutate({
-                        draftId: id,
-                        snapshotId: snap.id,
-                      })
-                    }
-                    disabled={restoreMut.isPending}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {snapshots.map((snap) => {
+                const isExpanded = expandedSnapshotId === snap.id;
+                return (
+                  <div
+                    key={snap.id}
                     style={{
-                      flexShrink: 0,
-                      padding: "2px 8px",
-                      fontSize: 10,
-                      fontWeight: 500,
-                      borderRadius: 4,
-                      border: "1px solid var(--border-subtle)",
-                      background: "var(--bg-surface)",
-                      color: "var(--ink-secondary)",
-                      cursor: "pointer",
-                      marginTop: 1,
+                      borderRadius: 6,
+                      border: isExpanded ? "1px solid var(--accent)" : "1px solid var(--border-subtle)",
+                      overflow: "hidden",
                     }}
                   >
-                    Restore
-                  </button>
-                </div>
-              ))}
+                    <button
+                      onClick={() => setExpandedSnapshotId(isExpanded ? null : snap.id)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px",
+                        background: isExpanded ? "rgba(99,102,241,0.04)" : "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div style={{ fontSize: 11, lineHeight: 1.4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>
+                          <span style={{ fontWeight: 700, color: "var(--ink-primary)" }}>v{snap.version}</span>
+                          <span style={{ color: "var(--ink-tertiary)", margin: "0 4px" }}>·</span>
+                          <span style={{ color: "var(--ink-secondary)" }}>{getModelLabel(snap.modelId ?? "unknown")}</span>
+                        </span>
+                        <span style={{ fontSize: 10, color: "var(--ink-tertiary)" }}>{relativeTime(snap.createdAt)}</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--ink-tertiary)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {snap.instructions ? `"${snap.instructions}"` : "Fresh generation"}
+                      </div>
+                    </button>
+                    {isExpanded && (
+                      <div style={{ borderTop: "1px solid var(--border-subtle)", padding: "8px 10px" }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--ink-tertiary)", marginBottom: 4 }}>Preview</div>
+                        <div style={{ fontSize: 11, lineHeight: 1.5, color: "var(--ink-secondary)", maxHeight: 120, overflowY: "auto", whiteSpace: "pre-wrap", marginBottom: 8 }}>
+                          {snap.content.length > 300 ? snap.content.slice(0, 300) + "..." : snap.content}
+                        </div>
+                        <button
+                          onClick={() => restoreMut.mutate({ draftId: id, snapshotId: snap.id })}
+                          disabled={restoreMut.isPending}
+                          style={{
+                            padding: "4px 10px",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            borderRadius: 4,
+                            border: "none",
+                            background: "var(--accent)",
+                            color: "white",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {restoreMut.isPending ? "Restoring..." : "Restore this version"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
