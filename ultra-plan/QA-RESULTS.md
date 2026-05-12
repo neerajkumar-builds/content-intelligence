@@ -18,6 +18,18 @@
 
 ## Results Log
 
+### Session 10 (2026-05-12)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| Manual sync (triggerSync + SourceRail) | `pnpm build` | PASS | 2 files, +82 lines |
+| Date range filter (router + FilterBar + page) | `pnpm build` | PASS | 3 files, +76 lines |
+| Brand Brief auto-generate (schema + mutation + UI) | `pnpm build` | PASS | 4 files, +219 lines |
+| Self-review fixes (date SQL, entity regex, traceId) | `pnpm build` | PASS | 3 fixes applied |
+| Schema migration (brands.website_url) | postgres-js direct SQL | PASS | Column added IF NOT EXISTS |
+| drizzle-kit push | BLOCKED | SKIP | Would DELETE 7 tables from other project sharing DB. Used direct SQL instead. |
+| Full commit (9 files, +377 lines) | `git commit` | PASS | f83eeb5 |
+
 ### Session 9 Final (2026-05-12)
 
 | Task | Command | Result | Notes |

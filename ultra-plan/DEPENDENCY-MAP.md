@@ -4,6 +4,37 @@
 
 ---
 
+## Session 10 Changes
+
+### Manual sync button
+- `src/server/routers/signals.ts:triggerSync` — calls n8n REST API
+  - Depends: `N8N_API_KEY`, `N8N_INSTANCE_URL` env vars
+  - Depends: n8n workflow `qrnItYAUlVcgchZO` being active
+- `src/components/ideas/source-rail.tsx` — sync button UI
+  - Depends: `trpc.signals.triggerSync` mutation
+
+### Date range filter
+- `src/server/routers/ideas.ts:list` — accepts `dateFrom`/`dateTo`
+  - Uses: `COALESCE(ideas.publishedAt, ideas.createdAt)` for null-safe filtering
+- `src/components/ideas/filter-bar.tsx` — date inputs (native HTML)
+- `src/app/(app)/ideas/page.tsx` — date state, passes to query + FilterBar
+
+### Brand Brief auto-generate
+- `src/db/schema/brands.ts` — `websiteUrl` column (nullable text)
+- `src/server/routers/brand.ts:update` — accepts `websiteUrl` in data
+- `src/server/routers/brief.ts:autoGenerate` — fetch HTML + callLLM
+  - Depends: `src/lib/ai/llm-router.ts:callLLM`
+  - Depends: LLM API key (GOOGLE_AI_API_KEY for default Gemini Flash)
+- `src/app/(app)/brand/page.tsx` — URL input + auto-generate button
+  - Depends: `trpc.brief.autoGenerate`, `trpc.brand.list` (for websiteUrl)
+
+### DANGER: drizzle-kit push on shared DB
+- Supabase DB has 7 tables from another project (scored_meetings, zoom_users, etc.)
+- `drizzle-kit push` tries to DELETE those tables. NEVER use on this project.
+- Schema changes: edit Drizzle file + apply SQL directly via postgres-js or Supabase MCP.
+
+---
+
 ## Session 9B Changes
 
 ### Config consolidation (single source of truth)

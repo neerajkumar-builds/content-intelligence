@@ -4,6 +4,41 @@
 
 ---
 
+## 2026-05-12 (Session 10 — Sync + Filter + Auto-Generate)
+
+### Manual Sync Button
+
+- **[FEATURE] triggerSync mutation** — Calls n8n Cloud REST API to execute Signal Harvester workflow on demand. `protectedProcedure` ensures auth. 10s timeout.
+  - Files: `src/server/routers/signals.ts`
+  - Env: `N8N_API_KEY`, `N8N_INSTANCE_URL`
+
+- **[FEATURE] Sync button in SourceRail** — Refresh icon + "Sync" label in header row. 2-minute client-side cooldown. Toast on success/error.
+  - Files: `src/components/ideas/source-rail.tsx`
+
+### Date Range Filter
+
+- **[FEATURE] Date filtering on ideas.list** — `dateFrom`/`dateTo` optional ISO date inputs. Uses `COALESCE(publishedAt, createdAt)` so manual ideas (null publishedAt) are included. `dateTo` uses `::date + interval '1 day'` for inclusive end.
+  - Files: `src/server/routers/ideas.ts`
+
+- **[FEATURE] Date picker in FilterBar** — Two native `<input type="date">` elements with "Clear" button. `colorScheme: "dark light"` for theme compat.
+  - Files: `src/components/ideas/filter-bar.tsx`, `src/app/(app)/ideas/page.tsx`
+
+### Brand Brief Auto-Generate
+
+- **[SCHEMA] brands.websiteUrl** — New nullable text column on brands table. Applied via direct SQL (drizzle-kit push unsafe on shared Supabase DB).
+  - Files: `src/db/schema/brands.ts`
+
+- **[FEATURE] brief.autoGenerate mutation** — Synchronous (no Inngest). Fetches website HTML, strips tags (script/style/nav/footer removed), calls Gemini Flash via callLLM (temperature 0.4), parses JSON response. Returns pre-filled fields for user review. Glass-box: model + tokens + costCents in response.
+  - Files: `src/server/routers/brief.ts`
+
+- **[FEATURE] brand.update extended** — Accepts `websiteUrl` (url | null) in data schema.
+  - Files: `src/server/routers/brand.ts`
+
+- **[FEATURE] Auto-generate UI on brand page** — Website URL input (pre-populated from brand data) + "Auto-generate brief" button. On success: pre-fills edit form, enters edit mode, glass-box toast. Loading state: "Analyzing...".
+  - Files: `src/app/(app)/brand/page.tsx`
+
+---
+
 ## 2026-05-12 (Session 9B — Config Consolidation + Quick Wins)
 
 ### Checkpoint A: Quick Wins

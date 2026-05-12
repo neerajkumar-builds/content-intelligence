@@ -52,9 +52,10 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **UI Polish (Session 8):** Lora font on draft body, channel label mapping, animated generation loader (5 steps), stuck draft timeout (>90s → Retry/Delete), title textarea wrap, ConfirmDialog component (replaces native confirm()), Copy/Download/Share actions on editor.
 - **Session 9 Fixes:** model_id + format columns on drafts. Draft status badges on Idea Wall. Generate Popover (channel + format + model). Verified char limits. Regenerate timeout fix. Gemini 2.5 Flash recategorized.
 - **Session 9B (4 checkpoints + UX + data):** A) Source link + dedup score. B) Config consolidation (3 config files). C) Brand Brief wired (edit, version history, diff). D) Regenerate with instructions + draft_snapshots. Plus: instruction area UX, version preview, hot score fix, freshness fix, publishedAt column, relevance sort. 18 commits, ~2,200 lines.
-- **Next:** Manual sync button → Date filter → Brand Brief auto-generate → Prompt Studio → Signal Explorer → Phase 6 (grading)
+- **Session 10 (3 features, +377 lines):** Manual sync button (n8n trigger from SourceRail), date range filter on Idea Wall (COALESCE publishedAt/createdAt), Brand Brief auto-generate from website (fetch HTML + Gemini Flash analysis). brands.websiteUrl column added. No new Inngest functions.
+- **Next:** Prompt Studio → Signal Explorer → More RSS sources → Phase 6 (grading, needs Inngest upgrade)
 - **Full product vision:** See `memory/project_product_vision.md` — deep onboarding, knowledge base, competitor detection
-- **Schema now:** 30 tables (29 + draft_snapshots). ideas.publishedAt added. drafts.format + drafts.modelId added., signal explorer
+- **Schema now:** 30 tables (29 + draft_snapshots). brands.websiteUrl added. ideas.publishedAt added. drafts.format + drafts.modelId added.
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
@@ -68,9 +69,10 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 4. Check `ultra-plan/DEPENDENCY-MAP.md` before modifying any file
 5. All work on `main` branch (all PRs merged). No stale branches.
 6. Design spec in `design_handoff_content_intelligence_agent/CLAUDE.md`
-7. **FIRST TASK next session:** Prompt Studio UI (placeholder exists at `src/app/(app)/prompts/page.tsx`, need: list prompts from DB, edit + save, linked from Draft editor glass-box panel) → then LinkedIn E2E publish test (live post to LinkedIn via connected account) → then Phase 6 (7-dim grading: grade-draft Inngest function, GradePanel UI on editor). **NOTE: Inngest free plan at 6 functions (at capacity) — adding a grade-draft function requires plan upgrade or consolidation.**
+7. **FIRST TASK next session:** Prompt Studio UI (placeholder exists at `src/app/(app)/prompts/page.tsx`, need: list prompts from DB, edit + save, linked from Draft editor glass-box panel) → then Signal Explorer page → then LinkedIn E2E publish test → then Phase 6 (7-dim grading: grade-draft Inngest function, GradePanel UI on editor). **NOTE: Inngest free plan at 6 functions (at capacity) — adding a grade-draft function requires plan upgrade or consolidation.**
 8. **Key context:** `ctx.workspaceId` = Clerk orgId (for OAuth). `ctx.scoped.workspaceId` = UUID (for DB). Never confuse them.
 9. **Production is LIVE:** content-intelligence-eight.vercel.app auto-deploys from main. Inngest Cloud + n8n workflow are active. Test locally before pushing.
+10. **DANGER: NEVER use drizzle-kit push** — Supabase DB has 7 tables from another project. `drizzle-kit push` tries to DELETE them (~2,200 rows). Schema changes: edit Drizzle schema file + apply SQL directly via postgres-js or Supabase MCP.
 10. **Connector strategy plan:** Read `/Users/neerajkumar/.claude/plans/unified-sniffing-island.md` for the 13-part deep research plan before starting Phase 4B.
 
 ## Task Completion Protocol (MANDATORY after every task)

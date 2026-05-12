@@ -150,3 +150,9 @@
 24. **Regenerate timeout must use updatedAt, not createdAt** — Stuck draft detection compared `Date.now()` against `draft.createdAt`. For old drafts regenerated later, `createdAt` was hours/days ago, immediately triggering "Generation timed out." Use `updatedAt` which resets on each regenerate mutation. (Session 9, timeout fix)
 
 25. **Platform config scattered across 5+ files will drift** — CHANNEL_LABELS was defined in 2 files with different entries. CHAR_LIMITS in 2 files with different shapes. Adding a new platform required editing 5+ files. Consolidate into a single config file (`src/lib/config/`) imported everywhere. Zero behavior change, massive maintenance improvement. (Session 9, Checkpoint B)
+
+## Session 10 Learnings
+
+26. **NEVER use drizzle-kit push on shared Supabase databases** — Supabase DB has 7 tables from another project (scored_meetings, zoom_users, etc. with ~2,200+ rows). `drizzle-kit push` sees tables NOT in our Drizzle schema and tries to DELETE them. This would destroy production data from another app. Schema changes: edit Drizzle file (for TypeScript types) + apply SQL directly via postgres-js or Supabase MCP. NEVER run `db:push` or `drizzle-kit push` on this project. (Session 10, schema migration)
+
+27. **Self-review catches SQL edge cases** — Date filter initially used `setHours(23,59,59,999)` + `toISOString()` for end-of-day. Postgres `::date + interval '1 day'` is cleaner and timezone-safe. Code review also caught: HTML entity regex missing numeric entities, using random traceId instead of middleware's ctx.traceId. Always self-review after writing, especially for SQL and regex. (Session 10, review fixes)
