@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { ModelSelect, getModelLabel, MODELS } from "@/components/ai/model-select";
+import { getCharLimit, getChannelLabel } from "@/lib/config";
 
 function ProviderDot({ provider }: { provider: string }) {
   if (provider.includes("claude") || provider.includes("opus") || provider.includes("sonnet"))
@@ -13,35 +14,6 @@ function ProviderDot({ provider }: { provider: string }) {
     return <span style={{ color: "#9ca3af", fontWeight: 700 }}>O</span>;
   return <span style={{ color: "#4285f4", fontWeight: 700 }}>G</span>;
 }
-
-const CHAR_LIMITS: Record<string, number> = {
-  linkedin: 3000,
-  twitter: 280,
-  instagram: 2200,
-  threads: 500,
-  tiktok: 2200,
-  youtube: 5000,
-  reddit: 40000,
-  bluesky: 300,
-  facebook: 63206,
-  pinterest: 500,
-  mastodon: 500,
-  newsletter: 10000,
-  blog: 15000,
-};
-
-const CHANNEL_LABELS: Record<string, string> = {
-  linkedin: "LinkedIn",
-  twitter: "X / Twitter",
-  instagram: "Instagram",
-  threads: "Threads",
-  facebook: "Facebook",
-  tiktok: "TikTok",
-  youtube: "YouTube",
-  reddit: "Reddit",
-  bluesky: "Bluesky",
-  beehiiv: "Beehiiv",
-};
 
 const STATUS_BADGE_STYLES: Record<
   string,
@@ -188,7 +160,7 @@ export default function DraftEditorPage() {
 
   const status = draft?.status ?? "draft";
   const channel = draft?.channel ?? "linkedin";
-  const charLimit = CHAR_LIMITS[channel] ?? 3000;
+  const charLimit = getCharLimit(channel);
   const charCount = content.length;
   const overLimit = charCount > charLimit;
   const editable = status === "draft" && !isGenerating(draft?.content);
@@ -715,7 +687,7 @@ export default function DraftEditorPage() {
               color: "var(--ink-primary)",
             }}
           >
-            {CHANNEL_LABELS[channel] ?? channel}
+            {getChannelLabel(channel)}
           </span>
         </div>
 

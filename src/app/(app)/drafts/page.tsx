@@ -5,25 +5,11 @@ import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { getChannelLabel } from "@/lib/config";
 
 type StatusFilter = "all" | "draft" | "approved" | "live" | "failed";
 
 const STATUS_FILTERS: StatusFilter[] = ["all", "draft", "approved", "live", "failed"];
-
-const CHANNEL_LABELS: Record<string, string> = {
-  linkedin: "LinkedIn",
-  twitter: "X / Twitter",
-  instagram: "Instagram",
-  threads: "Threads",
-  facebook: "Facebook",
-  newsletter: "Newsletter",
-  blog: "Blog",
-  tiktok: "TikTok",
-  youtube: "YouTube",
-  reddit: "Reddit",
-  bluesky: "Bluesky",
-  beehiiv: "Beehiiv",
-};
 
 const STATUS_BADGE_STYLES: Record<
   string,
@@ -255,7 +241,7 @@ export default function DraftsPage() {
                   <StatusBadge status={draft.status} />
 
                   <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 4, background: "var(--bg-muted)", color: "var(--ink-secondary)", fontWeight: 500 }}>
-                    {CHANNEL_LABELS[draft.channel] ?? draft.channel}
+                    {getChannelLabel(draft.channel)}
                   </span>
 
                   {draft.format && (

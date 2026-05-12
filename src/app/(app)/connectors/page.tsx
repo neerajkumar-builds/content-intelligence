@@ -2,26 +2,54 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { PLATFORMS, getOAuthReadyPlatforms } from "@/lib/config";
 
-const PLATFORM_DISPLAY: Record<string, { name: string; kind: string; tier: string }> = {
-  linkedin: { name: "LinkedIn", kind: "Social · B2B", tier: "tier1" },
-  x: { name: "X / Twitter", kind: "Social · Short-form", tier: "tier1" },
-  beehiiv: { name: "Beehiiv", kind: "Newsletter", tier: "tier1" },
-  facebook: { name: "Facebook", kind: "Social · Pages", tier: "tier2" },
-  instagram: { name: "Instagram", kind: "Social · Visual", tier: "tier2" },
-  threads: { name: "Threads", kind: "Social · Text-first", tier: "tier2" },
-  youtube: { name: "YouTube", kind: "Video · Long-form", tier: "tier2" },
-  tiktok: { name: "TikTok", kind: "Video · Short-form", tier: "tier2" },
-  reddit: { name: "Reddit", kind: "Community · Discussion", tier: "tier2" },
-  bluesky: { name: "Bluesky", kind: "Social · Decentralized", tier: "tier2" },
-  pinterest: { name: "Pinterest", kind: "Visual · Discovery", tier: "tier2" },
-  substack: { name: "Substack", kind: "Newsletter · Paste", tier: "tier3" },
-  hubspot: { name: "HubSpot", kind: "CRM · Attribution", tier: "tier3" },
-  medium: { name: "Medium", kind: "Blog · Long-form", tier: "tier3" },
-  mastodon: { name: "Mastodon", kind: "Social · Fediverse", tier: "tier3" },
+/** Extra kind labels and platforms not yet in PLATFORMS config */
+const CONNECTOR_KIND: Record<string, string> = {
+  linkedin: "Social · B2B",
+  twitter: "Social · Short-form",
+  beehiiv: "Newsletter",
+  facebook: "Social · Pages",
+  instagram: "Social · Visual",
+  threads: "Social · Text-first",
+  youtube: "Video · Long-form",
+  tiktok: "Video · Short-form",
+  reddit: "Community · Discussion",
+  bluesky: "Social · Decentralized",
+  pinterest: "Visual · Discovery",
+  substack: "Newsletter · Paste",
+  hubspot: "CRM · Attribution",
+  medium: "Blog · Long-form",
+  mastodon: "Social · Fediverse",
 };
 
-const OAUTH_READY = ["linkedin"];
+/** Build connector display list from PLATFORMS config + extras not yet in config */
+const CONNECTOR_PLATFORMS: Array<{ id: string; name: string; kind: string; tier: string }> = [
+  // Platforms from config (filter out non-connector types like newsletter/blog)
+  ...Object.values(PLATFORMS)
+    .filter((p) => !["newsletter", "blog"].includes(p.id))
+    .map((p) => ({
+      id: p.id === "twitter" ? "x" : p.id,
+      name: p.label,
+      kind: CONNECTOR_KIND[p.id] ?? "",
+      tier: p.tier,
+    })),
+  // Platforms not yet in PLATFORMS config
+  ...(["substack", "hubspot", "medium"] as const)
+    .filter((id) => !PLATFORMS[id])
+    .map((id) => ({
+      id,
+      name: id === "hubspot" ? "HubSpot" : id.charAt(0).toUpperCase() + id.slice(1),
+      kind: CONNECTOR_KIND[id] ?? "",
+      tier: "tier3" as const,
+    })),
+  // beehiiv (not in PLATFORMS config but is a connector)
+  ...(!PLATFORMS["beehiiv"]
+    ? [{ id: "beehiiv", name: "Beehiiv", kind: CONNECTOR_KIND["beehiiv"] ?? "", tier: "tier1" as const }]
+    : []),
+];
+
+const OAUTH_READY = getOAuthReadyPlatforms();
 
 export default function ConnectorsPage() {
   return (
@@ -36,7 +64,7 @@ function ConnectorsContent() {
   const connected = searchParams.get("connected");
   const error = searchParams.get("error");
 
-  const platforms = Object.entries(PLATFORM_DISPLAY);
+  const platforms = CONNECTOR_PLATFORMS;
 
   return (
     <div className="fade-in" style={{ height: "100%", overflow: "auto" }}>
@@ -66,7 +94,7 @@ function ConnectorsContent() {
         {connected && (
           <div className="card" style={{ padding: 12, marginBottom: 16, background: "var(--accent-soft)", borderColor: "var(--accent)" }}>
             <span style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600 }}>
-              Connected {PLATFORM_DISPLAY[connected]?.name ?? connected} successfully
+              Connected {platforms.find((p) => p.id === connected)?.name ?? connected} successfully
             </span>
           </div>
         )}
@@ -80,12 +108,13 @@ function ConnectorsContent() {
         )}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-          {platforms.map(([id, info]) => {
-            const isReady = OAUTH_READY.includes(id);
+          {platforms.map((info) => {
+            const oauthId = info.id === "x" ? "twitter" : info.id;
+            const isReady = OAUTH_READY.includes(oauthId);
 
             return (
               <div
-                key={id}
+                key={info.id}
                 className="card"
                 style={{
                   padding: 16,
@@ -105,7 +134,7 @@ function ConnectorsContent() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
                   <span className="pill neutral" style={{ fontSize: 10 }}>disconnected</span>
                   {isReady ? (
-                    <a href={`/api/auth/oauth/${id}/start`} className="btn primary sm" style={{ textDecoration: "none" }}>
+                    <a href={`/api/auth/oauth/${oauthId}/start`} className="btn primary sm" style={{ textDecoration: "none" }}>
                       Connect
                     </a>
                   ) : (

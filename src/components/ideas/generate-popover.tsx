@@ -2,40 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ModelSelect, MODELS } from "@/components/ai/model-select";
-
-const CHANNELS = [
-  { id: "linkedin", label: "LinkedIn", icon: "in" },
-  { id: "twitter", label: "X / Twitter", icon: "𝕏" },
-  { id: "newsletter", label: "Newsletter", icon: "✉" },
-  { id: "instagram", label: "Instagram", icon: "◻" },
-  { id: "threads", label: "Threads", icon: "@" },
-  { id: "blog", label: "Blog", icon: "¶" },
-] as const;
-
-const CHANNEL_FORMATS: Record<string, Array<{ id: string; label: string }>> = {
-  linkedin: [
-    { id: "linkedin-long", label: "Long post" },
-    { id: "linkedin-short", label: "Short post" },
-  ],
-  twitter: [
-    { id: "twitter-tweet", label: "Tweet" },
-    { id: "twitter-thread", label: "Thread" },
-  ],
-  newsletter: [
-    { id: "newsletter", label: "Article" },
-    { id: "newsletter-digest", label: "Digest" },
-  ],
-  instagram: [
-    { id: "instagram-caption", label: "Caption" },
-    { id: "carousel-script", label: "Carousel script" },
-  ],
-  threads: [
-    { id: "threads-post", label: "Post" },
-  ],
-  blog: [
-    { id: "blog-article", label: "Article" },
-  ],
-};
+import { getAllChannels, getFormats } from "@/lib/config";
 
 interface GeneratePopoverProps {
   ideaFormats: string[];
@@ -69,14 +36,14 @@ export function GeneratePopover({
     return "gemini-2.0-flash";
   });
 
-  const formats = CHANNEL_FORMATS[channel] ?? CHANNEL_FORMATS.linkedin;
+  const formats = getFormats(channel).length > 0 ? getFormats(channel) : getFormats("linkedin");
   const defaultFormat = ideaFormats.find((f) =>
     formats.some((cf) => cf.id === f),
   ) ?? formats[0].id;
   const [format, setFormat] = useState(defaultFormat);
 
   useEffect(() => {
-    const newFormats = CHANNEL_FORMATS[channel] ?? CHANNEL_FORMATS.linkedin;
+    const newFormats = getFormats(channel).length > 0 ? getFormats(channel) : getFormats("linkedin");
     const match = ideaFormats.find((f) => newFormats.some((cf) => cf.id === f));
     setFormat(match ?? newFormats[0].id);
   }, [channel, ideaFormats]);
@@ -126,7 +93,7 @@ export function GeneratePopover({
           Channel
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-          {CHANNELS.map((ch) => (
+          {getAllChannels().map((ch) => (
             <button
               key={ch.id}
               onClick={() => setChannel(ch.id)}
