@@ -18,6 +18,13 @@
   - `connectors/page.tsx` → `PLATFORMS`, `getOAuthReadyPlatforms`
 - **Adding a new platform:** Edit ONLY `src/lib/config/platforms.ts` + optionally `display.ts`
 
+### Late Session 9 Changes
+- `process-signal.ts`: `computeFreshness` checks `pubDate`/`isoDate` (n8n fields). `computeHotScore` uses freshness-based scoring (base 30, not 50).
+- `signals.ts`: ideas table has `publishedAt` column (nullable timestamptz). Set from signal metadata during idea creation.
+- `idea-card.tsx`: shows publishedAt date, source link icon, hover tooltip with both dates
+- `ideas.ts` router: default sort changed from hotScore to composite score. "fresh" sort uses publishedAt. Added "relevance" sort option.
+- `filter-bar.tsx`: sort options updated (Relevance, Newest, ICP fit, Trending)
+
 ### Checkpoint C+D Changes
 - `brand/page.tsx` now queries `trpc.brand.list` + `trpc.brief.get/create/list/diff` — depends on brief.ts + brand.ts routers
 - `content.ts` has new `draftSnapshots` table — exported via `schema/index.ts`

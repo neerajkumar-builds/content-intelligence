@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-12 (Session 9B — All 4 Checkpoints DONE)
-> Current phase: Checkpoints A-D complete. 14 commits this session.
-> Next action: Brand Brief auto-generate (C6) → Prompt Studio → Signal Explorer (future sessions)
+> Last updated: 2026-05-12 (Session 9 COMPLETE — 18 commits, ~2,200 lines)
+> Current phase: All 4 checkpoints + data quality fixes + UX polish done.
+> Next action: Manual sync button → Date filter → Brand Brief auto-generate → Prompt Studio → Signal Explorer
 
 ---
 
@@ -36,6 +36,8 @@
 | S9-CkptB — Config consolidation (3 config files, 5 consumers updated) | DONE | `main` | Session 9B |
 | S9-CkptC — Brand Brief page wired (edit, version history, diff) | DONE | `main` | Session 9B |
 | S9-CkptD — Regenerate with instructions + draft version snapshots | DONE | `main` | Session 9B |
+| S9-UX — Instruction area visibility + version preview + snapshot refresh | DONE | `main` | Session 9B |
+| S9-Data — Hot score fix + freshness fix + publishedAt + sort by relevance | DONE | `main` | Session 9B |
 | 4B — Connector Publishing | IN PROGRESS (LinkedIn adapter done) | `main` | Session 8 |
 | 6 — Drafts + Grading | IN PROGRESS (generation done, grading NOT STARTED) | `main` | Session 8 |
 | 7 — Schedule + Publish | NOT STARTED | — | — |

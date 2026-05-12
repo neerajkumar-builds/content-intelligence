@@ -18,6 +18,17 @@
 
 ## Results Log
 
+### Session 9 Final (2026-05-12)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| UX polish (instruction area + version preview) | `pnpm build` | PASS | 80 lines changed |
+| Data quality (hot score + freshness + dates) | `pnpm build` | PASS | 3 files, 35 additions |
+| Sort fix (relevance default) | `pnpm build` | PASS | 3 files changed |
+| ideas.publishedAt backfill | Supabase SQL | PASS | Existing ideas populated from signal metadata |
+| draft_snapshots table | Supabase SQL | PASS | Table + index created |
+| Final push (18 commits) | `git push` | PASS | All on main, Vercel deploying |
+
 ### Session 9B — All 4 Checkpoints (2026-05-12)
 
 | Task | Command | Result | Notes |

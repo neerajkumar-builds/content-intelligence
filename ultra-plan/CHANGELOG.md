@@ -23,6 +23,17 @@
   - Updated: `drafts/[id]/page.tsx`, `drafts/page.tsx`, `generate-popover.tsx`, `generate-draft.ts`, `connectors/page.tsx`
   - Eliminated: CHAR_LIMITS, CHANNEL_LABELS (2 copies), CHANNELS, CHANNEL_FORMATS, FORMAT_GUIDELINES, PLATFORM_DISPLAY (2 copies), OAUTH_READY
 
+### Late Session 9 — UX Polish + Data Quality
+
+- **[FIX] Instruction area visibility** — Dashed border, chat icon, "AI Instructions" label. Much more discoverable than plain gray background.
+- **[FIX] Version history refresh** — listSnapshots invalidated on regenerate success. Snapshots appear immediately.
+- **[FEATURE] Version preview** — Expandable snapshot entries with 300-char content preview + "Restore this version" button.
+- **[FIX] Hot score computation** — Base lowered from 50 to 30. Freshness-based scoring (recent = hotter). RSS no longer stuck at 50.
+- **[FIX] computeFreshness** — Added `pubDate` and `isoDate` to metadata field check chain. Was missing the field n8n actually sends.
+- **[SCHEMA] ideas.publishedAt** — Original pub date from signal metadata stored on idea. Backfilled existing ideas from signals.metadata.pubDate.
+- **[UI] IdeaCard dates** — Shows actual pub date (e.g., "Dec 17") instead of static "1d". Hover tooltip shows both published + synced dates.
+- **[FIX] Default sort** — Changed from hotScore (all 50) to composite score (ICP fit + hot + freshness). Added "Relevance" and "Newest" sort options.
+
 ### Checkpoint C: Brand Brief Page Wiring
 
 - **[FEATURE] Brand Brief fully wired** — Page was static mockup with hardcoded data. Now queries DB via brief.get/create/list/diff. Edit button opens inline form (4 textareas + changelog). Save creates new version (append-only). Version History tab lists all versions. Diff tab shows field-by-field comparison. Versioning sidebar card dynamic.

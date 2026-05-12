@@ -51,9 +51,10 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Multi-Model LLM Router (Session 8):** 3 providers (Google AI, Anthropic, OpenRouter), 5 models (Gemini 3.0 Flash, Claude Sonnet 4, Claude Opus 4, GPT-5.4, Gemini 3.1 Pro). Custom model picker dropdown with provider SVG logos and Standard/Thinking groups. llm-router.ts replaces single-provider generate.ts. generate-draft Inngest function updated to use router with per-request modelId. Inngest free plan at 6 functions — at capacity.
 - **UI Polish (Session 8):** Lora font on draft body, channel label mapping, animated generation loader (5 steps), stuck draft timeout (>90s → Retry/Delete), title textarea wrap, ConfirmDialog component (replaces native confirm()), Copy/Download/Share actions on editor.
 - **Session 9 Fixes:** model_id + format columns on drafts. Draft status badges on Idea Wall. Generate Popover (channel + format + model). Verified char limits. Regenerate timeout fix. Gemini 2.5 Flash recategorized.
-- **Session 9B (4 checkpoints):** A) Source link on IdeaCard + dedup score for near-misses. B) Config consolidation (3 config files replacing 13 scattered constants). C) Brand Brief page fully wired (edit, version history, diff — was static mockup). D) Regenerate with custom instructions + draft_snapshots version history (refine mode). 14 commits, ~1,500 lines.
-- **Next:** Brand Brief auto-generate from website (C6) → Prompt Studio UI → Signal Explorer page → Phase 6 (7-dim grading)
-- **Full product vision:** See `memory/project_product_vision.md` — deep onboarding, knowledge base, competitor detection, signal explorer
+- **Session 9B (4 checkpoints + UX + data):** A) Source link + dedup score. B) Config consolidation (3 config files). C) Brand Brief wired (edit, version history, diff). D) Regenerate with instructions + draft_snapshots. Plus: instruction area UX, version preview, hot score fix, freshness fix, publishedAt column, relevance sort. 18 commits, ~2,200 lines.
+- **Next:** Manual sync button → Date filter → Brand Brief auto-generate → Prompt Studio → Signal Explorer → Phase 6 (grading)
+- **Full product vision:** See `memory/project_product_vision.md` — deep onboarding, knowledge base, competitor detection
+- **Schema now:** 30 tables (29 + draft_snapshots). ideas.publishedAt added. drafts.format + drafts.modelId added., signal explorer
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)

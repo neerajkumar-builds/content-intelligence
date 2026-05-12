@@ -138,3 +138,15 @@
 18. **Stuck drafts need explicit timeout handling on the client** — If an Inngest generate-draft function fails silently (no retries left, DLQ, or cloud outage), the draft stays in `draft` status with no content forever. The editor auto-poll loop will spin indefinitely. Always set a client-side timeout (e.g., 90 seconds) after which polling stops and Retry/Delete buttons appear. Never assume background functions always complete. (Session 8, UP.5)
 
 19. **Native `confirm()` is unusable in production web apps** — `window.confirm()` is blocked in cross-origin iframes (Vercel preview URLs), overridden by browser extensions, and doesn't respect app dark themes. It also can't be styled or internationalized. Always use a custom modal component for any destructive action confirmation. Build one early and reuse it — `ConfirmDialog` is now at `src/components/ui/confirm-dialog.tsx`. (Session 8, UP.7)
+
+20. **n8n RSS metadata field names don't match what you expect** — n8n RSS Read node sends `pubDate` and `isoDate` in metadata. Our `computeFreshness()` checked `publishedAt`, `published_at`, `created` — none of which exist in RSS metadata. Always verify ACTUAL field names from n8n output, don't assume. The `pubDate` field is standard RSS but not a common programming convention. (Session 9, data quality fix)
+
+21. **Hot score needs freshness-based scoring for sources without engagement** — RSS feeds have no upvotes/comments/shares. Starting hot score at 50 with only engagement bonuses means ALL RSS ideas get 50. Lower the base (30) and add freshness bonuses (recent = hotter). Different sources need different scoring strategies. (Session 9, data quality fix)
+
+22. **Seeded DB prompt templates don't auto-update** — `getOrSeedPrompt()` seeds a default template on first use, then reads from DB forever. When we changed the template to include `{format_guidelines}`, existing workspaces kept the old template. Fix: append format instructions to the prompt even when template lacks the placeholder. Alternatively, add prompt versioning/migration. (Session 9, format injection fix)
+
+23. **Static mockup pages look functional but aren't** — Brand Brief page had buttons, tabs, version numbers — all hardcoded. Users can't tell a mockup from a real page. Wire backend BEFORE shipping UI (or show clear "coming soon" state). This was caught because a user tried to click Edit and nothing happened. (Session 9, Checkpoint C)
+
+24. **Regenerate timeout must use updatedAt, not createdAt** — Stuck draft detection compared `Date.now()` against `draft.createdAt`. For old drafts regenerated later, `createdAt` was hours/days ago, immediately triggering "Generation timed out." Use `updatedAt` which resets on each regenerate mutation. (Session 9, timeout fix)
+
+25. **Platform config scattered across 5+ files will drift** — CHANNEL_LABELS was defined in 2 files with different entries. CHAR_LIMITS in 2 files with different shapes. Adding a new platform required editing 5+ files. Consolidate into a single config file (`src/lib/config/`) imported everywhere. Zero behavior change, massive maintenance improvement. (Session 9, Checkpoint B)
