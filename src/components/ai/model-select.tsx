@@ -13,9 +13,9 @@ interface ModelOption {
 const MODELS: ModelOption[] = [
   { id: "gemini-2.0-flash", label: "Gemini 3.0 Flash", provider: "google", category: "standard", costEstimate: "~$0.01" },
   { id: "claude-sonnet-4-20250514", label: "Sonnet 4.6", provider: "anthropic", category: "standard", costEstimate: "~$0.08" },
-  { id: "openai/gpt-5.4", label: "GPT-5.4", provider: "openai", category: "standard", costEstimate: "~$0.06" },
+  { id: "openai/gpt-4.1", label: "GPT-4.1", provider: "openai", category: "standard", costEstimate: "~$0.05" },
   { id: "claude-opus-4-20250514", label: "Opus 4.6", provider: "anthropic", category: "thinking", costEstimate: "~$0.40" },
-  { id: "google/gemini-3.1-pro", label: "Gemini 3.1 Pro", provider: "google", category: "thinking", costEstimate: "~$0.03" },
+  { id: "google/gemini-2.5-flash-preview-05-20", label: "Gemini 2.5 Flash", provider: "google", category: "thinking", costEstimate: "~$0.02" },
 ];
 
 function ProviderIcon({ provider, size = 16 }: { provider: string; size?: number }) {
