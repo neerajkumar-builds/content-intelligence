@@ -14,7 +14,9 @@ ICP: {icp}
 RULES (never violate):
 {anti_ai_rules}`;
 
-const DEFAULT_USER_PROMPT_TEMPLATE = `Write a {channel} post based on this signal:
+const DEFAULT_USER_PROMPT_TEMPLATE = `Write a {format} for {channel} based on this signal:
+
+FORMAT: {format_guidelines}
 
 IDEA: {idea_hook}
 ANGLE: {idea_angle}
@@ -25,7 +27,7 @@ BRAND CONTEXT (similar content from our corpus):
 
 Output format:
 TITLE: (one compelling headline, no prefix)
-BODY: (150-300 words, short paragraphs, conversational, no hashtags in body)`;
+BODY: (follow the FORMAT guidelines above for length and structure)`;
 
 interface PromptResult {
   systemPrompt: string;
@@ -76,6 +78,8 @@ export async function getOrSeedPrompt(
     { name: "icp", description: "Ideal customer profile", required: true },
     { name: "anti_ai_rules", description: "Anti-AI rules to enforce", required: true },
     { name: "channel", description: "Target channel (e.g. linkedin, twitter)", required: true },
+    { name: "format", description: "Content format (e.g. linkedin-long, twitter-thread)", required: false },
+    { name: "format_guidelines", description: "Format-specific writing guidelines", required: false },
     { name: "idea_hook", description: "Idea hook/headline", required: true },
     { name: "idea_angle", description: "Idea angle/perspective", required: true },
     { name: "source_content", description: "Source signal content", required: true },

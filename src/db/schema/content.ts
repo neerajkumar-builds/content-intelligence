@@ -29,6 +29,7 @@ export const drafts = pgTable(
     content: text("content").notNull(),
     status: postStatusEnum("status").notNull().default("draft"),
     channel: text("channel").notNull(),
+    format: text("format"),
     modelId: text("model_id"),
     version: integer("version").notNull().default(1),
     createdAt: timestamp("created_at", { withTimezone: true })

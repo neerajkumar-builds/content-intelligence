@@ -67,6 +67,7 @@ export const DraftGenerate = eventType(
       brandId: z.string().uuid(),
       workspaceId: z.string().uuid(),
       modelId: z.string().optional(),
+      format: z.string().optional(),
     }),
   },
 );

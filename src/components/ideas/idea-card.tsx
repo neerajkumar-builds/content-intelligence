@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { InferSelectModel } from "drizzle-orm";
 import type { ideas } from "@/db/schema";
+import { GeneratePopover } from "./generate-popover";
 
 type Idea = InferSelectModel<typeof ideas>;
 
@@ -33,14 +34,17 @@ export function IdeaCard({
   onGenerate,
   onDismiss,
   onViewDraft,
+  generatePending,
 }: {
   idea: Idea;
   latestDraft?: { draftId: string; draftStatus: string } | null;
-  onGenerate: (id: string) => void;
+  onGenerate: (id: string, opts: { channel: string; format: string; modelId: string }) => void;
   onDismiss: (id: string) => void;
   onViewDraft?: (draftId: string) => void;
+  generatePending?: boolean;
 }) {
   const [hover, setHover] = useState(false);
+  const [showPopover, setShowPopover] = useState(false);
   const sourceColor = SOURCE_COLORS[idea.sourceKind] ?? "var(--ink-secondary)";
   const hotScore = idea.hotScore;
 
@@ -237,25 +241,39 @@ export function IdeaCard({
               </svg>
             </button>
           ) : (
-            <button
-              onClick={() => onGenerate(idea.id)}
-              style={{
-                padding: "5px 12px",
-                fontSize: 11,
-                background: "var(--accent)",
-                color: "white",
-                border: "none",
-                borderRadius: 5,
-                cursor: "pointer",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                lineHeight: 1,
-              }}
-            >
-              ✦ Generate
-            </button>
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setShowPopover(!showPopover)}
+                style={{
+                  padding: "5px 12px",
+                  fontSize: 11,
+                  background: "var(--accent)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 5,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  lineHeight: 1,
+                }}
+              >
+                ✦ Generate
+              </button>
+              {showPopover && (
+                <GeneratePopover
+                  ideaFormats={idea.formats}
+                  onGenerate={(opts) => {
+                    setShowPopover(false);
+                    onGenerate(idea.id, opts);
+                  }}
+                  isPending={!!generatePending}
+                  anchor="right"
+                  onClose={() => setShowPopover(false)}
+                />
+              )}
+            </div>
           )}
         </div>
       </div>

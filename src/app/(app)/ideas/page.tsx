@@ -1,28 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { IdeaCard } from "@/components/ideas/idea-card";
 import { SourceRail } from "@/components/ideas/source-rail";
 import { FilterBar } from "@/components/ideas/filter-bar";
-import { ModelSelect, MODELS } from "@/components/ai/model-select";
-
 export default function IdeaWallPage() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState<"hot" | "icp" | "fresh">("hot");
-  const [modelId, setModelId] = useState("gemini-2.0-flash");
-  useEffect(() => {
-    const saved = localStorage.getItem("cia.preferredModel");
-    if (saved) {
-      if (MODELS.find((m) => m.id === saved)) {
-        setModelId(saved);
-      } else {
-        localStorage.removeItem("cia.preferredModel");
-      }
-    }
-  }, []);
 
   const router = useRouter();
   const utils = trpc.useUtils();
@@ -53,21 +40,15 @@ export default function IdeaWallPage() {
 
   const items = data?.items ?? [];
 
-  function handleModelChange(newModelId: string) {
-    setModelId(newModelId);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("cia.preferredModel", newModelId);
-    }
-  }
-
-  function handleGenerate(ideaId: string) {
+  function handleGenerate(ideaId: string, opts: { channel: string; format: string; modelId: string }) {
     const idea = items.find((i) => i.id === ideaId);
     if (!idea) return;
     generateMut.mutate({
       ideaId,
       brandId: idea.brandId,
-      channel: "linkedin",
-      modelId,
+      channel: opts.channel,
+      format: opts.format,
+      modelId: opts.modelId,
     });
   }
 
@@ -95,11 +76,6 @@ export default function IdeaWallPage() {
           onSortChange={(s) => setSort(s as "hot" | "icp" | "fresh")}
           onAddIdea={handleAddIdea}
         />
-
-        <div style={{ padding: "8px 24px 0", display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 11, color: "var(--ink-tertiary)", fontWeight: 500 }}>AI Model:</span>
-          <ModelSelect value={modelId} onChange={handleModelChange} compact />
-        </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px 60px" }}>
           {isLoading ? (
@@ -142,7 +118,7 @@ export default function IdeaWallPage() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 12 }}>
               {items.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} latestDraft={idea.latestDraft} onGenerate={handleGenerate} onDismiss={handleDismiss} onViewDraft={handleViewDraft} />
+                <IdeaCard key={idea.id} idea={idea} latestDraft={idea.latestDraft} onGenerate={handleGenerate} onDismiss={handleDismiss} onViewDraft={handleViewDraft} generatePending={generateMut.isPending} />
               ))}
             </div>
           )}

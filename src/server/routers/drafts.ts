@@ -295,6 +295,7 @@ export const draftsRouter = router({
         ideaId: z.string().uuid(),
         brandId: z.string().uuid(),
         channel: z.string().default("linkedin"),
+        format: z.string().optional(),
         modelId: z.string().optional(),
       }),
     )
@@ -322,6 +323,7 @@ export const draftsRouter = router({
           content: "",
           status: "draft",
           channel: input.channel,
+          format: input.format ?? null,
         })
         .returning({ id: drafts.id });
 
@@ -333,6 +335,7 @@ export const draftsRouter = router({
             brandId: input.brandId,
             workspaceId,
             modelId: input.modelId,
+            format: input.format,
           }),
         )
         .catch(() => {});

@@ -710,6 +710,18 @@ export default function DraftEditorPage() {
           </span>
         </div>
 
+        {/* Format */}
+        {draft.format && (
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--ink-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+              Format
+            </div>
+            <span style={{ fontSize: 13, color: "var(--ink-primary)" }}>
+              {draft.format.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+            </span>
+          </div>
+        )}
+
         {/* Character count */}
         <div>
           <div
