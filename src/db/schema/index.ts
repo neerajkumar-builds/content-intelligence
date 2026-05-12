@@ -23,7 +23,7 @@ export {
 
 export { signals, ideas, signalSourceConfigs } from "./signals";
 
-export { drafts, draftGrades, draftAntiAiHits } from "./content";
+export { drafts, draftGrades, draftAntiAiHits, draftSnapshots } from "./content";
 
 export { schedules, posts, postResults } from "./publishing";
 

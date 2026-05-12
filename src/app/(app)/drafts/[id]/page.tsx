@@ -7,6 +7,17 @@ import { toast } from "sonner";
 import { ModelSelect, getModelLabel, MODELS } from "@/components/ai/model-select";
 import { getCharLimit, getChannelLabel } from "@/lib/config";
 
+function relativeTime(date: string | Date): string {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
 function ProviderDot({ provider }: { provider: string }) {
   if (provider.includes("claude") || provider.includes("opus") || provider.includes("sonnet"))
     return <span style={{ color: "#d4a574", fontWeight: 700 }}>A</span>;
@@ -37,6 +48,8 @@ export default function DraftEditorPage() {
   const [content, setContent] = useState("");
   const [dirty, setDirty] = useState(false);
   const [regenModelId, setRegenModelId] = useState("gemini-2.0-flash");
+  const [instructions, setInstructions] = useState("");
+  const [showInstructions, setShowInstructions] = useState(false);
   useEffect(() => {
     const saved = localStorage.getItem("cia.preferredModel");
     if (saved) {
@@ -93,6 +106,8 @@ export default function DraftEditorPage() {
     onSuccess: () => {
       toast.success("Regenerating...");
       setDirty(false);
+      setInstructions("");
+      setShowInstructions(false);
       void utils.drafts.get.invalidate({ draftId: id });
     },
     onError: (err) => toast.error(err.message),
@@ -115,6 +130,21 @@ export default function DraftEditorPage() {
   const linkedInConnector = connectorsList?.find(
     (c) => c.platform === "linkedin" && c.state === "healthy",
   );
+
+  const { data: snapshots } = trpc.drafts.listSnapshots.useQuery(
+    { draftId: id },
+    { refetchInterval: false },
+  );
+
+  const restoreMut = trpc.drafts.restoreSnapshot.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Restored from v${data.fromVersion}`);
+      setDirty(false);
+      void utils.drafts.get.invalidate({ draftId: id });
+      void utils.drafts.listSnapshots.invalidate({ draftId: id });
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   // Sync server data into local state (only when not dirty)
   useEffect(() => {
@@ -301,7 +331,7 @@ export default function DraftEditorPage() {
                   <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
                     {draft?.ideaId && (
                       <button
-                        onClick={() => regenerateMut.mutate({ draftId: id, modelId: regenModelId })}
+                        onClick={() => regenerateMut.mutate({ draftId: id, modelId: regenModelId, customInstructions: instructions || undefined })}
                         disabled={regenerateMut.isPending}
                         style={{ padding: "7px 16px", fontSize: 12, fontWeight: 600, borderRadius: 6, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}
                       >
@@ -438,6 +468,63 @@ export default function DraftEditorPage() {
           )}
         </div>
 
+        {/* Instruction input for regeneration */}
+        {status === "draft" && !generating && content.trim() !== "" && draft.ideaId && (
+          <div style={{ padding: "0 24px", flexShrink: 0 }}>
+            {!showInstructions ? (
+              <button
+                onClick={() => setShowInstructions(true)}
+                style={{
+                  width: "100%",
+                  padding: "8px 16px",
+                  fontSize: 12,
+                  color: "var(--ink-tertiary)",
+                  background: "var(--bg-muted)",
+                  border: "none",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                Add instructions for regeneration...
+              </button>
+            ) : (
+              <div
+                style={{
+                  background: "var(--bg-muted)",
+                  borderRadius: 8,
+                  padding: "8px 16px",
+                }}
+              >
+                <textarea
+                  autoFocus
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setShowInstructions(false);
+                    }
+                  }}
+                  placeholder="e.g. Make shorter, add statistics, rewrite as a thread..."
+                  rows={2}
+                  style={{
+                    width: "100%",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    color: "var(--ink-primary)",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    resize: "none",
+                    padding: 0,
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Bottom action bar */}
         <div
           style={{
@@ -484,6 +571,7 @@ export default function DraftEditorPage() {
                   regenerateMut.mutate({
                     draftId: id,
                     modelId: regenModelId,
+                    customInstructions: instructions || undefined,
                   });
                 }}
                 disabled={regenerateMut.isPending}
@@ -807,6 +895,92 @@ export default function DraftEditorPage() {
             </button>
           </div>
         )}
+
+        {/* Version History */}
+        <div>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: "var(--ink-tertiary)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: 8,
+            }}
+          >
+            Version History
+          </div>
+          {!snapshots || snapshots.length === 0 ? (
+            <p style={{ fontSize: 11, color: "var(--ink-tertiary)", margin: 0 }}>
+              No previous versions
+            </p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {snapshots.map((snap) => (
+                <div
+                  key={snap.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 6,
+                  }}
+                >
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 11, lineHeight: 1.4 }}>
+                      <span style={{ fontWeight: 700, color: "var(--ink-primary)" }}>
+                        v{snap.version}
+                      </span>
+                      <span style={{ color: "var(--ink-tertiary)", margin: "0 4px" }}>·</span>
+                      <span style={{ color: "var(--ink-secondary)" }}>
+                        {getModelLabel(snap.modelId ?? "unknown")}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--ink-tertiary)",
+                        lineHeight: 1.4,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {snap.instructions
+                        ? `"${snap.instructions.length > 40 ? snap.instructions.slice(0, 40) + "..." : snap.instructions}"`
+                        : "Fresh generation"}
+                      <span style={{ margin: "0 4px" }}>·</span>
+                      {relativeTime(snap.createdAt)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() =>
+                      restoreMut.mutate({
+                        draftId: id,
+                        snapshotId: snap.id,
+                      })
+                    }
+                    disabled={restoreMut.isPending}
+                    style={{
+                      flexShrink: 0,
+                      padding: "2px 8px",
+                      fontSize: 10,
+                      fontWeight: 500,
+                      borderRadius: 4,
+                      border: "1px solid var(--border-subtle)",
+                      background: "var(--bg-surface)",
+                      color: "var(--ink-secondary)",
+                      cursor: "pointer",
+                      marginTop: 1,
+                    }}
+                  >
+                    Restore
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </aside>
     </div>
   );

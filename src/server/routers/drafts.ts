@@ -3,7 +3,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { drafts, draftGrades, draftAntiAiHits, ideas } from "@/db/schema";
+import { drafts, draftGrades, draftAntiAiHits, draftSnapshots, ideas } from "@/db/schema";
 import { posts, postResults } from "@/db/schema/publishing";
 import { connectors } from "@/db/schema/connectors";
 import { inngest } from "../inngest/client";
@@ -348,6 +348,7 @@ export const draftsRouter = router({
       z.object({
         draftId: z.string().uuid(),
         modelId: z.string().optional(),
+        customInstructions: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -369,9 +370,30 @@ export const draftsRouter = router({
         });
       }
 
+      const previousContent = draft.content && draft.content.trim() !== ""
+        ? draft.content
+        : undefined;
+
+      if (previousContent) {
+        await db.insert(draftSnapshots).values({
+          draftId: input.draftId,
+          version: draft.version,
+          title: draft.title,
+          content: previousContent,
+          modelId: draft.modelId,
+          instructions: input.customInstructions ?? null,
+        });
+      }
+
       await db
         .update(drafts)
-        .set({ content: "", title: draft.title, status: "draft", modelId: null })
+        .set({
+          content: "",
+          title: draft.title,
+          status: "draft",
+          modelId: null,
+          version: draft.version + 1,
+        })
         .where(eq(drafts.id, input.draftId));
 
       await inngest
@@ -382,11 +404,13 @@ export const draftsRouter = router({
             brandId: draft.brandId,
             workspaceId,
             modelId: input.modelId,
+            customInstructions: input.customInstructions,
+            previousContent,
           }),
         )
         .catch(() => {});
 
-      return { draftId: input.draftId };
+      return { draftId: input.draftId, version: draft.version + 1 };
     }),
 
   create: protectedProcedure
@@ -519,5 +543,84 @@ export const draftsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
       }
       return { deleted: true };
+    }),
+
+  listSnapshots: protectedProcedure
+    .input(z.object({ draftId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+
+      const [draft] = await db
+        .select({ id: drafts.id })
+        .from(drafts)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .limit(1);
+      if (!draft) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      }
+
+      return db
+        .select()
+        .from(draftSnapshots)
+        .where(eq(draftSnapshots.draftId, input.draftId))
+        .orderBy(desc(draftSnapshots.version));
+    }),
+
+  restoreSnapshot: protectedProcedure
+    .input(
+      z.object({
+        draftId: z.string().uuid(),
+        snapshotId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+
+      const [draft] = await db
+        .select()
+        .from(drafts)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .limit(1);
+      if (!draft) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      }
+
+      const [snapshot] = await db
+        .select()
+        .from(draftSnapshots)
+        .where(
+          and(
+            eq(draftSnapshots.id, input.snapshotId),
+            eq(draftSnapshots.draftId, input.draftId),
+          ),
+        )
+        .limit(1);
+      if (!snapshot) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Snapshot not found" });
+      }
+
+      if (draft.content && draft.content.trim() !== "") {
+        await db.insert(draftSnapshots).values({
+          draftId: input.draftId,
+          version: draft.version,
+          title: draft.title,
+          content: draft.content,
+          modelId: draft.modelId,
+          instructions: "Restored from v" + snapshot.version,
+        });
+      }
+
+      await db
+        .update(drafts)
+        .set({
+          title: snapshot.title,
+          content: snapshot.content,
+          modelId: snapshot.modelId,
+          version: draft.version + 1,
+          status: "draft",
+        })
+        .where(eq(drafts.id, input.draftId));
+
+      return { restored: true, fromVersion: snapshot.version };
     }),
 });

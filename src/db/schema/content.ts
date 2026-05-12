@@ -95,3 +95,22 @@ export const draftAntiAiHits = pgTable(
     index("draft_anti_ai_hits_rule_idx").on(t.ruleId),
   ],
 );
+
+export const draftSnapshots = pgTable(
+  "draft_snapshots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    draftId: uuid("draft_id")
+      .notNull()
+      .references(() => drafts.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    title: text("title"),
+    content: text("content").notNull(),
+    modelId: text("model_id"),
+    instructions: text("instructions"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("draft_snapshots_draft_idx").on(t.draftId)],
+);

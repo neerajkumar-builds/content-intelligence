@@ -30,7 +30,7 @@ export const generateDraftFn = inngest.createFunction(
     triggers: [{ event: DraftGenerate }],
   },
   async ({ event, step }) => {
-    const { draftId, ideaId, brandId, workspaceId, modelId, format } = event.data;
+    const { draftId, ideaId, brandId, workspaceId, modelId, format, customInstructions, previousContent } = event.data;
     const traceId = createTraceId();
 
     // Step 1: Fetch idea, brand, latest brief, corpus matches, anti-AI rules
@@ -152,6 +152,10 @@ export const generateDraftFn = inngest.createFunction(
 
       if (!prompt.userPromptTemplate.includes("{format_guidelines}")) {
         userPrompt += `\n\nFORMAT: ${vars.format_guidelines}\nFollow these format guidelines strictly for structure and length.`;
+      }
+
+      if (customInstructions && previousContent) {
+        userPrompt += `\n\n---\nCURRENT DRAFT (to refine):\n${previousContent}\n\nUSER INSTRUCTIONS: ${customInstructions}\n\nRewrite the draft above following these instructions. Maintain the same format and voice.`;
       }
 
       return callLLM({
