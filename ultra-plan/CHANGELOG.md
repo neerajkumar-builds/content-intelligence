@@ -4,7 +4,33 @@
 
 ---
 
-## 2026-05-12 (Session 10 — Sync + Filter + Auto-Generate)
+## 2026-05-12 (Session 10 — Sync + Filter + Auto-Generate + Prompt Studio + Signal Explorer)
+
+### Prompt Studio
+
+- **[FEATURE] Prompts tRPC router** — list, get, update procedures. Workspace-scoped. Seeds default "Draft Generation" prompt on first access. Version increments on save.
+  - Files: `src/server/routers/prompts.ts` (NEW), `src/server/routers/_app.ts`
+
+- **[FEATURE] Prompt Studio page** — Full editor: system prompt textarea + user prompt template textarea (monospace). Variable reference panel (12 variables with descriptions + required flags). Interpolated preview with sample values. Version tracking. Tab selector for future multi-prompt.
+  - Files: `src/app/(app)/prompts/page.tsx` (rewritten from placeholder)
+
+### Signal Explorer
+
+- **[FEATURE] listSignals query** — Paginated signal list with source enum filter, processed boolean filter, total count. Returns truncated body (200 chars). Workspace-scoped.
+  - Files: `src/server/routers/signals.ts`
+
+- **[FEATURE] Signal Explorer page** — Table: source badge, title, body preview, relative date, processed/pending status, source link. Click row → expand full content + metadata JSON. Source filter chips, processed dropdown, pagination (50/page).
+  - Files: `src/app/(app)/signals/page.tsx` (NEW)
+
+- **[NAV] Signals added to sidebar** — Under "Learn" group, before Insights.
+  - Files: `src/components/shell/nav-config.ts`
+
+### Generation UX
+
+- **[FEATURE] Progressive generation loader** — Elapsed timer (seconds), progressive status messages at 0-15s/15-30s/30-60s/60-90s, steps turn green, "Back to Idea Wall" + "Retry now" buttons at 30s.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`
+
+---
 
 ### Manual Sync Button
 

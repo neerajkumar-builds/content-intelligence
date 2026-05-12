@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-12 (Session 10 COMPLETE — 6 commits, +450 lines, production verified)
-> Current phase: Sync + Filter + Auto-generate + Generation UX done. All previous phases intact.
-> Next action: Prompt Studio → Signal Explorer → More RSS sources → Phase 6 (grading, needs Inngest upgrade)
+> Last updated: 2026-05-12 (Session 10 FINAL — 8 commits, +1,100 lines, production verified)
+> Current phase: Sync + Filter + Auto-generate + Generation UX + Prompt Studio + Signal Explorer done.
+> Next action: More RSS sources → Phase 6 (grading, needs Inngest upgrade) → Deep onboarding
 
 ---
 
@@ -44,6 +44,8 @@
 | S10-Fix — Sync webhook, URL auto-prepend, brand name header | DONE | `main` | Session 10 |
 | S10-UX — Progressive generation loader with timer + escape hatch | DONE | `main` | Session 10 |
 | S10-Prod — Inngest resync (3 missing functions), n8n webhook workflow | DONE | `main` + n8n | Session 10 |
+| S10-PromptStudio — Prompt editor (router + full UI page) | DONE | `main` | Session 10 |
+| S10-SignalExplorer — Raw signals table (query + page + nav) | DONE | `main` | Session 10 |
 | 4B — Connector Publishing | IN PROGRESS (LinkedIn adapter done) | `main` | Session 8 |
 | 6 — Drafts + Grading | IN PROGRESS (generation done, grading NOT STARTED) | `main` | Session 8 |
 | 7 — Schedule + Publish | NOT STARTED | — | — |
