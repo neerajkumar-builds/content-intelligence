@@ -18,7 +18,16 @@
 
 ## Results Log
 
-### Session 9B — Config Consolidation + Quick Wins (2026-05-12)
+### Session 9B — All 4 Checkpoints (2026-05-12)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| Checkpoint C (brand brief) | `pnpm build` | PASS | Brand page rewritten, 419 lines |
+| Checkpoint D (regen + versions) | `pnpm build` | PASS | 6 files, 308 additions |
+| draft_snapshots table | Supabase MCP | PASS | Table + index created |
+| Git push (all checkpoints) | `git push` | PASS | 14 commits this session |
+
+### Session 9B Earlier — Config Consolidation + Quick Wins (2026-05-12)
 
 | Task | Command | Result | Notes |
 |------|---------|--------|-------|

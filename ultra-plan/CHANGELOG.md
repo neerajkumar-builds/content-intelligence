@@ -23,6 +23,25 @@
   - Updated: `drafts/[id]/page.tsx`, `drafts/page.tsx`, `generate-popover.tsx`, `generate-draft.ts`, `connectors/page.tsx`
   - Eliminated: CHAR_LIMITS, CHANNEL_LABELS (2 copies), CHANNELS, CHANNEL_FORMATS, FORMAT_GUIDELINES, PLATFORM_DISPLAY (2 copies), OAUTH_READY
 
+### Checkpoint C: Brand Brief Page Wiring
+
+- **[FEATURE] Brand Brief fully wired** — Page was static mockup with hardcoded data. Now queries DB via brief.get/create/list/diff. Edit button opens inline form (4 textareas + changelog). Save creates new version (append-only). Version History tab lists all versions. Diff tab shows field-by-field comparison. Versioning sidebar card dynamic.
+  - Files: `src/app/(app)/brand/page.tsx` (rewritten, +419 lines)
+
+### Checkpoint D: Regenerate with Instructions + Version History
+
+- **[SCHEMA] draft_snapshots table** — Stores previous draft versions on each regeneration. Fields: draftId, version, title, content, modelId, instructions, createdAt. CASCADE delete.
+  - Files: `src/db/schema/content.ts`, `src/db/schema/index.ts`
+
+- **[FEATURE] Regenerate with custom instructions** — Users can type instructions ("make shorter", "add statistics") before regenerating. LLM receives current draft + instructions in REFINE mode. Empty instructions = fresh generation (unchanged behavior).
+  - Files: `src/server/routers/drafts.ts`, `src/server/inngest/events.ts`, `src/server/inngest/functions/generate-draft.ts`
+
+- **[FEATURE] Draft version history** — Each regeneration snapshots current content before clearing. Side panel shows all versions with model, instructions, relative time. Restore button copies old version back (with double-snapshot to preserve current).
+  - Files: `src/app/(app)/drafts/[id]/page.tsx` (+176 lines), `src/server/routers/drafts.ts` (listSnapshots + restoreSnapshot)
+
+- **[UI] Instruction input** — Collapsible text area above action bar. "Add instructions for regeneration..." placeholder. Escape to collapse. Cleared on successful regeneration.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`
+
 ### Earlier Session 9 (Generate Popover + Bug Fixes)
 
 - **[FEATURE] Generate Popover** — Channel + format + model selection when clicking Generate on Idea Wall. 6 channels, format per channel, model selector. Format stored on draft and passed to LLM prompt.

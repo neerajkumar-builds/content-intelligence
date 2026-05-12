@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-12 (Session 9B — Config Consolidation + Generate Popover + Bug Fixes)
-> Current phase: Config consolidated. Generate Popover shipped. Dedup improved. Brand Brief wiring next.
-> Next action: Checkpoint C (Brand Brief wiring + auto-generate) → Checkpoint D (Regenerate + versions)
+> Last updated: 2026-05-12 (Session 9B — All 4 Checkpoints DONE)
+> Current phase: Checkpoints A-D complete. 14 commits this session.
+> Next action: Brand Brief auto-generate (C6) → Prompt Studio → Signal Explorer (future sessions)
 
 ---
 
@@ -34,6 +34,8 @@
 | S9-Limits — Verified char limits against official API docs | DONE | `main` | Session 9 |
 | S9-CkptA — Source link on IdeaCard + dedupScore for near-misses | DONE | `main` | Session 9B |
 | S9-CkptB — Config consolidation (3 config files, 5 consumers updated) | DONE | `main` | Session 9B |
+| S9-CkptC — Brand Brief page wired (edit, version history, diff) | DONE | `main` | Session 9B |
+| S9-CkptD — Regenerate with instructions + draft version snapshots | DONE | `main` | Session 9B |
 | 4B — Connector Publishing | IN PROGRESS (LinkedIn adapter done) | `main` | Session 8 |
 | 6 — Drafts + Grading | IN PROGRESS (generation done, grading NOT STARTED) | `main` | Session 8 |
 | 7 — Schedule + Publish | NOT STARTED | — | — |

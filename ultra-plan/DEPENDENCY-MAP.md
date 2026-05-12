@@ -18,6 +18,15 @@
   - `connectors/page.tsx` → `PLATFORMS`, `getOAuthReadyPlatforms`
 - **Adding a new platform:** Edit ONLY `src/lib/config/platforms.ts` + optionally `display.ts`
 
+### Checkpoint C+D Changes
+- `brand/page.tsx` now queries `trpc.brand.list` + `trpc.brief.get/create/list/diff` — depends on brief.ts + brand.ts routers
+- `content.ts` has new `draftSnapshots` table — exported via `schema/index.ts`
+- `drafts.ts` router: `regenerate` mutation now snapshots before clearing, accepts `customInstructions`
+- `drafts.ts` router: new `listSnapshots` + `restoreSnapshot` queries
+- `events.ts`: DraftGenerate event has `customInstructions` + `previousContent` fields
+- `generate-draft.ts`: REFINE mode appends previous content + instructions to prompt
+- `drafts/[id]/page.tsx`: instruction input + version history section in side panel
+
 ### Session 9 Changes (earlier)
 - `content.ts:drafts` has `modelId` + `format` columns
 - `ideas.ts:list` imports `drafts` + `inArray` — returns `latestDraft` per item
