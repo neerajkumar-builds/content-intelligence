@@ -202,8 +202,8 @@ export const CHARACTER_LIMITS: Record<Platform, CharacterLimit> = {
   },
   [Platform.YouTube]: {
     platform: Platform.YouTube,
-    textField: "title",
-    maxCharacters: 100,
+    textField: "description",
+    maxCharacters: 5_000,
     maxBytes: null,
     maxGraphemes: null,
     premiumLimit: null,
@@ -211,10 +211,10 @@ export const CHARACTER_LIMITS: Record<Platform, CharacterLimit> = {
   [Platform.Reddit]: {
     platform: Platform.Reddit,
     textField: "selftext",
-    maxCharacters: null,
+    maxCharacters: 40_000,
     maxBytes: null,
     maxGraphemes: null,
-    premiumLimit: null,
+    premiumLimit: 80_000,
   },
   [Platform.Bluesky]: {
     platform: Platform.Bluesky,

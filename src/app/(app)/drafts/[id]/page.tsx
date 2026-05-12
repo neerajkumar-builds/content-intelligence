@@ -17,12 +17,17 @@ function ProviderDot({ provider }: { provider: string }) {
 const CHAR_LIMITS: Record<string, number> = {
   linkedin: 3000,
   twitter: 280,
-  threads: 500,
-  bluesky: 300,
   instagram: 2200,
+  threads: 500,
+  tiktok: 2200,
+  youtube: 5000,
+  reddit: 40000,
+  bluesky: 300,
+  facebook: 63206,
+  pinterest: 500,
+  mastodon: 500,
   newsletter: 10000,
   blog: 15000,
-  facebook: 63206,
 };
 
 const CHANNEL_LABELS: Record<string, string> = {
