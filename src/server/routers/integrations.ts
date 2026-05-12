@@ -112,7 +112,10 @@ export const integrationsRouter = router({
     }),
 
   testConnection: protectedProcedure
-    .input(z.object({ integrationType: integrationTypeSchema }))
+    .input(z.object({
+      integrationType: integrationTypeSchema,
+      folderId: z.string().optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const { db, scopeAnd } = ctx.scoped;
 
@@ -149,7 +152,8 @@ export const integrationsRouter = router({
 
       if (input.integrationType === "google_drive") {
         const folderId =
-          (integration.config as Record<string, unknown>).folderId as string ||
+          input.folderId ||
+          (integration?.config as Record<string, unknown>)?.folderId as string ||
           process.env.GOOGLE_DRIVE_FOLDER_ID ||
           "";
         if (!folderId) {

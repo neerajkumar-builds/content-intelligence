@@ -123,7 +123,7 @@ export default function SettingsPage() {
   function handleDriveTest() {
     setDriveTestResult(null);
     driveTestMut.mutate(
-      { integrationType: "google_drive" },
+      { integrationType: "google_drive", folderId: driveFolderId },
       {
         onSuccess: (result) => {
           const folderName = (result as unknown as { folderName?: string }).folderName;
