@@ -86,11 +86,14 @@ export default function BrandBriefPage() {
     if (brands?.[0]?.websiteUrl) setWebsiteUrl(brands[0].websiteUrl);
   }, [brands]);
 
+  const updateBrand = trpc.brand.update.useMutation();
+
   function handleAutoGenerate() {
     if (!brandId || !websiteUrl) return;
     let url = websiteUrl.trim();
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
     setWebsiteUrl(url);
+    updateBrand.mutate({ brandId, data: { websiteUrl: url } });
     autoGenMut.mutate({ brandId, websiteUrl: url });
   }
 
@@ -209,7 +212,21 @@ export default function BrandBriefPage() {
       {/* Header */}
       <div style={{ padding: "20px 28px 8px", borderBottom: "1px solid var(--border-subtle)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, position: "sticky", top: 0, background: "var(--bg-canvas)", zIndex: 5 }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, margin: 0, letterSpacing: "-0.012em" }}>Brand brief</h1>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 600, margin: 0, letterSpacing: "-0.012em" }}>
+              {brands?.[0]?.name ?? "Brand brief"}
+            </h1>
+            {brands?.[0]?.websiteUrl && (
+              <a
+                href={brands[0].websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 11.5, color: "var(--ink-tertiary)", fontFamily: "var(--font-mono)", textDecoration: "none" }}
+              >
+                {brands[0].websiteUrl.replace(/^https?:\/\//, "")} ↗
+              </a>
+            )}
+          </div>
           <p style={{ fontSize: 12.5, color: "var(--ink-secondary)", margin: "3px 0 12px", maxWidth: 720 }}>
             The single source of truth that feeds every prompt. Versioned, diff-able, embedded into voice scoring.
           </p>
