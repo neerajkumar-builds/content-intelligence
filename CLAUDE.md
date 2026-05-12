@@ -57,9 +57,10 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **PRODUCT PIVOT (May 12, 2026):** Eliminate native social publishing/scheduling. Focus on "first 100 miles" — research, create, approve. Output via Google Drive + Slack. CI paused while Meeting Intelligence ships. See `memory/project_pivot_2026_05_12.md`.
 - **Luke's Positioning Agent (May 13):** Brand Brief must evolve into 11-section Positioning Guide (pillars, benefits, tone, phrases, audience language). Signals → Market Analysis → Positioning Statement → Guide → feeds ALL content. See `memory/reference_positioning_agent.md`.
 - **Existing n8n workflows analyzed:** Social Listening V2 (8 Sheets tabs, 5 audience segments) + Blog Generator (topics → Gemini Pro → Google Docs → Slack). See `memory/reference_existing_workflows.md`.
-- **Next (when CI resumes):** Module 1 (complete output loop: Drive + Slack) → Module 2 (signal intelligence: multi-platform, competitors, leaders) → Module 3 (content excellence + positioning guide upgrade) → Module 4 (SEO/AEO) → Module 5 (polish)
+- **Session 11 — MODULE 1 COMPLETE (6 commits, +2,200 lines):** Core Loop done. Approved drafts export to Google Drive + Slack. New: workspace_integrations table (encrypted secrets), draft_exports table (idempotency keys), export-draft Inngest function (replaces verify-post), integrations router (13th), Settings > Integrations page, Home dashboard (stats + approvals + exports + actions), export buttons on draft editor, export badges on drafts list.
+- **Next:** Module 2 (signal intelligence: multi-platform, competitors, leaders) → Module 3 (content excellence + positioning guide upgrade) → Module 4 (SEO/AEO) → Module 5 (polish)
 - **Full roadmap:** See plan file `~/.claude/plans/unified-sniffing-island.md` — 5 modules, depth-first
-- **Schema now:** 30 tables. brands.websiteUrl added. 12 routers. 24 routes. 6 Inngest functions.
+- **Schema now:** 31 tables. 13 routers. 30+ routes. 6 Inngest functions (export-draft replaced verify-post).
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
@@ -132,7 +133,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Dev prompts | `design_handoff_content_intelligence_agent/DEV_PROMPTS.md` |
 | Design tokens | `design_handoff_content_intelligence_agent/app/tokens.css` |
 | Connectors spec (prototype) | `design_handoff_content_intelligence_agent/app/screens/govern.jsx` |
-| Drizzle schema (LIVE) | `src/db/schema/*.ts` (9 files, 28 tables) |
+| Drizzle schema (LIVE) | `src/db/schema/*.ts` (10 files, 31 tables) |
 | DB client | `src/db/index.ts` (postgres-js, prepare: false) |
 | Drizzle config | `drizzle.config.ts` |
 | Migration SQL | `drizzle/0000_great_jocasta.sql` |
@@ -166,7 +167,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Default anti-AI rules (62) | `src/lib/rules/default-rules.ts` |
 | Voice style templates | `src/components/onboarding/voice-templates.ts` |
 | Inngest client + events | `src/server/inngest/client.ts`, `events.ts` |
-| Inngest functions (6, AT FREE PLAN LIMIT) | `src/server/inngest/functions/*.ts` (corpus-backfill, corpus-embed-item, process-signal, publish-post, verify-post, generate-draft) |
+| Inngest functions (6, AT FREE PLAN LIMIT) | `src/server/inngest/functions/*.ts` (corpus-backfill, corpus-embed-item, process-signal, publish-post, export-draft, generate-draft) |
 | Inngest serve route | `src/app/api/inngest/route.ts` |
 | Gemini embedding utility | `src/lib/ai/embed.ts` (gemini-embedding-001, 3072 dims, glass-box) |
 | n8n webhook endpoint | `src/app/api/webhooks/n8n/route.ts` (HMAC-SHA256) |
@@ -177,7 +178,14 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 | Adapter registry | `src/lib/connectors/registry.ts` (getAdapter/registerAdapter) |
 | LinkedIn publishing adapter | `src/lib/connectors/adapters/linkedin.ts` (publish/verify/delete/refresh/healthProbe) |
 | Inngest publish function | `src/server/inngest/functions/publish-post.ts` (10-step pipeline + token decrypt/refresh) |
-| Inngest verify function | `src/server/inngest/functions/verify-post.ts` (ghost detection) |
+| Inngest verify function | `src/server/inngest/functions/verify-post.ts` (ghost detection — UNREGISTERED, code preserved) |
+| Inngest export function | `src/server/inngest/functions/export-draft.ts` (Drive + Slack export, replaces verify-post) |
+| Google Drive utility | `src/lib/integrations/google-drive.ts` (createGoogleDoc, testDriveConnection) |
+| Slack utility | `src/lib/integrations/slack.ts` (sendSlackNotification, testSlackConnection, SSRF validation) |
+| Integrations router | `src/server/routers/integrations.ts` (config CRUD, test connection, list exports) |
+| Integrations schema | `src/db/schema/integrations.ts` (workspace_integrations + draft_exports) |
+| Settings page | `src/app/(app)/settings/page.tsx` (Drive + Slack integration config) |
+| Home dashboard | `src/app/(app)/page.tsx` (stats, approvals, exports, quick actions) |
 | Inngest generate-draft function | `src/server/inngest/functions/generate-draft.ts` (5-step: context→prompt→LLM→save) |
 | LLM generation utility | `src/lib/ai/generate.ts` (Gemini 2.0 Flash, glass-box, structured JSON output — single-provider, superseded by llm-router) |
 | LLM Router | `src/lib/ai/llm-router.ts` (Google AI + Anthropic + OpenRouter, routes by modelId, glass-box) |

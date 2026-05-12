@@ -4,6 +4,37 @@
 
 ---
 
+## 2026-05-13 (Session 11 — Module 1: Complete Core Loop)
+
+- **[SCHEMA] workspace_integrations + draft_exports tables** — Per-workspace integration config with encrypted secrets (AES-256-GCM). Export tracking with idempotency keys, ON DELETE SET NULL for audit trail.
+  - Files: `src/db/schema/integrations.ts` (NEW), `src/db/schema/index.ts`
+  - Migration: Supabase MCP `apply_migration`. 31 CI tables now (was 29).
+
+- **[INNGEST] export-draft function replaces verify-post** — Handles Drive + Slack exports via Inngest steps. Workspace-scoped concurrency (S3), defensive workspace checks (S4), idempotency guard (D1), NonRetriableError for deleted drafts (D2), onFailure handler (D6).
+  - Files: `src/server/inngest/functions/export-draft.ts` (NEW), `src/server/inngest/functions/index.ts`, `src/server/inngest/events.ts`
+
+- **[UTILITIES] Google Drive + Slack integration** — `createGoogleDoc` (Google Docs API with formatting), `sendSlackNotification` (Block Kit messages, 2900 char truncation), `testDriveConnection`, `testSlackConnection`, SSRF validation for webhook URLs.
+  - Files: `src/lib/integrations/google-drive.ts` (NEW), `src/lib/integrations/slack.ts` (NEW)
+
+- **[API] Integrations router (13th) + export mutations** — Config CRUD with encrypted secrets, test connection, export list. Draft mutations: exportToDrive, sendToSlack, getExportStatus, listDraftExports. Dashboard queries: countByStatus, countRecent, listRecent.
+  - Files: `src/server/routers/integrations.ts` (NEW), `src/server/routers/drafts.ts`, `src/server/routers/ideas.ts`, `src/server/routers/signals.ts`, `src/server/routers/_app.ts`
+
+- **[UI] Draft editor export buttons** — Export to Drive + Send to Slack replace LinkedIn publish button. Integration readiness check, export status polling, export history section.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx`
+
+- **[UI] Settings > Integrations page** — Google Drive card (folder ID, test connection) + Slack card (webhook URL masked, test message). Replace placeholder.
+  - Files: `src/app/(app)/settings/page.tsx`
+
+- **[UI] Home dashboard** — Stats row (ideas, approved, exports, signals), pending approvals list with quick-approve, recent exports feed, quick actions (sync, view ideas/drafts). Skeleton loaders, empty states.
+  - Files: `src/app/(app)/page.tsx`
+
+- **[UI] Export badges on drafts list** — Small Drive/Slack icons on exported drafts.
+  - Files: `src/app/(app)/drafts/page.tsx`
+
+- **[PACKAGE] googleapis 171.4.0 added** — Google Drive + Google Docs API.
+
+---
+
 ## 2026-05-13 (Session 10 — Strategic Planning)
 
 - **[PIVOT] Product direction changed** — Eliminate native social publishing/scheduling. Focus on "first 100 miles": research, create, approve. Output via Google Drive + Slack. CI paused for Meeting Intelligence.
