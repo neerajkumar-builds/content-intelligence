@@ -139,7 +139,9 @@ export default function SettingsPage() {
   }
 
   function handleSlackSave() {
-    const secret = slackWebhookUrl === "********" ? undefined : slackWebhookUrl;
+    const secret = slackWebhookUrl === "********" || slackWebhookUrl === ""
+      ? undefined
+      : slackWebhookUrl;
     slackUpdateMut.mutate({
       integrationType: "slack",
       secret,
@@ -149,8 +151,9 @@ export default function SettingsPage() {
   }
 
   function handleSlackTest() {
+    const webhookUrl = slackWebhookUrl !== "********" && slackWebhookUrl ? slackWebhookUrl : undefined;
     slackTestMut.mutate(
-      { integrationType: "slack" },
+      { integrationType: "slack", webhookUrl },
       {
         onSuccess: () => toast.success("Test message sent to Slack"),
         onError: (err) => toast.error(err.message),

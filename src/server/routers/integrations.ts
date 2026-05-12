@@ -31,7 +31,8 @@ export const integrationsRouter = router({
 
       const hasDbSecret = !!row.encryptedSecret;
       const hasEnvSecret =
-        input.integrationType === "google_drive" && !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+        (input.integrationType === "google_drive" && !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) ||
+        (input.integrationType === "slack" && !!process.env.SLACK_WEBHOOK_URL);
 
       return {
         id: row.id,
@@ -65,7 +66,7 @@ export const integrationsRouter = router({
         }
       }
 
-      const encryptedSecret = input.secret
+      const encryptedSecret = input.secret && input.secret.trim().length > 0
         ? encryptToken(input.secret).ciphertext
         : undefined;
 
@@ -115,6 +116,7 @@ export const integrationsRouter = router({
     .input(z.object({
       integrationType: integrationTypeSchema,
       folderId: z.string().optional(),
+      webhookUrl: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { db, scopeAnd } = ctx.scoped;
@@ -166,7 +168,14 @@ export const integrationsRouter = router({
       }
 
       if (input.integrationType === "slack") {
-        return testSlackConnection(secret);
+        const webhookUrl = input.webhookUrl || secret;
+        if (!webhookUrl) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Slack webhook URL not configured",
+          });
+        }
+        return testSlackConnection(webhookUrl);
       }
 
       throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown integration type" });
