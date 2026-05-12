@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type StatusFilter = "all" | "draft" | "approved" | "live" | "failed";
 
@@ -58,6 +59,8 @@ export default function DraftsPage() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   const items = data?.items ?? [];
 
@@ -293,9 +296,7 @@ export default function DraftsPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Delete "${draft.title || "this draft"}"?`)) {
-                        deleteMut.mutate({ draftId: draft.id });
-                      }
+                      setDeleteTarget({ id: draft.id, title: draft.title || "Untitled draft" });
                     }}
                     style={{ fontSize: 11, color: "#ef4444", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}
                   >
@@ -307,6 +308,21 @@ export default function DraftsPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete draft"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteMut.mutate({ draftId: deleteTarget.id });
+          }
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

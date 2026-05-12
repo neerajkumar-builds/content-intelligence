@@ -4,6 +4,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { AddSourceDialog } from "./add-source-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface EditingState {
   id: string;
@@ -14,6 +15,7 @@ interface EditingState {
 export function SourceRail() {
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<EditingState | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
   const { data: sources } = trpc.signals.listSources.useQuery();
   const utils = trpc.useUtils();
 
@@ -209,11 +211,7 @@ export function SourceRail() {
                           Edit
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(`Remove "${s.label}"?`)) {
-                              deleteMut.mutate({ sourceId: s.id });
-                            }
-                          }}
+                          onClick={() => setDeleteTarget({ id: s.id, label: s.label })}}
                           style={{ fontSize: 10, color: "#ef4444", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}
                         >
                           Remove
@@ -252,6 +250,18 @@ export function SourceRail() {
       </div>
 
       <AddSourceDialog open={showAdd} onClose={() => setShowAdd(false)} />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Remove source"
+        message={`Remove "${deleteTarget?.label}" from your signal sources? New signals from this source will stop being fetched.`}
+        confirmLabel="Remove"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) deleteMut.mutate({ sourceId: deleteTarget.id });
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </>
   );
 }
