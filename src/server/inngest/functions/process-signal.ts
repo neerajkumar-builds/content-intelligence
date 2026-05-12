@@ -125,6 +125,7 @@ export const processSignalFn = inngest.createFunction(
 
       if (isDuplicate) continue;
 
+      const isNearDuplicate = topDup && Number(topDup.similarity) > 0.70;
       const meta = signal.metadata as Record<string, unknown>;
       const freshness = computeFreshness(meta);
       const hotScore = computeHotScore(meta, freshness);
@@ -151,6 +152,8 @@ export const processSignalFn = inngest.createFunction(
             formats: inferFormats(signal.source, signal.body.length),
             tags: Array.isArray(meta.tags) ? (meta.tags as string[]) : [],
             score: String(score),
+            dedupScore: isNearDuplicate ? String(Number(topDup!.similarity).toFixed(4)) : null,
+            dedupPriorId: isNearDuplicate ? topDup!.id : null,
           })
           .returning({ id: ideas.id });
         createdIdeas.push(idea.id);
