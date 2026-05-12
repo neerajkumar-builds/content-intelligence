@@ -4,6 +4,43 @@
 
 ---
 
+## 2026-05-12 (Session 9 — UX Bug Fixes)
+
+### Fix: Model Display Bug
+- **[FIX] Added `model_id` column to drafts table** — Nullable text column. Stores actual model used by LLM router (not requested model, which may differ due to fallback). Migration applied via Supabase.
+  - Files: `src/db/schema/content.ts` (+1 line), `drizzle/0002_silly_magma.sql` (new)
+  - Impact: Glass-box principle — draft now records exactly which model generated it
+
+- **[FIX] generate-draft stores actual model** — Clean destructuring of `modelId` from event data (removed type assertion hack). Saves `generation.model` (from LLMResult) to draft row after LLM call.
+  - Files: `src/server/inngest/functions/generate-draft.ts` (3 changes)
+  - Impact: New drafts will have `model_id` populated; old drafts remain null
+
+- **[FIX] Draft editor reads model from draft data** — Loader and side panel now show `draft.modelId` with fallback to `regenModelId` (localStorage). During generation, shows selected model; after completion, shows actual model.
+  - Files: `src/app/(app)/drafts/[id]/page.tsx` (4 changes)
+
+- **[FIX] Regenerate clears modelId** — `drafts.regenerate` mutation now sets `modelId: null` to prevent stale model from persisting during new generation.
+  - Files: `src/server/routers/drafts.ts` (1 change)
+
+### Fix: Idea Wall Draft Status Indicators
+- **[FEATURE] ideas.list enriches with draft status** — After fetching ideas, second query gets latest draft per idea via `IN` clause. Returns `latestDraft: { draftId, draftStatus } | null` per item.
+  - Files: `src/server/routers/ideas.ts` (+30 lines)
+  - Impact: Frontend can show draft state without additional queries
+
+- **[FEATURE] IdeaCard shows status badge + View Draft** — Status badge (color-coded: Draft/Approved/Live/Failed) between meta row and hook. "Generate" button changes to "View Draft" when draft exists.
+  - Files: `src/components/ideas/idea-card.tsx` (+55 lines)
+
+- **[FIX] ideas.list cache invalidated after generate** — `generateMut.onSuccess` now calls `utils.ideas.list.invalidate()`. Prevents stale cache when navigating back from draft editor.
+  - Files: `src/app/(app)/ideas/page.tsx` (+1 line)
+
+### UI Polish
+- **[UI] SourceRail Edit/Remove icons** — Replaced text links with pencil and trash SVG icons. Cleaner visual density.
+  - Files: `src/components/ideas/source-rail.tsx` (1 change)
+
+- **[FIX] localStorage model validation** — Ideas page and draft editor now validate saved model ID against known MODELS list. Removes stale/invalid IDs.
+  - Files: `src/app/(app)/ideas/page.tsx`, `src/app/(app)/drafts/[id]/page.tsx`
+
+---
+
 ## 2026-05-12 (Session 8)
 
 ### Checkpoint 1: Publishing Foundation

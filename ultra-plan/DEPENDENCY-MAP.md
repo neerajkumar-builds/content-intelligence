@@ -4,6 +4,13 @@
 
 ---
 
+## Session 9 Changes
+
+- `content.ts:drafts` now has `modelId` column — `generate-draft.ts` writes it, `drafts/[id]/page.tsx` reads it
+- `ideas.ts:list` now imports `drafts` and `inArray` from drizzle-orm — returns `latestDraft` per item
+- `idea-card.tsx` now accepts `latestDraft` and `onViewDraft` props — Ideas page must pass them
+- `source-rail.tsx` Edit/Remove changed from text to icons — no dependency change
+
 ## Schema Dependencies (change cascades downward)
 
 ```
@@ -12,7 +19,7 @@ enums.ts
   ├── brands.ts (uses severity, ruleCategory)
   ├── connectors.ts (uses connectorState, tier)
   ├── signals.ts (uses signalSource)
-  ├── content.ts (uses postStatus, severity)
+  ├── content.ts (uses postStatus, severity) — NEW: drafts.modelId
   ├── publishing.ts (uses postStatus)
   ├── ai.ts (uses aiTaskType)
   └── ops.ts (uses exportFormat, exportStatus)

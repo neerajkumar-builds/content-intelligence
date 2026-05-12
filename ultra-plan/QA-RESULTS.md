@@ -18,6 +18,14 @@
 
 ## Results Log
 
+### Session 9 — UX Bug Fixes (2026-05-12)
+
+| Task | Command | Result | Notes |
+|------|---------|--------|-------|
+| Schema + all code changes | `pnpm build` | PASS | 23 routes, zero type errors |
+| model_id column | Supabase `ALTER TABLE` | PASS | Confirmed via information_schema |
+| Git push | `git push origin main` | PASS | Commit 995968b, Vercel deploy triggered |
+
 ### 2026-05-12 (Session 8)
 
 | Task | Command | Result | Notes |

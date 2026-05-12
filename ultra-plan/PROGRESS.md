@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-12 (Session 8 — Multi-Model LLM Router + UI Polish)
-> Current phase: Multi-Model Router DONE. Vertical Slice DONE. UI Polish DONE.
-> Next action: Prompt Studio UI → LinkedIn E2E publish test (production) → Phase 6 (7-dim grading) → Custom model picker improvements
+> Last updated: 2026-05-12 (Session 9 — UX Bug Fixes + Draft Status Indicators)
+> Current phase: Session 8 bugs FIXED. Draft status on Idea Wall DONE.
+> Next action: Prompt Studio UI → LinkedIn E2E publish test (production) → Phase 6 (7-dim grading)
 
 ---
 
@@ -29,6 +29,7 @@
 | VS — Vertical Slice (Idea→Draft→LinkedIn publish, end-to-end) | DONE | `main` | Session 8 |
 | Multi-Model — LLM Router (3 providers, 5 models, custom picker) | DONE | `main` | Session 8 |
 | UI Polish — Lora font, stuck draft timeout, channel labels, loader, title wrap | DONE | `main` | Session 8 |
+| S9-Fix — Model display bug + Idea Wall draft status + SourceRail icons | DONE | `main` | Session 9 |
 | 4B — Connector Publishing | IN PROGRESS (LinkedIn adapter done) | `main` | Session 8 |
 | 6 — Drafts + Grading | IN PROGRESS (generation done, grading NOT STARTED) | `main` | Session 8 |
 | 7 — Schedule + Publish | NOT STARTED | — | — |
