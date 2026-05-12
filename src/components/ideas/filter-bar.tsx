@@ -10,9 +10,10 @@ const SOURCES = [
 ];
 
 const SORTS = [
-  { id: "hot", label: "Sort: Hot" },
+  { id: "relevance", label: "Sort: Relevance" },
+  { id: "fresh", label: "Sort: Newest" },
   { id: "icp", label: "Sort: ICP fit" },
-  { id: "fresh", label: "Sort: Freshest" },
+  { id: "hot", label: "Sort: Trending" },
 ];
 
 export function FilterBar({

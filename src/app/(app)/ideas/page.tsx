@@ -9,7 +9,7 @@ import { SourceRail } from "@/components/ideas/source-rail";
 import { FilterBar } from "@/components/ideas/filter-bar";
 export default function IdeaWallPage() {
   const [filter, setFilter] = useState("all");
-  const [sort, setSort] = useState<"hot" | "icp" | "fresh">("hot");
+  const [sort, setSort] = useState<"relevance" | "hot" | "icp" | "fresh">("relevance");
 
   const router = useRouter();
   const utils = trpc.useUtils();

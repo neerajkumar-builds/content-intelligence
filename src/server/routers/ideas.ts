@@ -12,7 +12,7 @@ export const ideasRouter = router({
         .object({
           brandId: z.string().uuid().optional(),
           source: z.string().optional(),
-          sort: z.enum(["icp", "hot", "fresh"]).default("hot"),
+          sort: z.enum(["relevance", "icp", "hot", "fresh"]).default("relevance"),
           limit: z.number().int().min(1).max(100).default(20),
           cursor: z.string().uuid().optional(),
         })
@@ -30,8 +30,10 @@ export const ideasRouter = router({
         input?.sort === "icp"
           ? desc(ideas.icpFit)
           : input?.sort === "fresh"
-            ? desc(ideas.createdAt)
-            : desc(ideas.hotScore);
+            ? desc(ideas.publishedAt)
+            : input?.sort === "hot"
+              ? desc(ideas.hotScore)
+              : desc(ideas.score);
 
       const rows = await db
         .select()
