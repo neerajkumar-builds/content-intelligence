@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-12 (Session 10 — 3 features, +377 lines)
-> Current phase: Sync + Filter + Auto-generate done. All previous phases intact.
-> Next action: Prompt Studio → Signal Explorer → Phase 6 (grading) → More RSS sources
+> Last updated: 2026-05-12 (Session 10 COMPLETE — 6 commits, +450 lines, production verified)
+> Current phase: Sync + Filter + Auto-generate + Generation UX done. All previous phases intact.
+> Next action: Prompt Studio → Signal Explorer → More RSS sources → Phase 6 (grading, needs Inngest upgrade)
 
 ---
 
@@ -41,6 +41,9 @@
 | S10-Sync — Manual sync button (n8n trigger from UI) | DONE | `main` | Session 10 |
 | S10-Filter — Date range filter on Idea Wall | DONE | `main` | Session 10 |
 | S10-AutoGen — Brand Brief auto-generate from website (LLM) | DONE | `main` | Session 10 |
+| S10-Fix — Sync webhook, URL auto-prepend, brand name header | DONE | `main` | Session 10 |
+| S10-UX — Progressive generation loader with timer + escape hatch | DONE | `main` | Session 10 |
+| S10-Prod — Inngest resync (3 missing functions), n8n webhook workflow | DONE | `main` + n8n | Session 10 |
 | 4B — Connector Publishing | IN PROGRESS (LinkedIn adapter done) | `main` | Session 8 |
 | 6 — Drafts + Grading | IN PROGRESS (generation done, grading NOT STARTED) | `main` | Session 8 |
 | 7 — Schedule + Publish | NOT STARTED | — | — |

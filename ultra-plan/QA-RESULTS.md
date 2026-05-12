@@ -28,6 +28,17 @@
 | Self-review fixes (date SQL, entity regex, traceId) | `pnpm build` | PASS | 3 fixes applied |
 | Schema migration (brands.website_url) | postgres-js direct SQL | PASS | Column added IF NOT EXISTS |
 | drizzle-kit push | BLOCKED | SKIP | Would DELETE 7 tables from other project sharing DB. Used direct SQL instead. |
+| Sync button fix (webhook approach) | `pnpm build` | PASS | n8n REST API 405 → webhook wrapper workflow |
+| URL auto-prepend + brand name header | `pnpm build` | PASS | 1 file |
+| Progressive generation loader | `pnpm build` | PASS | Timer, progressive messages, escape hatch |
+| Full push (6 commits) | `git push` | PASS | All on main, Vercel deploying |
+| **Production E2E: Sync button** | Click Sync on prod | PASS | Webhook triggers n8n Signal Harvester |
+| **Production E2E: Date filter** | Set dates on prod | PASS | Ideas filter correctly, Clear resets |
+| **Production E2E: Auto-generate brief** | Enter URL on prod | PASS | Gemini Flash, 1331 tokens, $0.020, fields pre-fill |
+| **Production E2E: Draft generation** | Generate from Idea Wall | PASS | After Inngest resync — 6/6 functions registered |
+| **Production E2E: Generation UX** | Watch loader on prod | PASS | Timer counts, steps green, messages progress |
+| Inngest resync | Manual resync dashboard | PASS | 3→6 functions. generate-draft, publish-post, verify-post restored |
+| n8n webhook workflow | Created + activated | PASS | qKxPjg3Cl2VetQ51, /webhook/ci-manual-sync |
 | Full commit (9 files, +377 lines) | `git commit` | PASS | f83eeb5 |
 
 ### Session 9 Final (2026-05-12)

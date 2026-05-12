@@ -7,9 +7,11 @@
 ## Session 10 Changes
 
 ### Manual sync button
-- `src/server/routers/signals.ts:triggerSync` — calls n8n REST API
-  - Depends: `N8N_API_KEY`, `N8N_INSTANCE_URL` env vars
-  - Depends: n8n workflow `qrnItYAUlVcgchZO` being active
+- `src/server/routers/signals.ts:triggerSync` — calls n8n webhook (NOT REST API — 405)
+  - Depends: `N8N_INSTANCE_URL` env var (or `N8N_SYNC_WEBHOOK_URL` override)
+  - Depends: n8n webhook workflow `qKxPjg3Cl2VetQ51` being active
+  - Webhook URL: `{N8N_INSTANCE_URL}/webhook/ci-manual-sync`
+  - n8n wrapper triggers main Signal Harvester `qrnItYAUlVcgchZO` via Execute Sub-workflow
 - `src/components/ideas/source-rail.tsx` — sync button UI
   - Depends: `trpc.signals.triggerSync` mutation
 
