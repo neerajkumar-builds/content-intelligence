@@ -11,6 +11,7 @@ import { auditRouter } from "./audit";
 import { onboardingRouter } from "./onboarding";
 import { signalsRouter } from "./signals";
 import { promptsRouter } from "./prompts";
+import { integrationsRouter } from "./integrations";
 
 export const appRouter = router({
   brand: brandRouter,
@@ -25,6 +26,7 @@ export const appRouter = router({
   onboarding: onboardingRouter,
   signals: signalsRouter,
   prompts: promptsRouter,
+  integrations: integrationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

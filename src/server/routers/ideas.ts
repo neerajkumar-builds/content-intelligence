@@ -176,4 +176,25 @@ export const ideasRouter = router({
         .returning();
       return idea;
     }),
+
+  countByStatus: protectedProcedure.query(async ({ ctx }) => {
+    const { db, workspaceId } = ctx.scoped;
+
+    const rows = await db
+      .select({
+        total: sql<number>`count(*)::int`,
+      })
+      .from(ideas)
+      .where(eq(ideas.workspaceId, workspaceId));
+
+    const draftRows = await db
+      .select({ count: sql<number>`count(DISTINCT ${drafts.ideaId})::int` })
+      .from(drafts)
+      .where(eq(drafts.workspaceId, workspaceId));
+
+    return {
+      total: rows[0]?.total ?? 0,
+      withDrafts: draftRows[0]?.count ?? 0,
+    };
+  }),
 });

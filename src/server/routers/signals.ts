@@ -341,4 +341,25 @@ export const signalsRouter = router({
       });
     }
   }),
+
+  countRecent: protectedProcedure.query(async ({ ctx }) => {
+    const { db, workspaceId } = ctx.scoped;
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const rows = await db
+      .select({
+        count: sql<number>`count(*)::int`,
+      })
+      .from(signals)
+      .where(
+        and(
+          eq(signals.workspaceId, workspaceId),
+          sql`${signals.createdAt} >= ${sevenDaysAgo.toISOString()}::timestamptz`,
+        ),
+      );
+
+    return rows[0]?.count ?? 0;
+  }),
 });

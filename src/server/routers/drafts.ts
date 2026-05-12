@@ -1,13 +1,13 @@
 import { z } from "zod";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
-import { drafts, draftGrades, draftAntiAiHits, draftSnapshots, ideas } from "@/db/schema";
+import { drafts, draftGrades, draftAntiAiHits, draftSnapshots, ideas, draftExports, workspaceIntegrations } from "@/db/schema";
 import { posts, postResults } from "@/db/schema/publishing";
 import { connectors } from "@/db/schema/connectors";
 import { inngest } from "../inngest/client";
-import { PostPublish, DraftGenerate } from "../inngest/events";
+import { PostPublish, DraftGenerate, DraftExport } from "../inngest/events";
 
 export const draftsRouter = router({
   list: protectedProcedure
@@ -622,5 +622,165 @@ export const draftsRouter = router({
         .where(eq(drafts.id, input.draftId));
 
       return { restored: true, fromVersion: snapshot.version };
+    }),
+
+  exportToDrive: protectedProcedure
+    .input(z.object({ draftId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, workspaceId, scopeAnd } = ctx.scoped;
+
+      const [draft] = await db
+        .select()
+        .from(drafts)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .limit(1);
+
+      if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      if (draft.status !== "approved") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Draft must be approved before exporting" });
+      }
+
+      const [integration] = await db
+        .select()
+        .from(workspaceIntegrations)
+        .where(scopeAnd(workspaceIntegrations.workspaceId, eq(workspaceIntegrations.integrationType, "google_drive")))
+        .limit(1);
+
+      if (!integration?.enabled || !integration.encryptedSecret) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Configure Google Drive in Settings first" });
+      }
+
+      const idempotencyKey = `export_${input.draftId}_google_drive_${ctx.userId}`;
+      const [existing] = await db
+        .select({ id: draftExports.id, status: draftExports.status })
+        .from(draftExports)
+        .where(eq(draftExports.idempotencyKey, idempotencyKey))
+        .limit(1);
+
+      if (existing && (existing.status === "pending" || existing.status === "processing")) {
+        return { exportId: existing.id, skipped: true };
+      }
+
+      const [exportRow] = await db
+        .insert(draftExports)
+        .values({
+          workspaceId,
+          draftId: input.draftId,
+          destination: "google_drive",
+          idempotencyKey,
+          exportedBy: ctx.userId,
+        })
+        .returning({ id: draftExports.id });
+
+      await inngest.send(
+        DraftExport.create({
+          exportId: exportRow.id,
+          draftId: input.draftId,
+          workspaceId,
+          destination: "google_drive",
+        }),
+      );
+
+      return { exportId: exportRow.id, skipped: false };
+    }),
+
+  sendToSlack: protectedProcedure
+    .input(z.object({ draftId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, workspaceId, scopeAnd } = ctx.scoped;
+
+      const [draft] = await db
+        .select()
+        .from(drafts)
+        .where(scopeAnd(drafts.workspaceId, eq(drafts.id, input.draftId)))
+        .limit(1);
+
+      if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      if (draft.status !== "approved") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Draft must be approved before sending to Slack" });
+      }
+
+      const [integration] = await db
+        .select()
+        .from(workspaceIntegrations)
+        .where(scopeAnd(workspaceIntegrations.workspaceId, eq(workspaceIntegrations.integrationType, "slack")))
+        .limit(1);
+
+      if (!integration?.enabled || !integration.encryptedSecret) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Configure Slack in Settings first" });
+      }
+
+      const idempotencyKey = `export_${input.draftId}_slack_${ctx.userId}`;
+      const [existing] = await db
+        .select({ id: draftExports.id, status: draftExports.status })
+        .from(draftExports)
+        .where(eq(draftExports.idempotencyKey, idempotencyKey))
+        .limit(1);
+
+      if (existing && (existing.status === "pending" || existing.status === "processing")) {
+        return { exportId: existing.id, skipped: true };
+      }
+
+      const [exportRow] = await db
+        .insert(draftExports)
+        .values({
+          workspaceId,
+          draftId: input.draftId,
+          destination: "slack",
+          idempotencyKey,
+          exportedBy: ctx.userId,
+        })
+        .returning({ id: draftExports.id });
+
+      await inngest.send(
+        DraftExport.create({
+          exportId: exportRow.id,
+          draftId: input.draftId,
+          workspaceId,
+          destination: "slack",
+        }),
+      );
+
+      return { exportId: exportRow.id, skipped: false };
+    }),
+
+  getExportStatus: protectedProcedure
+    .input(z.object({ exportId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+
+      const [row] = await db
+        .select()
+        .from(draftExports)
+        .where(scopeAnd(draftExports.workspaceId, eq(draftExports.id, input.exportId)))
+        .limit(1);
+
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Export not found" });
+      return row;
+    }),
+
+  listDraftExports: protectedProcedure
+    .input(z.object({ draftId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const { db, scopeAnd } = ctx.scoped;
+
+      return db
+        .select()
+        .from(draftExports)
+        .where(scopeAnd(draftExports.workspaceId, eq(draftExports.draftId, input.draftId)))
+        .orderBy(desc(draftExports.createdAt));
+    }),
+
+  listRecent: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(50).default(10) }).optional())
+    .query(async ({ ctx, input }) => {
+      const { db, scope } = ctx.scoped;
+
+      return db
+        .select()
+        .from(drafts)
+        .where(scope(drafts.workspaceId))
+        .orderBy(desc(drafts.updatedAt))
+        .limit(input?.limit ?? 10);
     }),
 });
