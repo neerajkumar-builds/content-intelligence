@@ -195,17 +195,19 @@ export function IdeaCard({
             </span>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <button
             onClick={() => onDismiss(idea.id)}
             style={{
-              padding: "4px 8px",
+              padding: "5px 10px",
               fontSize: 11,
               background: "transparent",
               border: "1px solid var(--border-subtle)",
-              borderRadius: 4,
+              borderRadius: 5,
               cursor: "pointer",
               color: "var(--ink-secondary)",
+              fontWeight: 500,
+              lineHeight: 1,
             }}
           >
             Dismiss
@@ -214,36 +216,42 @@ export function IdeaCard({
             <button
               onClick={() => onViewDraft(latestDraft.draftId)}
               style={{
-                padding: "4px 10px",
+                padding: "5px 12px",
                 fontSize: 11,
-                background: "var(--bg-surface)",
-                color: "var(--accent)",
-                border: "1px solid var(--accent)",
-                borderRadius: 4,
+                background: "var(--accent)",
+                color: "white",
+                border: "none",
+                borderRadius: 5,
                 cursor: "pointer",
                 fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 gap: 4,
+                lineHeight: 1,
               }}
             >
               View Draft
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14" />
+                <path d="M12 5l7 7-7 7" />
+              </svg>
             </button>
           ) : (
             <button
               onClick={() => onGenerate(idea.id)}
               style={{
-                padding: "4px 10px",
+                padding: "5px 12px",
                 fontSize: 11,
                 background: "var(--accent)",
                 color: "white",
                 border: "none",
-                borderRadius: 4,
+                borderRadius: 5,
                 cursor: "pointer",
                 fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 gap: 4,
+                lineHeight: 1,
               }}
             >
               ✦ Generate
