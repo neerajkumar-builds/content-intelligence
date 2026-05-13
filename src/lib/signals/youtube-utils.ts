@@ -13,6 +13,8 @@
  * Never throws — returns { error: "..." } on failure.
  */
 
+import { assertSafeUrl, SsrfError } from "./url-safety";
+
 const FETCH_TIMEOUT_MS = 8_000;
 
 const USER_AGENT =
@@ -120,6 +122,24 @@ function buildResult(channelId: string): ResolveResult {
  *   3. Raw regex scan for "UC" pattern in page source
  */
 async function resolveViaHtml(pageUrl: string): Promise<ResolveResult> {
+  // SSRF protection: validate URL before fetching
+  try {
+    await assertSafeUrl(pageUrl);
+  } catch (err) {
+    const message = err instanceof SsrfError ? err.message : "URL safety check failed";
+    return { error: `SSRF blocked: ${message}` };
+  }
+
+  // Validate hostname is actually YouTube
+  try {
+    const urlObj = new URL(pageUrl);
+    if (!urlObj.hostname.toLowerCase().includes("youtube.com")) {
+      return { error: `Not a YouTube domain: ${urlObj.hostname}` };
+    }
+  } catch {
+    return { error: `Invalid URL: ${pageUrl}` };
+  }
+
   let html: string;
   try {
     const controller = new AbortController();

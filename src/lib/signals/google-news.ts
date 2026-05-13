@@ -7,6 +7,8 @@
  *    redirect chain to get the actual article URL
  */
 
+import { assertSafeUrl } from "./url-safety";
+
 // ---------------------------------------------------------------------------
 // Build a Google News RSS search URL
 // ---------------------------------------------------------------------------
@@ -51,6 +53,14 @@ export function buildGoogleNewsUrl(options: {
 export async function resolveGoogleNewsRedirect(
   googleUrl: string,
 ): Promise<string> {
+  // SSRF protection: validate URL before fetching
+  try {
+    await assertSafeUrl(googleUrl);
+  } catch {
+    // If SSRF blocked, return original URL unchanged (same as fetch failure)
+    return googleUrl;
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5_000);

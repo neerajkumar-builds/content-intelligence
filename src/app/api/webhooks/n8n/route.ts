@@ -43,7 +43,9 @@ export async function POST(req: NextRequest) {
   ) {
     const errPayload = parsed as Record<string, unknown>;
     const sourceConfigId = errPayload.sourceConfigId as string | undefined;
-    if (sourceConfigId) {
+    const workspaceId = errPayload.workspaceId as string | undefined;
+    // Require workspaceId to scope the update — prevents cross-tenant writes
+    if (sourceConfigId && workspaceId) {
       await db
         .update(signalSourceConfigs)
         .set({
@@ -51,7 +53,12 @@ export async function POST(req: NextRequest) {
           lastErrorMessage:
             (errPayload.errorMessage as string) ?? "Unknown error",
         })
-        .where(eq(signalSourceConfigs.id, sourceConfigId));
+        .where(
+          and(
+            eq(signalSourceConfigs.id, sourceConfigId),
+            eq(signalSourceConfigs.workspaceId, workspaceId),
+          ),
+        );
     }
     return NextResponse.json({ handled: "error" }, { status: 200 });
   }

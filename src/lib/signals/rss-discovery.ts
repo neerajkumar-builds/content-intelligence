@@ -10,6 +10,8 @@
  * No external dependencies — uses built-in fetch + AbortController.
  */
 
+import { assertSafeUrl, SsrfError } from "./url-safety";
+
 const USER_AGENT = "ContentIntelligence/1.0 RSS-Discovery";
 const HTML_FETCH_TIMEOUT_MS = 8_000;
 const PROBE_TIMEOUT_MS = 5_000;
@@ -298,6 +300,14 @@ async function validateFeeds(
 async function validateSingleFeed(
   candidate: DiscoveredFeed
 ): Promise<{ valid: boolean; reason?: string; detectedType?: "rss" | "atom" }> {
+  // SSRF protection: validate URL before fetching
+  try {
+    await assertSafeUrl(candidate.url);
+  } catch (err) {
+    const message = err instanceof SsrfError ? err.message : "URL safety check failed";
+    return { valid: false, reason: message };
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), VALIDATE_TIMEOUT_MS);
 
@@ -359,6 +369,14 @@ async function fetchWithTimeout(
   url: string,
   timeoutMs: number
 ): Promise<FetchResult> {
+  // SSRF protection: validate URL before fetching
+  try {
+    await assertSafeUrl(url);
+  } catch (err) {
+    const message = err instanceof SsrfError ? err.message : "URL safety check failed";
+    return { ok: false, body: "", headers: null, error: message };
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -404,6 +422,13 @@ async function headWithTimeout(
   url: string,
   timeoutMs: number
 ): Promise<HeadResult> {
+  // SSRF protection: validate URL before fetching
+  try {
+    await assertSafeUrl(url);
+  } catch {
+    return { ok: false, status: 0, contentType: "" };
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 

@@ -206,22 +206,21 @@ async function runAutoDiscovery(
     }
   }
 
-  // Run all with 15s total timeout
-  const settled = await Promise.race([
-    Promise.allSettled(tasks),
-    new Promise<PromiseSettledResult<DiscoveryResult[]>[]>((resolve) =>
-      setTimeout(
-        () =>
-          resolve(
-            tasks.map(() => ({
-              status: "rejected" as const,
-              reason: new Error("Discovery timeout (15s)"),
-            })),
-          ),
-        15_000,
+  // Per-task timeout — a slow YouTube fetch times out independently
+  // while a fast RSS discovery still succeeds
+  const DISCOVERY_TIMEOUT = 15_000;
+
+  const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
+    Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error("Discovery timeout")), ms),
       ),
-    ),
-  ]);
+    ]);
+
+  const settled = await Promise.allSettled(
+    tasks.map((task) => withTimeout(task, DISCOVERY_TIMEOUT)),
+  );
 
   for (const result of settled) {
     if (result.status === "fulfilled") {
@@ -458,22 +457,37 @@ export const profilesRouter = router({
         // Skip Google News — it's a source_config only, not a platform_link
         if (result.platform === "google_news") {
           if (result.feedUrl) {
-            const [config] = await db
-              .insert(signalSourceConfigs)
-              .values({
-                workspaceId,
-                source: "rss",
-                label: `${input.name} (Google News)`,
-                configUrl: result.feedUrl,
-                profileId: profile.id,
-                fetchMethod: "google_news",
-              })
-              .returning({ id: signalSourceConfigs.id });
-            if (config) {
-              createdConfigs.push({
-                label: `${input.name} (Google News)`,
-                id: config.id,
-              });
+            // Dedup: check if config already exists for this workspace+URL+profile
+            const [existingNewsConfig] = await db
+              .select({ id: signalSourceConfigs.id })
+              .from(signalSourceConfigs)
+              .where(
+                and(
+                  eq(signalSourceConfigs.workspaceId, workspaceId),
+                  eq(signalSourceConfigs.configUrl, result.feedUrl),
+                  eq(signalSourceConfigs.profileId, profile.id),
+                ),
+              )
+              .limit(1);
+
+            if (!existingNewsConfig) {
+              const [config] = await db
+                .insert(signalSourceConfigs)
+                .values({
+                  workspaceId,
+                  source: "rss",
+                  label: `${input.name} (Google News)`,
+                  configUrl: result.feedUrl,
+                  profileId: profile.id,
+                  fetchMethod: "google_news",
+                })
+                .returning({ id: signalSourceConfigs.id });
+              if (config) {
+                createdConfigs.push({
+                  label: `${input.name} (Google News)`,
+                  id: config.id,
+                });
+              }
             }
           }
           continue;
@@ -569,23 +583,38 @@ export const profilesRouter = router({
                   : result.platform.charAt(0).toUpperCase() +
                     result.platform.slice(1);
 
-          const [config] = await db
-            .insert(signalSourceConfigs)
-            .values({
-              workspaceId,
-              source: "rss",
-              label: `${input.name} (${labelSuffix})`,
-              configUrl: result.feedUrl,
-              profileId: profile.id,
-              fetchMethod: dbFetchMethod,
-            })
-            .returning({ id: signalSourceConfigs.id });
+          // Dedup: check if config already exists for this workspace+URL+profile
+          const [existingConfig] = await db
+            .select({ id: signalSourceConfigs.id })
+            .from(signalSourceConfigs)
+            .where(
+              and(
+                eq(signalSourceConfigs.workspaceId, workspaceId),
+                eq(signalSourceConfigs.configUrl, result.feedUrl),
+                eq(signalSourceConfigs.profileId, profile.id),
+              ),
+            )
+            .limit(1);
 
-          if (config) {
-            createdConfigs.push({
-              label: `${input.name} (${labelSuffix})`,
-              id: config.id,
-            });
+          if (!existingConfig) {
+            const [config] = await db
+              .insert(signalSourceConfigs)
+              .values({
+                workspaceId,
+                source: "rss",
+                label: `${input.name} (${labelSuffix})`,
+                configUrl: result.feedUrl,
+                profileId: profile.id,
+                fetchMethod: dbFetchMethod,
+              })
+              .returning({ id: signalSourceConfigs.id });
+
+            if (config) {
+              createdConfigs.push({
+                label: `${input.name} (${labelSuffix})`,
+                id: config.id,
+              });
+            }
           }
         }
       }
@@ -803,18 +832,33 @@ export const profilesRouter = router({
         const labelSuffix =
           input.platform.charAt(0).toUpperCase() + input.platform.slice(1);
 
-        const [config] = await db
-          .insert(signalSourceConfigs)
-          .values({
-            workspaceId,
-            source: "rss",
-            label: `${profile.name} (${labelSuffix})`,
-            configUrl: platformResult.feedUrl,
-            profileId: input.profileId,
-            fetchMethod,
-          })
-          .returning();
-        sourceConfig = config;
+        // Dedup: check if config already exists for this workspace+URL+profile
+        const [existingConfig] = await db
+          .select({ id: signalSourceConfigs.id })
+          .from(signalSourceConfigs)
+          .where(
+            and(
+              eq(signalSourceConfigs.workspaceId, workspaceId),
+              eq(signalSourceConfigs.configUrl, platformResult.feedUrl),
+              eq(signalSourceConfigs.profileId, input.profileId),
+            ),
+          )
+          .limit(1);
+
+        if (!existingConfig) {
+          const [config] = await db
+            .insert(signalSourceConfigs)
+            .values({
+              workspaceId,
+              source: "rss",
+              label: `${profile.name} (${labelSuffix})`,
+              configUrl: platformResult.feedUrl,
+              profileId: input.profileId,
+              fetchMethod,
+            })
+            .returning();
+          sourceConfig = config;
+        }
       }
 
       return { link, sourceConfig, discovery: platformResult ?? null };

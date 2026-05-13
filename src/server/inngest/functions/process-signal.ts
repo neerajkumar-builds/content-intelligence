@@ -1,9 +1,19 @@
+import { z } from "zod";
 import { inngest } from "../client";
 import { SignalIngested } from "../events";
 import { db } from "@/db";
 import { signals, ideas, brands } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { embedTexts } from "@/lib/ai/embed";
+
+/** Zod schema for validating LLM classification output */
+const classificationSchema = z.object({
+  contentType: z.string(),
+  themes: z.array(z.string()).max(10).default([]),
+  suggestedFormats: z.array(z.string()).max(5).default([]),
+  contentAngle: z.string().default(""),
+  relevanceScore: z.number().min(0).max(1).default(0.5),
+}).passthrough();
 
 const MAX_WORDS = 2000;
 
@@ -118,10 +128,13 @@ Return this JSON structure:
 }`;
 
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey,
+            },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: { temperature: 0.3, maxOutputTokens: 512 },
@@ -146,20 +159,25 @@ Return this JSON structure:
 
         // Strip markdown fences if model returns them despite instructions
         const cleaned = text.replace(/```(?:json)?\s*/g, "").replace(/```\s*/g, "").trim();
-        const parsed = JSON.parse(cleaned) as {
-          contentType?: string;
-          themes?: string[];
-          suggestedFormats?: string[];
-          contentAngle?: string;
-          relevanceScore?: number;
-        };
+        const rawParsed = JSON.parse(cleaned);
+
+        // Validate LLM output structure with Zod — graceful degradation on invalid data
+        const validated = classificationSchema.safeParse(rawParsed);
+        if (!validated.success) {
+          console.error(
+            `[classify-signal] Validation failed for signal ${signalId}:`,
+            validated.error.message,
+          );
+          return null;
+        }
+        const classification = validated.data;
 
         // Store classification in signal metadata via JSONB merge
         await db.execute(
-          sql`UPDATE signals SET metadata = COALESCE(metadata, '{}'::jsonb) || ${JSON.stringify({ classification: parsed })}::jsonb WHERE id = ${signalId}`,
+          sql`UPDATE signals SET metadata = COALESCE(metadata, '{}'::jsonb) || ${JSON.stringify({ classification })}::jsonb WHERE id = ${signalId}`,
         );
 
-        return parsed;
+        return classification;
       } catch (err) {
         console.error(`[classify-signal] Failed for signal ${signalId}:`, err);
         return null;
