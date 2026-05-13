@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 import { brands } from "./brands";
+import { profiles } from "./profiles";
 import { signalSourceEnum, fetchMethodEnum } from "./enums";
 
 export const signals = pgTable(
@@ -31,7 +32,7 @@ export const signals = pgTable(
       .notNull()
       .default(sql`'{}'::jsonb`)
       .$type<Record<string, unknown>>(),
-    profileId: uuid("profile_id"),
+    profileId: uuid("profile_id").references(() => profiles.id, { onDelete: "set null" }),
     embedding: halfvec("embedding", { dimensions: 3072 }),
     processed: boolean("processed").notNull().default(false),
     publishedAt: timestamp("published_at", { withTimezone: true }),
@@ -107,7 +108,7 @@ export const signalSourceConfigs = pgTable(
     label: text("label").notNull(),
     configUrl: text("config_url").notNull(),
     enabled: boolean("enabled").notNull().default(true),
-    profileId: uuid("profile_id"),
+    profileId: uuid("profile_id").references(() => profiles.id, { onDelete: "set null" }),
     fetchMethod: fetchMethodEnum("fetch_method"),
     lastFetchedAt: timestamp("last_fetched_at", { withTimezone: true }),
     lastErrorAt: timestamp("last_error_at", { withTimezone: true }),
