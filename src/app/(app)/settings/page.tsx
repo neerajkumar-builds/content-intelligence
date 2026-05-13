@@ -28,13 +28,13 @@ function SlackIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={() => !disabled && onChange(!checked)}
       style={{
         position: "relative",
         width: 36,
@@ -42,9 +42,10 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
         borderRadius: 10,
         border: "none",
         background: checked ? "var(--accent)" : "var(--bg-muted)",
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
         transition: "background 0.15s",
         flexShrink: 0,
+        opacity: disabled ? 0.5 : 1,
       }}
     >
       <span
@@ -64,19 +65,60 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   );
 }
 
+type TestState = "idle" | "testing" | "passed" | "failed";
+
+function StatusBadge({ testState, errorMsg, hasSecret }: { testState: TestState; errorMsg: string | null; hasSecret: boolean }) {
+  if (testState === "passed") {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 4, background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
+        Connection verified
+      </span>
+    );
+  }
+  if (testState === "failed") {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 4, background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444" }} />
+        {errorMsg ?? "Connection failed"}
+      </span>
+    );
+  }
+  if (hasSecret) {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 4, background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
+        Configured
+      </span>
+    );
+  }
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b" }} />
+      Not configured
+    </span>
+  );
+}
+
 export default function SettingsPage() {
   const utils = trpc.useUtils();
 
-  const { data: driveConfig, isLoading: driveLoading } = trpc.integrations.getConfig.useQuery({ integrationType: "google_drive" });
-  const { data: slackConfig, isLoading: slackLoading } = trpc.integrations.getConfig.useQuery({ integrationType: "slack" });
+  const { data: driveConfig } = trpc.integrations.getConfig.useQuery({ integrationType: "google_drive" });
+  const { data: slackConfig } = trpc.integrations.getConfig.useQuery({ integrationType: "slack" });
 
   const [driveFolderId, setDriveFolderId] = useState("");
   const [driveEnabled, setDriveEnabled] = useState(false);
-  const [driveTestResult, setDriveTestResult] = useState<string | null>(null);
+  const [driveTest, setDriveTest] = useState<TestState>("idle");
+  const [driveTestMsg, setDriveTestMsg] = useState<string | null>(null);
+  const [driveTestError, setDriveTestError] = useState<string | null>(null);
+  const [driveDirty, setDriveDirty] = useState(false);
 
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [slackChannelName, setSlackChannelName] = useState("");
   const [slackEnabled, setSlackEnabled] = useState(false);
+  const [slackTest, setSlackTest] = useState<TestState>("idle");
+  const [slackTestError, setSlackTestError] = useState<string | null>(null);
+  const [slackDirty, setSlackDirty] = useState(false);
 
   useEffect(() => {
     if (driveConfig) {
@@ -94,16 +136,18 @@ export default function SettingsPage() {
   }, [slackConfig]);
 
   const driveUpdateMut = trpc.integrations.updateConfig.useMutation({
-    onSuccess: (data) => {
-      toast.success(data.updated ? "Drive settings saved" : "Drive integration created");
+    onSuccess: () => {
+      toast.success("Google Drive settings saved");
+      setDriveDirty(false);
       void utils.integrations.getConfig.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
 
   const slackUpdateMut = trpc.integrations.updateConfig.useMutation({
-    onSuccess: (data) => {
-      toast.success(data.updated ? "Slack settings saved" : "Slack integration created");
+    onSuccess: () => {
+      toast.success("Slack settings saved");
+      setSlackDirty(false);
       void utils.integrations.getConfig.invalidate();
     },
     onError: (err) => toast.error(err.message),
@@ -111,6 +155,36 @@ export default function SettingsPage() {
 
   const driveTestMut = trpc.integrations.testConnection.useMutation();
   const slackTestMut = trpc.integrations.testConnection.useMutation();
+
+  function handleDriveFolderChange(val: string) {
+    setDriveFolderId(val);
+    setDriveDirty(true);
+    setDriveTest("idle");
+    setDriveTestMsg(null);
+    setDriveTestError(null);
+  }
+
+  function handleDriveTest() {
+    setDriveTest("testing");
+    setDriveTestMsg(null);
+    setDriveTestError(null);
+    driveTestMut.mutate(
+      { integrationType: "google_drive", folderId: driveFolderId },
+      {
+        onSuccess: (result) => {
+          const folderName = (result as unknown as { folderName?: string }).folderName;
+          setDriveTest("passed");
+          setDriveTestMsg(folderName ? `Connected to "${folderName}"` : "Connection verified");
+          toast.success("Google Drive connection verified");
+        },
+        onError: (err) => {
+          setDriveTest("failed");
+          setDriveTestError(err.message);
+          toast.error(err.message);
+        },
+      },
+    );
+  }
 
   function handleDriveSave() {
     driveUpdateMut.mutate({
@@ -120,18 +194,31 @@ export default function SettingsPage() {
     });
   }
 
-  function handleDriveTest() {
-    setDriveTestResult(null);
-    driveTestMut.mutate(
-      { integrationType: "google_drive", folderId: driveFolderId },
+  function handleSlackUrlChange(val: string) {
+    setSlackWebhookUrl(val);
+    setSlackDirty(true);
+    setSlackTest("idle");
+    setSlackTestError(null);
+  }
+
+  function handleSlackTest() {
+    const url = slackWebhookUrl !== "********" ? slackWebhookUrl : undefined;
+    if (!url) {
+      toast.error("Enter a webhook URL to test");
+      return;
+    }
+    setSlackTest("testing");
+    setSlackTestError(null);
+    slackTestMut.mutate(
+      { integrationType: "slack", webhookUrl: url },
       {
-        onSuccess: (result) => {
-          const folderName = (result as unknown as { folderName?: string }).folderName;
-          setDriveTestResult(folderName ? `Connected to "${folderName}"` : "Connection successful");
-          toast.success("Google Drive connection verified");
+        onSuccess: () => {
+          setSlackTest("passed");
+          toast.success("Test message sent to Slack");
         },
         onError: (err) => {
-          setDriveTestResult(null);
+          setSlackTest("failed");
+          setSlackTestError(err.message);
           toast.error(err.message);
         },
       },
@@ -150,16 +237,8 @@ export default function SettingsPage() {
     });
   }
 
-  function handleSlackTest() {
-    const webhookUrl = slackWebhookUrl !== "********" && slackWebhookUrl ? slackWebhookUrl : undefined;
-    slackTestMut.mutate(
-      { integrationType: "slack", webhookUrl },
-      {
-        onSuccess: () => toast.success("Test message sent to Slack"),
-        onError: (err) => toast.error(err.message),
-      },
-    );
-  }
+  const driveCanSave = driveTest === "passed" || (!driveDirty && !!driveConfig);
+  const slackCanSave = slackTest === "passed" || (!slackDirty && !!slackConfig);
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -196,27 +275,28 @@ export default function SettingsPage() {
     gap: 16,
   };
 
-  const buttonPrimaryStyle: React.CSSProperties = {
+  const btnPrimary = (disabled: boolean): React.CSSProperties => ({
     padding: "8px 18px",
     fontSize: 12,
     fontWeight: 600,
     borderRadius: 6,
     border: "none",
-    background: "var(--accent)",
-    color: "#fff",
-    cursor: "pointer",
-  };
+    background: disabled ? "var(--bg-muted)" : "var(--accent)",
+    color: disabled ? "var(--ink-tertiary)" : "#fff",
+    cursor: disabled ? "not-allowed" : "pointer",
+  });
 
-  const buttonSecondaryStyle: React.CSSProperties = {
+  const btnSecondary = (disabled: boolean): React.CSSProperties => ({
     padding: "8px 18px",
     fontSize: 12,
     fontWeight: 600,
     borderRadius: 6,
     border: "1px solid var(--border-subtle)",
     background: "var(--bg-surface)",
-    color: "var(--ink-secondary)",
-    cursor: "pointer",
-  };
+    color: disabled ? "var(--ink-tertiary)" : "var(--ink-secondary)",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.6 : 1,
+  });
 
   return (
     <div style={{ padding: "24px 24px 60px", maxWidth: 900, margin: "0 auto" }}>
@@ -226,183 +306,93 @@ export default function SettingsPage() {
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 20 }}>
-        {/* Google Drive Card */}
+        {/* Google Drive */}
         <div style={cardStyle}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <DriveIcon size={24} />
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink-primary)" }}>Google Drive</div>
-              <div style={{ fontSize: 11, color: "var(--ink-tertiary)" }}>
-                Export approved drafts as Google Docs
-              </div>
+              <div style={{ fontSize: 11, color: "var(--ink-tertiary)" }}>Export approved drafts as Google Docs</div>
             </div>
             <div style={{ marginLeft: "auto" }}>
-              <Toggle checked={driveEnabled} onChange={setDriveEnabled} />
+              <Toggle checked={driveEnabled} onChange={(v) => { setDriveEnabled(v); setDriveDirty(true); }} />
             </div>
           </div>
 
-          <div>
-            <span style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 11,
-              fontWeight: 600,
-              padding: "3px 10px",
-              borderRadius: 4,
-              background: driveConfig?.hasSecret ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)",
-              color: driveConfig?.hasSecret ? "#22c55e" : "#f59e0b",
-            }}>
-              <span style={{
-                width: 6, height: 6, borderRadius: "50%",
-                background: driveConfig?.hasSecret ? "#22c55e" : "#f59e0b",
-              }} />
-              {driveConfig?.hasSecret ? "Service account configured" : "Not configured"}
-            </span>
-          </div>
+          <StatusBadge testState={driveTest} errorMsg={driveTestError} hasSecret={!!driveConfig?.hasSecret} />
 
           <div>
             <label style={labelStyle}>Folder ID</label>
-            <input
-              type="text"
-              value={driveFolderId}
-              onChange={(e) => setDriveFolderId(e.target.value)}
-              placeholder="e.g. 1aBcDeFgHiJkLmNoPq"
-              style={inputStyle}
-            />
-            <p style={helperStyle}>
-              The Google Drive folder ID where exported docs will be saved. Find it in the folder URL after /folders/.
-            </p>
+            <input type="text" value={driveFolderId} onChange={(e) => handleDriveFolderChange(e.target.value)} placeholder="e.g. 1aBcDeFgHiJkLmNoPq" style={inputStyle} />
+            <p style={helperStyle}>The Google Drive folder ID where exported docs will be saved. Find it in the folder URL after /folders/.</p>
           </div>
 
-          {driveTestResult && (
-            <div style={{
-              padding: "8px 12px",
-              borderRadius: 6,
-              background: "rgba(34,197,94,0.08)",
-              border: "1px solid rgba(34,197,94,0.2)",
-              fontSize: 12,
-              color: "#22c55e",
-              fontWeight: 500,
-            }}>
-              {driveTestResult}
+          {driveTestMsg && driveTest === "passed" && (
+            <div style={{ padding: "8px 12px", borderRadius: 6, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", fontSize: 12, color: "#22c55e", fontWeight: 500 }}>
+              {driveTestMsg}
             </div>
           )}
 
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-            <button
-              onClick={handleDriveTest}
-              disabled={driveTestMut.isPending || !driveFolderId}
-              style={{
-                ...buttonSecondaryStyle,
-                opacity: !driveFolderId ? 0.5 : 1,
-                cursor: !driveFolderId ? "not-allowed" : "pointer",
-              }}
-            >
-              {driveTestMut.isPending ? "Testing..." : "Test Connection"}
+            <button onClick={handleDriveTest} disabled={driveTest === "testing" || !driveFolderId.trim()} style={btnSecondary(driveTest === "testing" || !driveFolderId.trim())}>
+              {driveTest === "testing" ? "Testing..." : "Test Connection"}
             </button>
-            <button
-              onClick={handleDriveSave}
-              disabled={driveUpdateMut.isPending}
-              style={buttonPrimaryStyle}
-            >
+            <button onClick={handleDriveSave} disabled={driveUpdateMut.isPending || !driveCanSave} style={btnPrimary(driveUpdateMut.isPending || !driveCanSave)}>
               {driveUpdateMut.isPending ? "Saving..." : "Save"}
             </button>
           </div>
 
           <p style={{ ...helperStyle, margin: 0 }}>
-            The service account JSON is set via the GOOGLE_SERVICE_ACCOUNT_JSON environment variable on the server.
+            {driveDirty && driveTest === "idle" ? "Test the connection before saving." : "The service account JSON is set via the GOOGLE_SERVICE_ACCOUNT_JSON environment variable."}
           </p>
         </div>
 
-        {/* Slack Card */}
+        {/* Slack */}
         <div style={cardStyle}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <SlackIcon size={24} />
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink-primary)" }}>Slack</div>
-              <div style={{ fontSize: 11, color: "var(--ink-tertiary)" }}>
-                Send approved drafts to a Slack channel
-              </div>
+              <div style={{ fontSize: 11, color: "var(--ink-tertiary)" }}>Send approved drafts to a Slack channel</div>
             </div>
             <div style={{ marginLeft: "auto" }}>
-              <Toggle checked={slackEnabled} onChange={setSlackEnabled} />
+              <Toggle checked={slackEnabled} onChange={(v) => { setSlackEnabled(v); setSlackDirty(true); }} />
             </div>
           </div>
 
-          <div>
-            <span style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 11,
-              fontWeight: 600,
-              padding: "3px 10px",
-              borderRadius: 4,
-              background: slackConfig?.hasSecret ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)",
-              color: slackConfig?.hasSecret ? "#22c55e" : "#f59e0b",
-            }}>
-              <span style={{
-                width: 6, height: 6, borderRadius: "50%",
-                background: slackConfig?.hasSecret ? "#22c55e" : "#f59e0b",
-              }} />
-              {slackConfig?.hasSecret ? "Webhook configured" : "Not configured"}
-            </span>
-          </div>
+          <StatusBadge testState={slackTest} errorMsg={slackTestError} hasSecret={!!slackConfig?.hasSecret} />
 
           <div>
             <label style={labelStyle}>Webhook URL</label>
             <input
               type={slackWebhookUrl && slackWebhookUrl !== "********" ? "text" : "password"}
               value={slackWebhookUrl}
-              onChange={(e) => setSlackWebhookUrl(e.target.value)}
-              onFocus={(e) => {
-                if (e.target.value === "********") {
-                  setSlackWebhookUrl("");
-                }
-              }}
+              onChange={(e) => handleSlackUrlChange(e.target.value)}
+              onFocus={(e) => { if (e.target.value === "********") setSlackWebhookUrl(""); }}
               placeholder="https://hooks.slack.com/services/..."
               style={inputStyle}
             />
-            <p style={helperStyle}>
-              Create an incoming webhook in your Slack workspace settings.
-            </p>
+            <p style={helperStyle}>Create an incoming webhook in your Slack workspace settings.</p>
           </div>
 
           <div>
             <label style={labelStyle}>Channel Name</label>
-            <input
-              type="text"
-              value={slackChannelName}
-              onChange={(e) => setSlackChannelName(e.target.value)}
-              placeholder="#content-drafts"
-              style={inputStyle}
-            />
-            <p style={helperStyle}>
-              For display only. The actual channel is determined by the webhook URL.
-            </p>
+            <input type="text" value={slackChannelName} onChange={(e) => { setSlackChannelName(e.target.value); setSlackDirty(true); }} placeholder="#content-drafts" style={inputStyle} />
+            <p style={helperStyle}>For display only. The actual channel is determined by the webhook URL.</p>
           </div>
 
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-            <button
-              onClick={handleSlackTest}
-              disabled={slackTestMut.isPending || !slackConfig?.hasSecret}
-              style={{
-                ...buttonSecondaryStyle,
-                opacity: !slackConfig?.hasSecret ? 0.5 : 1,
-                cursor: !slackConfig?.hasSecret ? "not-allowed" : "pointer",
-              }}
-            >
-              {slackTestMut.isPending ? "Sending..." : "Send Test Message"}
+            <button onClick={handleSlackTest} disabled={slackTest === "testing" || !slackWebhookUrl.trim() || slackWebhookUrl === "********"} style={btnSecondary(slackTest === "testing" || !slackWebhookUrl.trim() || slackWebhookUrl === "********")}>
+              {slackTest === "testing" ? "Sending..." : "Send Test Message"}
             </button>
-            <button
-              onClick={handleSlackSave}
-              disabled={slackUpdateMut.isPending}
-              style={buttonPrimaryStyle}
-            >
+            <button onClick={handleSlackSave} disabled={slackUpdateMut.isPending || !slackCanSave} style={btnPrimary(slackUpdateMut.isPending || !slackCanSave)}>
               {slackUpdateMut.isPending ? "Saving..." : "Save"}
             </button>
           </div>
+
+          {slackDirty && slackTest === "idle" && slackWebhookUrl && slackWebhookUrl !== "********" && (
+            <p style={{ ...helperStyle, margin: 0 }}>Send a test message before saving.</p>
+          )}
         </div>
       </div>
     </div>

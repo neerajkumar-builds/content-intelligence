@@ -153,29 +153,38 @@ export const integrationsRouter = router({
       }
 
       if (input.integrationType === "google_drive") {
-        const folderId =
-          input.folderId ||
-          (integration?.config as Record<string, unknown>)?.folderId as string ||
-          process.env.GOOGLE_DRIVE_FOLDER_ID ||
-          "";
-        if (!folderId) {
+        if (!input.folderId) {
           throw new TRPCError({
-            code: "PRECONDITION_FAILED",
-            message: "Google Drive folder ID not configured",
+            code: "BAD_REQUEST",
+            message: "Enter a folder ID to test",
           });
         }
-        return testDriveConnection(secret, folderId);
+        const result = await testDriveConnection(secret, input.folderId);
+        if (!result.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error ?? "Google Drive connection failed",
+          });
+        }
+        return result;
       }
 
       if (input.integrationType === "slack") {
-        const webhookUrl = input.webhookUrl || secret;
-        if (!webhookUrl) {
+        const testUrl = input.webhookUrl;
+        if (!testUrl) {
           throw new TRPCError({
-            code: "PRECONDITION_FAILED",
-            message: "Slack webhook URL not configured",
+            code: "BAD_REQUEST",
+            message: "Enter a webhook URL to test",
           });
         }
-        return testSlackConnection(webhookUrl);
+        const result = await testSlackConnection(testUrl);
+        if (!result.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error ?? "Slack connection failed",
+          });
+        }
+        return result;
       }
 
       throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown integration type" });
