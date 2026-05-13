@@ -205,10 +205,12 @@ export default function SettingsPage() {
   }
 
   function handleDriveSave() {
+    const shouldEnable = hasDriveConfig ? driveEnabled : true;
+    setDriveEnabled(shouldEnable);
     driveUpdateMut.mutate({
       integrationType: "google_drive",
       config: { folderId: driveFolderId },
-      enabled: driveEnabled,
+      enabled: shouldEnable,
     });
   }
 
@@ -252,11 +254,13 @@ export default function SettingsPage() {
 
   function handleSlackSave() {
     const secret = slackWebhookUrl && slackWebhookUrl !== "********" ? slackWebhookUrl : undefined;
+    const shouldEnable = hasSlackConfig ? slackEnabled : true;
+    setSlackEnabled(shouldEnable);
     slackUpdateMut.mutate({
       integrationType: "slack",
       secret,
       config: { channelName: slackChannelName },
-      enabled: slackEnabled,
+      enabled: shouldEnable,
     });
   }
 
