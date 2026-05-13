@@ -168,3 +168,23 @@
 31. **Existing manual workflows are the best product spec.** Luke's existing n8n workflows (social listening → analysis → blog generation) reveal exactly what the team needs, how they work, and what the output looks like. Reverse-engineering these workflows gave us more actionable requirements than any spec document could. Always ask: "What are users doing manually today?" (Session 10, workflow analysis)
 
 32. **Brand Brief is too thin for enterprise content.** 4 fields (wedge, ICP, voiceTraits, antiPositioning) vs Luke's Positioning Guide with 11 sections (pillars, benefits, tone, phrases, audience-specific language). The positioning guide should be the FOUNDATION of all content creation. When CI resumes, upgrading Brand Brief to Positioning Guide is the highest-ROI change. (Session 10, Positioning Agent analysis)
+
+## Session 11 Learnings (Module 1)
+
+33. **NEVER ship UI without testing every user flow end-to-end.** Settings page required 5 fix commits because the initial implementation was shallow: `testDriveConnection` returned `{ok: false}` but frontend `onSuccess` handler ran for ALL responses without checking `ok`. Wrong folder IDs showed "Connection successful." Always trace: button click → mutation fires → response shape → UI renders. (Session 11, Settings page)
+
+34. **Google Drive service accounts have ZERO storage quota.** Service accounts can't create files in personal Drive folders — Google returns "Service Accounts do not have storage quota." Must use Shared Drives (Team Drives) where the drive itself has storage. Also: `drive.file` scope only sees files the SA created; need full `drive` scope for shared folders. Also: Google Docs API requires separate enablement from Drive API. (Session 11, Drive integration)
+
+35. **Env var fallback must be consistent EVERYWHERE.** Drive SA JSON and Slack webhook URL can come from env var OR per-workspace DB. Every code path that checks for these secrets must check BOTH sources: `integration.encryptedSecret || process.env.ENV_VAR`. We missed this in 3 places: tRPC mutation gate, getConfig response, testConnection — each required a separate fix. Pattern: grep for every usage of `encryptedSecret` and verify fallback exists. (Session 11, env var bugs)
+
+36. **JS operator precedence with `||` and `?:` is treacherous.** `a || b ? c : d` evaluates as `(a || b) ? c : d`, NOT `a || (b ? c : d)`. This caused Slack "View in CI" links to show `https://undefined` in production. Always parenthesize ternaries mixed with `||`. (Session 11, URL bug)
+
+37. **Settings pages need view/edit mode pattern.** After saving config, fields should LOCK (masked values, read-only). User needs explicit "Edit" button to change. Without this: sensitive values stay visible, accidental edits happen, no visual confirmation of saved state. Pattern: `editing` boolean state, auto-lock on save success, Cancel to discard. (Session 11, Settings UX)
+
+38. **Test before Save — enforce in UI.** Save button must be DISABLED until test passes. Users will save wrong config if Save is always enabled. The test-before-save gate caught wrong folder IDs, invalid webhook URLs. Without it, errors only surface during actual export (much later, harder to debug). (Session 11, Settings flow)
+
+39. **Idempotency keys should be time-based, not static.** Static keys like `export_{draftId}_{destination}_{userId}` prevent re-exports after completion — the unique constraint blocks the second insert. Fix: add timestamp suffix, check for inflight (pending/processing) exports instead of unique key collision. Users want to re-export the same draft multiple times. (Session 11, export re-attempt)
+
+40. **Workspace confusion in multi-tenant testing.** With 2+ Clerk orgs, exports in one workspace are invisible in another. Home dashboard showed "0 Exports" because user was viewing different workspace. This is correct behavior (workspace isolation works) but confusing during testing. Always verify which workspace you're in before reporting "missing data." (Session 11, workspace debugging)
+
+41. **Depth over shallow — the meta-learning.** The Settings page took 5+ fix commits because each was a shallow patch. A proper first pass with full user flow thinking would have caught ALL issues: test response handling, API scopes, storage quotas, state management, masked fields. Before writing ANY UI: map every state (empty, loading, success, error, saved, editing), test every API call directly, verify error paths. Never ship untested paths. (Session 11, user feedback)

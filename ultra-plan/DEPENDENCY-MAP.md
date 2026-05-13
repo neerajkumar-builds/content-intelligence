@@ -8,9 +8,11 @@
 
 ### Module execution order (strict sequence)
 ```
-Module 1 (Core Loop) → MUST complete before Module 2
-  - Google Drive + Slack output needs workspace settings
-  - Home page needs signal count + draft count queries
+Module 1 (Core Loop) → DONE (Session 11, 15 commits)
+  - Google Drive export via Shared Drive (supportsAllDrives: true)
+  - Slack notifications via incoming webhook (Block Kit)
+  - Home dashboard with stats, approvals, exports, quick actions
+  - Settings page with view/edit mode, test-before-save
 
 Module 2 (Signal Intelligence) → MUST complete before Module 3
   - Competitor/leader profiles provide data for positioning analysis
@@ -36,6 +38,50 @@ Existing workflows: memory/reference_existing_workflows.md
 Full roadmap: ~/.claude/plans/unified-sniffing-island.md
 Build state: memory/project_build_state.md
 ```
+
+---
+
+## Session 11 Changes (Module 1)
+
+### New files
+- `src/db/schema/integrations.ts` — workspace_integrations + draft_exports tables
+  - Depends: workspaces.id (FK), drafts.id (FK, ON DELETE SET NULL)
+  - Barrel: exported from `src/db/schema/index.ts`
+- `src/lib/integrations/google-drive.ts` — createGoogleDoc, testDriveConnection
+  - Depends: `googleapis` package, service account JSON (env var or encrypted DB)
+  - Requires: Google Drive API enabled, Shared Drive with SA as Content Manager
+- `src/lib/integrations/slack.ts` — sendSlackNotification, testSlackConnection, isValidSlackWebhookUrl
+  - Depends: fetch API, webhook URL (env var or encrypted DB)
+- `src/server/inngest/functions/export-draft.ts` — replaces verify-post.ts
+  - Depends: DraftExport event, google-drive.ts, slack.ts, encrypt.ts
+  - Registered in: `src/server/inngest/functions/index.ts`
+  - verify-post.ts: file KEPT but UNREGISTERED (code preserved)
+- `src/server/routers/integrations.ts` — 13th router
+  - Depends: workspace_integrations, draft_exports schemas, encrypt.ts, google-drive.ts, slack.ts
+  - Registered in: `src/server/routers/_app.ts`
+
+### Modified files
+- `src/server/routers/drafts.ts` — added: exportToDrive, sendToSlack, getExportStatus, listDraftExports, listRecent
+- `src/server/routers/ideas.ts` — added: countByStatus
+- `src/server/routers/signals.ts` — added: countRecent
+- `src/server/inngest/events.ts` — added: DraftExport event type
+- `src/app/(app)/page.tsx` — replaced placeholder with real dashboard
+- `src/app/(app)/settings/page.tsx` — replaced placeholder with integrations config
+- `src/app/(app)/drafts/[id]/page.tsx` — export dropdown, toolbar redesign, export history
+- `src/app/(app)/drafts/page.tsx` — export badges
+
+### Env var dependencies
+- `GOOGLE_SERVICE_ACCOUNT_JSON` — service account JSON (env var fallback for Drive)
+- `GOOGLE_DRIVE_FOLDER_ID` — Shared Drive ID (env var fallback)
+- `SLACK_WEBHOOK_URL` — incoming webhook URL (env var fallback)
+- `NEXT_PUBLIC_APP_URL` — used in Slack "View in CI" button links
+
+### Infrastructure
+- Google Cloud: project claude-496123, Drive API + Docs API enabled
+- Shared Drive: "Content Intelligence Exports" (ID: 0AKxDz-Wa68T6Uk9PVA)
+- Service account: content-intelligence@claude-496123.iam.gserviceaccount.com (Content Manager)
+- Slack App: "Content Intelligence" with incoming webhook to #content-intelligence
+- Inngest: 7 functions registered (6 active + 1 onFailure handler)
 
 ---
 

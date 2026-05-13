@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-05-13 (Session 11 — Module 1: Complete Core Loop)
+
+- `pnpm build` — PASS (all 15 commits)
+- Settings Drive test connection — PASS (Shared Drive "Content Intelligence Exports" found)
+- Settings Slack test message — PASS (posted to #content-intelligence)
+- Settings view/edit mode — PASS (fields lock after save, masked values)
+- Export to Google Drive — PASS (Google Doc created in Shared Drive, "Open" link works)
+- Send to Slack — PASS (Block Kit message with title, metadata, excerpt, "View in CI" button)
+- Home dashboard — PASS (stats: 28 Ideas, 2 Approved, 2 Exports, 91 Signals)
+- Export history sidebar — PASS (Slack + Drive entries with status + timestamp)
+- Export badges on drafts list — PASS (Drive + Slack icons next to exported drafts)
+- Toolbar redesign — PASS (3-group layout, Export dropdown, icon-only utilities)
+- Inngest dashboard — PASS (7 functions: 6 active + 1 onFailure handler, verify-post removed)
+- Vercel env vars — SET (NEXT_PUBLIC_APP_URL, GOOGLE_SERVICE_ACCOUNT_JSON, GOOGLE_DRIVE_FOLDER_ID, SLACK_WEBHOOK_URL)
+- Vercel deploy — PASS (commit 9cf92cf auto-deployed)
+- Code review (cavecrew-reviewer) — 8 bugs found, all fixed
+- Playwright E2E — PASS (home, settings, drafts pages validated)
+- Multi-workspace isolation — VERIFIED (exports in "FF" workspace invisible from "FullFunnel" workspace)
+- Direct API test (Node.js) — PASS (Drive files.create with Shared Drive, supportsAllDrives: true)
+
+---
+
 ## QA Checklist (run after every task)
 
 - [ ] `pnpm build` — zero type errors

@@ -68,31 +68,47 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 
 ## How to Resume (Reading Order for Maximum Context)
 
-**STEP 1: Understand the strategic direction (READ FIRST)**
-1. Read `memory/project_pivot_2026_05_12.md` — CRITICAL product pivot: no publishing, focus on creation + research
-2. Read `memory/reference_positioning_agent.md` — Luke's Positioning Agent concept, Brand Brief → Positioning Guide upgrade
-3. Read `~/.claude/plans/unified-sniffing-island.md` — 5-module roadmap (Drive+Slack → Signals → Content+Positioning → SEO → Polish)
+**STEP 1: Understand strategic direction + what's done**
+1. Read `memory/project_build_state.md` — Session 11 complete, Module 1 done, what's next
+2. Read `memory/project_pivot_2026_05_12.md` — Product pivot: no publishing, focus creation + research
+3. Read `memory/reference_positioning_agent.md` — Luke's Positioning Agent → Brand Brief upgrade (Module 3)
 
-**STEP 2: Understand current build state**
-4. Read `ultra-plan/PROGRESS.md` — what's DONE (Session 10: 9 commits, +1,100 lines, Prompt Studio + Signal Explorer)
-5. Read `memory/project_build_state.md` — infrastructure summary (30 tables, 12 routers, 24 routes, 6 Inngest functions)
-6. Read `ultra-plan/DEPENDENCY-MAP.md` — what depends on what, before modifying any file
+**STEP 2: Understand the roadmap + dependencies**
+4. Read `ultra-plan/PROGRESS.md` — Module 1 DONE, Modules 2-5 ahead
+5. Read `ultra-plan/DEPENDENCY-MAP.md` — Session 11 changes + what depends on what
+6. Read `~/.claude/plans/unified-sniffing-island.md` — 5-module roadmap (M1 done → M2 signals → M3 content → M4 SEO → M5 polish)
 
-**STEP 3: Understand mistakes NOT to repeat**
-7. Read `ultra-plan/LEARNINGS.md` — 29 learnings, especially #26 (drizzle-kit push danger), #28 (Inngest sync loss), #29 (n8n REST API)
-8. Read `memory/feedback_production_coding.md` — 10 non-negotiable production rules
+**STEP 3: Understand mistakes NOT to repeat (CRITICAL)**
+7. Read `ultra-plan/LEARNINGS.md` — 41 learnings. Key Session 11 additions:
+   - #33: Test every user flow E2E before shipping (Settings page disaster)
+   - #34: Service accounts have zero Drive storage (use Shared Drives)
+   - #35: Env var fallback must be consistent EVERYWHERE
+   - #36: JS `||` and `?:` operator precedence traps
+   - #37-38: Settings need view/edit mode + test-before-save
+   - #41: DEPTH OVER SHALLOW — the meta-learning
+8. Read `memory/feedback_depth_not_shallow.md` — User's explicit feedback: no shallow work, test API calls, verify error paths BEFORE committing
+9. Read `memory/feedback_production_coding.md` — 10 non-negotiable production rules
 
-**STEP 4: Understand existing workflows being productized**
-9. Read `memory/reference_existing_workflows.md` — two n8n workflows (social listening + blog generator) that CI makes 10x better
-10. Optionally: `knowledge_base/FullFunnel - Positioning Guide.docx` — example Positioning Guide output
+**STEP 4: Understand existing workflows + architecture**
+10. Read `memory/reference_existing_workflows.md` — n8n workflows CI productizes 10x better
+11. Read `ultra-plan/CHANGELOG.md` — Session 11 changelog (Module 1 full breakdown)
+
+**KEY PRINCIPLE FOR ALL FUTURE WORK:**
+Go DEEP per module. Complete E2E. Test every flow. No shallow implementations.
+Before writing ANY code: map user flow states, test APIs directly, verify error paths.
+A proper first pass avoids 5+ fix commits. Measure twice, cut once.
 
 **Key constraints:**
-- All work on `main` branch. Git clean at commit `a7656c6`.
+- All work on `main` branch. Git clean at commit `9cf92cf`.
 - `ctx.workspaceId` = Clerk orgId (OAuth). `ctx.scoped.workspaceId` = UUID (DB). Never confuse.
 - Production LIVE: content-intelligence-eight.vercel.app (auto-deploys from main)
-- Inngest Cloud: 6 functions (at capacity). Check dashboard after every deploy.
+- Inngest Cloud: 7 functions (6 active + 1 onFailure). Check dashboard after every deploy.
 - n8n Cloud: 2 workflows — Signal Harvester (qrnItYAUlVcgchZO) + Manual Sync Trigger (qKxPjg3Cl2VetQ51)
+- Google Cloud: project claude-496123, Shared Drive 0AKxDz-Wa68T6Uk9PVA
+- Slack App: Content Intelligence → #content-intelligence channel
 - **DANGER: NEVER use drizzle-kit push** — shared Supabase DB would delete other project's tables
+- **TWO workspaces exist:** "FullFunnel" (main, 91 signals) and "FF" (test, 67 signals). Use "FullFunnel" as primary.
+- CI is on `main` branch — every push auto-deploys to production
 - CI is PAUSED while Meeting Intelligence ships. When it resumes, start with Module 1 (complete output loop).
 
 ## Task Completion Protocol (MANDATORY after every task)
