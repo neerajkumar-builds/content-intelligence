@@ -1,8 +1,8 @@
 # Content Intelligence Agent — Build Progress
 
-> Last updated: 2026-05-13 (Session 11 — Module 1 COMPLETE — 6 commits, +2,200 lines, production deployed)
-> Current phase: Module 1 (Core Loop) DONE. Approved drafts can now export to Google Drive + Slack.
-> Next action: Module 2 (Signal Intelligence: multi-platform ingestion, competitors, leaders, positioning analysis)
+> Last updated: 2026-05-13 (Session 12 — Module 2A COMPLETE — 13 commits, +4,782 lines, production deployed)
+> Current phase: Module 2A (Signal Intelligence: Profiles + Multi-Platform Sources) DONE. Competitors + Leaders pages live. LLM classification active.
+> Next action: Module 2B (Apify scrapers for LinkedIn/Twitter/Instagram profiles)
 > Strategic plan: `~/.claude/plans/unified-sniffing-island.md`
 
 ---
@@ -51,7 +51,10 @@
 | S10-Positioning — Luke's Positioning Agent concept analyzed + integrated into roadmap | DONE | Memory | Session 10 |
 | **--- CI RESUMED Session 11 ---** | | | |
 | M1 — Complete Core Loop (Drive + Slack + Home page) | DONE | `main` | Session 11 |
-| M2 — Signal Intelligence (multi-platform, competitors, leaders, positioning analysis) | NOT STARTED | — | After M1 |
+| **--- Module 2A (Session 12) ---** | | | |
+| M2A — Profiles + Multi-Platform Sources | DONE | `main` | Session 12 |
+| M2B — Apify scrapers (LinkedIn/Twitter/Instagram) | NOT STARTED | — | After M2A |
+| M2 — Signal Intelligence (full, multi-platform + LLM classification) | IN PROGRESS | — | M2A done |
 | M3 — Content Excellence + Positioning Guide (Brand Brief upgrade, prompt overhaul) | NOT STARTED | — | After M2 |
 | M4 — SEO & AEO (keywords, scoring, AI engine optimization) | NOT STARTED | — | After M3 |
 | M5 — Polish & Integration (fix all dead ends, UX sweep) | NOT STARTED | — | After M4 |
@@ -329,6 +332,27 @@
 | UP.6 | Title textarea wraps instead of truncating | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
 | UP.7 | ConfirmDialog component (styled, replaces native confirm()) | `src/components/ui/confirm-dialog.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
 | UP.8 | Copy/Download/Share actions on draft editor | `drafts/[id]/page.tsx` | DONE | Browser verified | Session 8 | 2026-05-12 |
+
+---
+
+## Module 2A: Signal Intelligence — Profiles + Multi-Platform Sources (Session 12)
+
+| # | Task | Files | Status | Verified | Session |
+|---|------|-------|--------|----------|---------|
+| 2A.1 | profiles + profile_platform_links schema + 4 enums | `src/db/schema/profiles.ts` | DONE | Migration applied | 2026-05-13 |
+| 2A.2 | RSS auto-discovery utility | `src/lib/signals/rss-discovery.ts` | DONE | pnpm build OK | 2026-05-13 |
+| 2A.3 | YouTube channel utils (handle → channel ID → RSS URL) | `src/lib/signals/youtube-utils.ts` | DONE | pnpm build OK | 2026-05-13 |
+| 2A.4 | Google News RSS URL builder | `src/lib/signals/google-news.ts` | DONE | pnpm build OK | 2026-05-13 |
+| 2A.5 | Profiles router (14th, 10 procedures) | `src/server/routers/profiles.ts` | DONE | pnpm build OK | 2026-05-13 |
+| 2A.6 | Webhook enhancement (profileId + sourceUrl dedup) | `src/app/api/webhooks/n8n/route.ts` | DONE | pnpm build OK | 2026-05-13 |
+| 2A.7 | process-signal LLM classification step (Gemini Flash) | `src/server/inngest/functions/process-signal.ts` | DONE | pnpm build OK | 2026-05-13 |
+| 2A.8 | Competitors page (/competitors) | `src/app/(app)/competitors/page.tsx` | DONE | Browser verified | 2026-05-13 |
+| 2A.9 | Leaders page (/leaders) | `src/app/(app)/leaders/page.tsx` | DONE | Browser verified | 2026-05-13 |
+| 2A.10 | Profile detail pages (/competitors/[id], /leaders/[id]) | `src/app/(app)/competitors/[id]/page.tsx`, `leaders/[id]/page.tsx` | DONE | Browser verified | 2026-05-13 |
+| 2A.11 | AddProfileDialog component | `src/components/profiles/add-profile-dialog.tsx` | DONE | Browser verified | 2026-05-13 |
+| 2A.12 | Existing page enhancements (Idea Wall filters, Signal Explorer profile filter, Home stats, SourceRail link) | Multiple files | DONE | pnpm build OK | 2026-05-13 |
+| 2A.13 | n8n Signal Harvester workflow updated (profileId, publishedAt, fetchMethod, date filtering) | n8n Cloud | DONE | Workflow active | 2026-05-13 |
+| 2A.14 | Build verification + hygiene docs | `CLAUDE.md`, `ultra-plan/*.md` | DONE | pnpm build OK | 2026-05-13 |
 
 ---
 

@@ -14,9 +14,15 @@ Module 1 (Core Loop) → DONE (Session 11, 15 commits)
   - Home dashboard with stats, approvals, exports, quick actions
   - Settings page with view/edit mode, test-before-save
 
-Module 2 (Signal Intelligence) → MUST complete before Module 3
+Module 2A (Signal Intelligence — Profiles + Multi-Platform Sources) → DONE (Session 12)
+  - profiles + profile_platform_links tables live
+  - RSS/YouTube/Google News auto-discovery utilities ready
+  - LLM signal classification active in process-signal
+  - Competitors + Leaders pages live
+
+Module 2B (Signal Intelligence — Apify Scrapers) → MUST complete before Module 3
   - Competitor/leader profiles provide data for positioning analysis
-  - Multi-platform signals provide market context
+  - Apify scrapers needed for LinkedIn/Twitter/Instagram signal ingestion
 
 Module 3 (Content Excellence + Positioning Guide) → depends on Module 2 signals
   - Positioning Guide generated FROM accumulated signal data
@@ -82,6 +88,69 @@ Build state: memory/project_build_state.md
 - Service account: content-intelligence@claude-496123.iam.gserviceaccount.com (Content Manager)
 - Slack App: "Content Intelligence" with incoming webhook to #content-intelligence
 - Inngest: 7 functions registered (6 active + 1 onFailure handler)
+
+---
+
+## Session 12 Changes (Module 2A)
+
+### New files
+- `src/db/schema/profiles.ts` — profiles + profile_platform_links tables, 4 new enums
+  - Depends: workspaces.id (FK), brands.id (FK)
+  - Barrel: exported from `src/db/schema/index.ts`
+- `src/lib/signals/rss-discovery.ts` — auto-discovers RSS/Atom feed URL from website
+  - Depends: fetch API (node built-in)
+  - Used by: profiles router (addLink with auto-discover), AddProfileDialog flow
+- `src/lib/signals/youtube-utils.ts` — YouTube handle → channel ID → RSS URL
+  - Depends: YOUTUBE_API_KEY env var (for handle resolution via YouTube Data API v3)
+  - Used by: profiles router (addLink for YouTube platform)
+- `src/lib/signals/google-news.ts` — constructs Google News RSS URLs
+  - Depends: nothing (pure URL construction)
+  - Used by: profiles router (addLink for google_news fetchMethod)
+- `src/server/routers/profiles.ts` — 14th router, 10 procedures
+  - Depends: profiles schema, profile_platform_links schema, scoped-db.ts, trpc middleware
+  - Registered in: `src/server/routers/_app.ts`
+  - Procedures: create, get, list, update, delete, addLink, removeLink, listLinks, listByType, search
+- `src/app/(app)/competitors/page.tsx` — competitors list page (replaced placeholder)
+  - Depends: trpc.profiles.list (type=competitor), AddProfileDialog, ProfileCard
+- `src/app/(app)/leaders/page.tsx` — leaders list page (replaced placeholder)
+  - Depends: trpc.profiles.list (type=thought_leader), AddProfileDialog, ProfileCard
+- `src/app/(app)/competitors/[id]/page.tsx` — competitor detail page
+  - Depends: trpc.profiles.get, trpc.profiles.listLinks, ProfileDetailPage component
+- `src/app/(app)/leaders/[id]/page.tsx` — leader detail page
+  - Depends: trpc.profiles.get, trpc.profiles.listLinks, ProfileDetailPage component
+- `src/components/profiles/profile-card.tsx` — reusable profile card
+  - Depends: UI primitives, React
+  - Used by: competitors/page.tsx, leaders/page.tsx
+- `src/components/profiles/profile-detail-page.tsx` — shared detail view component
+  - Depends: trpc.profiles.get, trpc.profiles.listLinks, trpc.profiles.update, trpc.profiles.delete
+  - Used by: competitors/[id]/page.tsx, leaders/[id]/page.tsx (avoids duplication)
+- `src/components/profiles/add-profile-dialog.tsx` — add profile modal
+  - Depends: trpc.profiles.create mutation
+  - Used by: competitors/page.tsx, leaders/page.tsx
+
+### Modified files
+- `src/db/schema/index.ts` — added profiles.ts barrel export
+- `src/server/routers/_app.ts` — registered profiles router (14th)
+- `src/app/api/webhooks/n8n/route.ts` — added profileId + sourceUrl dedup
+- `src/server/inngest/functions/process-signal.ts` — added LLM classification step
+- `src/server/routers/signals.ts` — listSources returns profile name/type when linked
+- `src/components/ideas/filter-bar.tsx` — added profile dropdown filter
+- `src/app/(app)/ideas/page.tsx` — wired profile filter state
+- `src/app/(app)/signals/page.tsx` — added profile filter chips
+- `src/app/(app)/page.tsx` — added profiles stat, Add Competitor/Leader quick actions
+- `src/components/ideas/source-rail.tsx` — added link-to-profile on linked sources
+
+### New env var
+- `YOUTUBE_API_KEY` — YouTube Data API v3 key for handle → channel ID resolution
+  - Only required when adding YouTube-type profile links with @handle format
+  - Graceful degradation: if missing, user must provide channel ID directly
+
+### Schema cascade additions
+```
+profiles.ts
+  ├── profile_platform_links (profile_platform_links.profile_id → profiles.id)
+  └── signals (signals.profile_id → profiles.id, nullable FK, ON DELETE SET NULL)
+```
 
 ---
 

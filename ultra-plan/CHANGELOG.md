@@ -4,6 +4,85 @@
 
 ---
 
+## 2026-05-13 (Session 12 — Module 2A: Signal Intelligence — Profiles + Multi-Platform Sources)
+
+> 13 commits, +4,782 lines, 10 new files, 16 modified files. 33 tables. 14 routers. 80 procedures.
+
+### Schema
+
+- **[SCHEMA] profiles + profile_platform_links tables** — Competitor company and thought leader tracking. Per-workspace, per-brand. 4 new pgEnums: profileTypeEnum (competitor/thought_leader/partner/influencer), profileImportanceEnum (high/medium/low), profilePlatformEnum (12 platforms), fetchMethodEnum (rss/youtube_rss/google_news/apify_scrape/manual).
+  - Files: `src/db/schema/profiles.ts` (NEW), `src/db/schema/index.ts`
+  - Migration: Applied via Supabase MCP. 33 CI tables total (was 31).
+
+### Utilities
+
+- **[UTILITY] RSS auto-discovery** — Given any website URL, discovers its RSS/Atom feed URL by checking `<link>` tags, common paths (/rss, /feed, /atom.xml), and CMS-specific paths (WordPress, Ghost, Substack, Medium, Beehiiv).
+  - Files: `src/lib/signals/rss-discovery.ts` (NEW)
+
+- **[UTILITY] YouTube channel utils** — Resolves YouTube channel handles (@handle) to channel IDs via YouTube Data API, constructs RSS feed URLs from channel IDs. Handles both `@handle` and raw `channel/UCxxxx` formats.
+  - Files: `src/lib/signals/youtube-utils.ts` (NEW)
+  - Env: `YOUTUBE_API_KEY` required for handle resolution
+
+- **[UTILITY] Google News RSS builder** — Constructs Google News RSS URLs for topic keyword or company name searches. Used for competitor news monitoring without paid API.
+  - Files: `src/lib/signals/google-news.ts` (NEW)
+
+### API
+
+- **[API] Profiles router (14th, 10 procedures)** — Full CRUD for competitor and thought leader profiles. Procedures: create, get, list, update, delete, addLink, removeLink, listLinks, listByType, search. All workspace-scoped. Registered in _app.ts.
+  - Files: `src/server/routers/profiles.ts` (NEW), `src/server/routers/_app.ts`
+
+- **[API] Webhook enhanced** — n8n webhook now accepts `profileId` (optional UUID FK to profiles) and uses `sourceUrl` for per-URL deduplication in addition to `n8nExecutionId`. Enables profile-linked signal ingestion.
+  - Files: `src/app/api/webhooks/n8n/route.ts`
+
+- **[API] Signals router enhanced** — listSources now returns profile name + type when source is linked to a profile. SourceRail can show "Linked to: Gartner (competitor)" label.
+  - Files: `src/server/routers/signals.ts`
+
+### Inngest
+
+- **[INNGEST] process-signal LLM classification step** — After embedding + ranking, Gemini Flash classifies each signal: topic tags (up to 5), signal type (insight/news/announcement/research/opinion), content quality score (0-10), and suggested hook. Glass-box: classification logged to ai_calls. Gracefully degrades if LLM call fails (idea still created without classification).
+  - Files: `src/server/inngest/functions/process-signal.ts`
+
+### UI
+
+- **[UI] /competitors page** — Lists competitor profiles in card grid. AddProfileDialog with type=competitor preset. Empty state with prompt to add first competitor. Profile count badge. Links to detail pages.
+  - Files: `src/app/(app)/competitors/page.tsx` (NEW — replaced placeholder)
+
+- **[UI] /leaders page** — Lists thought leader profiles in card grid. AddProfileDialog with type=thought_leader preset. Same card grid pattern as competitors.
+  - Files: `src/app/(app)/leaders/page.tsx` (NEW — replaced placeholder)
+
+- **[UI] Profile detail pages** — /competitors/[id] and /leaders/[id] using shared ProfileDetailPage component. Shows profile metadata, platform links (with fetch method badges), linked signal sources, recent signals from this profile. Edit/delete actions.
+  - Files: `src/app/(app)/competitors/[id]/page.tsx` (NEW), `src/app/(app)/leaders/[id]/page.tsx` (NEW)
+
+- **[COMPONENT] ProfileCard** — Reusable card component for competitor/leader grid. Shows avatar initials, name, type badge, importance indicator, platform link count, description excerpt, and "View" link.
+  - Files: `src/components/profiles/profile-card.tsx` (NEW)
+
+- **[COMPONENT] ProfileDetailPage** — Shared detail view component used by both /competitors/[id] and /leaders/[id]. Avoids code duplication between the two routes.
+  - Files: `src/components/profiles/profile-detail-page.tsx` (NEW)
+
+- **[COMPONENT] AddProfileDialog** — Modal for adding competitor or thought leader profiles. Fields: name, type (pre-selectable), importance, description, website URL. Platform links added after creation via detail page.
+  - Files: `src/components/profiles/add-profile-dialog.tsx` (NEW)
+
+### Enhancements
+
+- **[ENHANCEMENT] Idea Wall profile filter** — FilterBar now includes a profile dropdown. Selecting a profile filters ideas to only those sourced from that profile's signal sources.
+  - Files: `src/components/ideas/filter-bar.tsx`, `src/app/(app)/ideas/page.tsx`
+
+- **[ENHANCEMENT] Signal Explorer profile filter** — Signal Explorer table now has a profile filter chip row in addition to the existing source type filter.
+  - Files: `src/app/(app)/signals/page.tsx`
+
+- **[ENHANCEMENT] Home dashboard profiles stat** — Stats row now shows total profiles count (competitors + leaders). Quick actions include "Add Competitor" and "Add Leader" shortcuts.
+  - Files: `src/app/(app)/page.tsx`
+
+- **[ENHANCEMENT] SourceRail link-to-profile** — Source rows in SourceRail show a "→ ProfileName" link when the source is linked to a profile. Clicking navigates to /competitors/[id] or /leaders/[id].
+  - Files: `src/components/ideas/source-rail.tsx`
+
+### n8n
+
+- **[N8N] Signal Harvester workflow updated** — Payload now includes `profileId` (nullable, from Supabase source config join), `publishedAt` (original article pub date), `fetchMethod` (rss/youtube_rss/etc). Date filtering: only articles published in last 7 days are forwarded.
+  - Workflow: `qrnItYAUlVcgchZO` on full-funnel.app.n8n.cloud (updated in place)
+
+---
+
 ## 2026-05-13 (Session 11 — Module 1: Complete Core Loop)
 
 - **[SCHEMA] workspace_integrations + draft_exports tables** — Per-workspace integration config with encrypted secrets (AES-256-GCM). Export tracking with idempotency keys, ON DELETE SET NULL for audit trail.

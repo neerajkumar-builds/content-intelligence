@@ -58,9 +58,10 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Luke's Positioning Agent (May 13):** Brand Brief must evolve into 11-section Positioning Guide (pillars, benefits, tone, phrases, audience language). Signals → Market Analysis → Positioning Statement → Guide → feeds ALL content. See `memory/reference_positioning_agent.md`.
 - **Existing n8n workflows analyzed:** Social Listening V2 (8 Sheets tabs, 5 audience segments) + Blog Generator (topics → Gemini Pro → Google Docs → Slack). See `memory/reference_existing_workflows.md`.
 - **Session 11 — MODULE 1 COMPLETE (6 commits, +2,200 lines):** Core Loop done. Approved drafts export to Google Drive + Slack. New: workspace_integrations table (encrypted secrets), draft_exports table (idempotency keys), export-draft Inngest function (replaces verify-post), integrations router (13th), Settings > Integrations page, Home dashboard (stats + approvals + exports + actions), export buttons on draft editor, export badges on drafts list.
-- **Next:** Module 2 (signal intelligence: multi-platform, competitors, leaders) → Module 3 (content excellence + positioning guide upgrade) → Module 4 (SEO/AEO) → Module 5 (polish)
+- **Module 2A — Signal Intelligence (Session 12):** profiles table, profile_platform_links table, 4 new enums (profileTypeEnum, profileImportanceEnum, profilePlatformEnum, fetchMethodEnum), profiles router (14th, 10 procedures), RSS/YouTube/Google News auto-discovery utilities, LLM signal classification step in process-signal (Gemini Flash), /competitors + /leaders pages + detail views, AddProfileDialog, Idea Wall/Signal Explorer/Home/SourceRail enhancements, n8n Signal Harvester workflow updated (profileId, publishedAt, fetchMethod in payload, date filtering). 13 commits, +4,782 lines.
+- **Next:** Module 2B (Apify scrapers for LinkedIn/Twitter/Instagram profiles) → Module 3 (content excellence + positioning guide upgrade) → Module 4 (SEO/AEO) → Module 5 (polish)
 - **Full roadmap:** See plan file `~/.claude/plans/unified-sniffing-island.md` — 5 modules, depth-first
-- **Schema now:** 31 tables. 13 routers. 70 procedures. 6 Inngest functions (export-draft replaced verify-post). 10 functional pages + 9 placeholders.
+- **Schema now:** 33 tables. 14 routers. 80 procedures. 6 Inngest functions (export-draft replaced verify-post). 14 functional pages + 5 placeholders.
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
@@ -149,7 +150,7 @@ A proper first pass avoids 5+ fix commits. Measure twice, cut once.
 | Dev prompts | `design_handoff_content_intelligence_agent/DEV_PROMPTS.md` |
 | Design tokens | `design_handoff_content_intelligence_agent/app/tokens.css` |
 | Connectors spec (prototype) | `design_handoff_content_intelligence_agent/app/screens/govern.jsx` |
-| Drizzle schema (LIVE) | `src/db/schema/*.ts` (10 files, 31 tables) |
+| Drizzle schema (LIVE) | `src/db/schema/*.ts` (11 files, 33 tables) |
 | DB client | `src/db/index.ts` (postgres-js, prepare: false) |
 | Drizzle config | `drizzle.config.ts` |
 | Migration SQL | `drizzle/0000_great_jocasta.sql` |
@@ -164,7 +165,7 @@ A proper first pass avoids 5+ fix commits. Measure twice, cut once.
 | Health endpoint | `src/app/api/health/route.ts` |
 | tRPC init + context | `src/server/context.ts`, `src/server/trpc.ts` |
 | tRPC middleware | `src/server/middleware.ts` (auth → workspace → trace) |
-| tRPC routers (11) | `src/server/routers/*.ts` (brand, brief, corpus, rules, connectors, ideas, drafts, schedule, audit, onboarding, signals) |
+| tRPC routers (14) | `src/server/routers/*.ts` (brand, brief, corpus, rules, connectors, ideas, drafts, schedule, audit, onboarding, signals, prompts, integrations, profiles) |
 | tRPC app router | `src/server/routers/_app.ts` |
 | tRPC API route | `src/app/api/trpc/[trpc]/route.ts` |
 | tRPC client hooks | `src/lib/trpc/client.tsx` |
@@ -219,6 +220,17 @@ A proper first pass avoids 5+ fix commits. Measure twice, cut once.
 | n8n Signal Harvester (LIVE) | Workflow `qrnItYAUlVcgchZO` on full-funnel.app.n8n.cloud |
 | Blotato references | `knowledge_base/blotato_references/` |
 | Brand guidelines PDF | `knowledge_base/FullFunnel_Brand Guidelines.pdf` |
+| Profile schema | `src/db/schema/profiles.ts` (profiles + profile_platform_links, 4 new enums) |
+| Profiles router | `src/server/routers/profiles.ts` (14th, 10 procedures: create, get, list, update, delete, addLink, removeLink, listLinks, listByType, search) |
+| RSS discovery | `src/lib/signals/rss-discovery.ts` (auto-discover RSS feed URL from any website) |
+| YouTube utils | `src/lib/signals/youtube-utils.ts` (channel ID → RSS URL, handle → channel ID) |
+| Google News | `src/lib/signals/google-news.ts` (topic/company → Google News RSS URL) |
+| Competitors page | `src/app/(app)/competitors/page.tsx` (competitor profiles list + AddProfileDialog) |
+| Leaders page | `src/app/(app)/leaders/page.tsx` (thought leader profiles list + AddProfileDialog) |
+| Profile detail page | `src/app/(app)/competitors/[id]/page.tsx`, `src/app/(app)/leaders/[id]/page.tsx` |
+| AddProfileDialog | `src/components/profiles/add-profile-dialog.tsx` |
+| ProfileCard | `src/components/profiles/profile-card.tsx` |
+| ProfileDetailPage | `src/components/profiles/profile-detail-page.tsx` (shared detail view component) |
 
 ## Platform API Gotchas (Top 10 — verified May 2026)
 
