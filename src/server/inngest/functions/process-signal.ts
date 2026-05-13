@@ -92,6 +92,80 @@ export const processSignalFn = inngest.createFunction(
       );
     });
 
+    // LLM classification — optional enhancement, graceful degradation on failure
+    const classification = await step.run("classify-signal", async () => {
+      try {
+        const apiKey = process.env.GOOGLE_AI_API_KEY;
+        if (!apiKey) {
+          console.warn("[classify-signal] GOOGLE_AI_API_KEY not set, skipping");
+          return null;
+        }
+
+        const truncatedBody = signal.body.slice(0, 1000);
+        const prompt = `Classify this content signal. Return valid JSON only, no markdown fences.
+
+Title: ${signal.title}
+Content: ${truncatedBody}
+Source type: ${signal.source}
+
+Return this JSON structure:
+{
+  "contentType": one of: "blog_post", "video", "podcast", "social_post", "press_release", "report", "webinar", "newsletter", "case_study", "product_update", "hiring", "event",
+  "themes": ["topic1", "topic2"] (max 5 tags),
+  "suggestedFormats": ["linkedin-long", "newsletter"] (from: "linkedin-long", "x-thread", "newsletter", "blog", "video-script"),
+  "contentAngle": "one sentence suggesting how to respond to this content",
+  "relevanceScore": 0.7 (float 0-1)
+}`;
+
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.3, maxOutputTokens: 512 },
+            }),
+          },
+        );
+
+        if (!res.ok) {
+          const errText = await res.text().catch(() => "unknown");
+          console.error(`[classify-signal] Gemini HTTP ${res.status}: ${errText.slice(0, 200)}`);
+          return null;
+        }
+
+        const data = (await res.json()) as {
+          candidates?: Array<{ content: { parts: Array<{ text: string }> } }>;
+        };
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) {
+          console.error("[classify-signal] Gemini returned no text content");
+          return null;
+        }
+
+        // Strip markdown fences if model returns them despite instructions
+        const cleaned = text.replace(/```(?:json)?\s*/g, "").replace(/```\s*/g, "").trim();
+        const parsed = JSON.parse(cleaned) as {
+          contentType?: string;
+          themes?: string[];
+          suggestedFormats?: string[];
+          contentAngle?: string;
+          relevanceScore?: number;
+        };
+
+        // Store classification in signal metadata via JSONB merge
+        await db.execute(
+          sql`UPDATE signals SET metadata = COALESCE(metadata, '{}'::jsonb) || ${JSON.stringify({ classification: parsed })}::jsonb WHERE id = ${signalId}`,
+        );
+
+        return parsed;
+      } catch (err) {
+        console.error(`[classify-signal] Failed for signal ${signalId}:`, err);
+        return null;
+      }
+    });
+
     const activeBrands = await step.run("fetch-brands", async () => {
       return db
         .select({ id: brands.id, name: brands.name })
@@ -145,6 +219,19 @@ export const processSignalFn = inngest.createFunction(
       const pubDateRaw = meta.pubDate ?? meta.publishedAt ?? meta.published_at ?? meta.created ?? meta.isoDate;
       const publishedAt = pubDateRaw ? new Date(pubDateRaw as string) : null;
 
+      // Prefer LLM classification over heuristic inference when available
+      const formats = classification?.suggestedFormats?.length
+        ? classification.suggestedFormats
+        : inferFormats(signal.source, signal.body.length);
+
+      const angle = classification?.contentAngle
+        ? classification.contentAngle
+        : inferAngle(signal.source, meta);
+
+      const tags = classification?.themes?.length
+        ? classification.themes
+        : Array.isArray(meta.tags) ? (meta.tags as string[]) : [];
+
       await step.run(`create-idea-${brand.id}`, async () => {
         const [idea] = await db
           .insert(ideas)
@@ -153,7 +240,7 @@ export const processSignalFn = inngest.createFunction(
             brandId: brand.id,
             signalId,
             hook: signal.title,
-            angle: inferAngle(signal.source, meta),
+            angle,
             sourceKind: signal.source,
             sourceLabel: String(meta.sourceLabel ?? signal.source),
             sourceCitation: citation,
@@ -162,8 +249,8 @@ export const processSignalFn = inngest.createFunction(
             icpFit: String(icpFit),
             hotScore,
             freshness,
-            formats: inferFormats(signal.source, signal.body.length),
-            tags: Array.isArray(meta.tags) ? (meta.tags as string[]) : [],
+            formats,
+            tags,
             score: String(score),
             dedupScore: isNearDuplicate ? String(Number(topDup!.similarity).toFixed(4)) : null,
             dedupPriorId: isNearDuplicate ? topDup!.id : null,
