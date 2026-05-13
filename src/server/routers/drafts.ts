@@ -646,7 +646,8 @@ export const draftsRouter = router({
         .where(scopeAnd(workspaceIntegrations.workspaceId, eq(workspaceIntegrations.integrationType, "google_drive")))
         .limit(1);
 
-      if (!integration?.enabled || !integration.encryptedSecret) {
+      const driveSecretAvailable = !!integration?.encryptedSecret || !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+      if (!integration?.enabled || !driveSecretAvailable) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Configure Google Drive in Settings first" });
       }
 
@@ -706,7 +707,8 @@ export const draftsRouter = router({
         .where(scopeAnd(workspaceIntegrations.workspaceId, eq(workspaceIntegrations.integrationType, "slack")))
         .limit(1);
 
-      if (!integration?.enabled || !integration.encryptedSecret) {
+      const slackSecretAvailable = !!integration?.encryptedSecret || !!process.env.SLACK_WEBHOOK_URL;
+      if (!integration?.enabled || !slackSecretAvailable) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Configure Slack in Settings first" });
       }
 
