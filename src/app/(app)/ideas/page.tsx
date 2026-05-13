@@ -16,8 +16,14 @@ export default function IdeaWallPage() {
   const router = useRouter();
   const utils = trpc.useUtils();
 
+  // Filters prefixed with "profile:" route to profileType, not source
+  const isProfileFilter = filter.startsWith("profile:");
+  const profileType = isProfileFilter ? filter.slice("profile:".length) : undefined;
+  const source = !isProfileFilter && filter !== "all" ? filter : undefined;
+
   const { data, isLoading } = trpc.ideas.list.useQuery({
-    source: filter === "all" ? undefined : filter,
+    source,
+    profileType: profileType as "competitor" | "thought_leader" | "content_creator" | undefined,
     sort,
     limit: 50,
     dateFrom: dateFrom || undefined,

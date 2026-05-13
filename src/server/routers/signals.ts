@@ -95,6 +95,7 @@ export const signalsRouter = router({
           "linkedin",
           "twitter",
           "apify",
+          "manual",
           "competitor",
           "thought_leader",
         ]),

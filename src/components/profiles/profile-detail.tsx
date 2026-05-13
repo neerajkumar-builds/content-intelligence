@@ -4,52 +4,18 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "@/server/routers/_app";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — inferred from tRPC router output types
 // ---------------------------------------------------------------------------
 
-type PlatformLink = {
-  id: string;
-  profileId: string;
-  platform: string;
-  url: string;
-  feedUrl: string | null;
-  fetchMethod: string;
-  enabled: boolean;
-  lastFetchedAt: Date | string | null;
-  metadata: Record<string, unknown>;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-};
-
-type SourceConfig = {
-  id: string;
-  workspaceId: string;
-  source: string;
-  label: string | null;
-  configUrl: string | null;
-  profileId: string | null;
-  fetchMethod: string;
-  enabled: boolean;
-  lastFetchedAt: Date | string | null;
-  lastErrorMessage: string | null;
-  metadata: Record<string, unknown>;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-};
-
-type SignalItem = {
-  id: string;
-  source: string;
-  sourceUrl: string | null;
-  title: string | null;
-  body: string | null;
-  metadata: Record<string, unknown> | null;
-  processed: boolean;
-  publishedAt: Date | string | null;
-  createdAt: Date | string;
-};
+type RouterOutput = inferRouterOutputs<AppRouter>;
+type ProfileData = NonNullable<RouterOutput["profiles"]["getById"]>;
+type PlatformLink = ProfileData["platformLinks"][number];
+type SourceConfig = ProfileData["sourceConfigs"][number];
+type SignalItem = RouterOutput["profiles"]["getProfileSignals"]["items"][number];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -216,6 +182,11 @@ const SOURCE_FILTER_LABELS: Record<SourceFilter, string> = {
 // Main component
 // ---------------------------------------------------------------------------
 
+const PLATFORM_OPTIONS = [
+  "website", "linkedin", "twitter", "youtube", "instagram",
+  "tiktok", "reddit", "substack", "medium", "podcast",
+] as const;
+
 export function ProfileDetailPage({
   profileId,
   backUrl,
@@ -233,6 +204,11 @@ export function ProfileDetailPage({
   const [notes, setNotes] = useState("");
   const [notesDirty, setNotesDirty] = useState(false);
   const notesRef = useRef<HTMLTextAreaElement>(null);
+
+  // Add platform link state
+  const [addLinkOpen, setAddLinkOpen] = useState(false);
+  const [addLinkPlatform, setAddLinkPlatform] = useState<string>("website");
+  const [addLinkUrl, setAddLinkUrl] = useState("");
 
   // ── Data queries ──
   const { data: profile, isLoading } = trpc.profiles.getById.useQuery(
@@ -263,6 +239,24 @@ export function ProfileDetailPage({
     onError: (err) => toast.error(err.message),
   });
 
+  const addLinkMut = trpc.profiles.addPlatformLink.useMutation({
+    onSuccess: (data) => {
+      setAddLinkOpen(false);
+      setAddLinkUrl("");
+      setAddLinkPlatform("website");
+      void utils.profiles.getById.invalidate({ id: profileId });
+      const status = data.discovery?.status ?? "unknown";
+      if (status === "active") {
+        toast.success("Platform link added — feed discovered");
+      } else if (status === "apify_needed") {
+        toast.success("Platform link added — requires Apify scraper");
+      } else {
+        toast.success("Platform link added — no feed found");
+      }
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   // ── Sync notes from server ──
   useEffect(() => {
     if (profile && !notesDirty) {
@@ -276,9 +270,9 @@ export function ProfileDetailPage({
   }, [notesDirty, notes, profileId, profile, updateMut]);
 
   // ── Derived data ──
-  const platformLinks: PlatformLink[] = (profile?.platformLinks ?? []) as PlatformLink[];
-  const sourceConfigs: SourceConfig[] = (profile?.sourceConfigs ?? []) as SourceConfig[];
-  const signalItems: SignalItem[] = (signalsData?.items ?? []) as SignalItem[];
+  const platformLinks = profile?.platformLinks ?? [];
+  const sourceConfigs = profile?.sourceConfigs ?? [];
+  const signalItems = signalsData?.items ?? [];
 
   // Build source config lookup by profileId + feedUrl for status display
   const sourceConfigByFeedUrl = new Map<string, SourceConfig>();
@@ -293,16 +287,33 @@ export function ProfileDetailPage({
     signalCountBySource.set(key, (signalCountBySource.get(key) ?? 0) + 1);
   }
 
-  // Filter signals by source
+  // Filter signals by fetchMethod from metadata (more accurate than source enum)
   const filteredSignals =
     sourceFilter === "all"
       ? signalItems
       : signalItems.filter((s) => {
-          if (sourceFilter === "website") return s.source === "rss" || s.source === "competitor";
-          if (sourceFilter === "youtube") return s.source === "rss" && s.sourceUrl?.includes("youtube");
-          if (sourceFilter === "reddit") return s.source === "reddit" || (s.source === "rss" && s.sourceUrl?.includes("reddit"));
-          if (sourceFilter === "linkedin") return s.source === "linkedin";
-          if (sourceFilter === "twitter") return s.source === "twitter" || s.source === "thought_leader";
+          const meta = (s.metadata ?? {}) as Record<string, unknown>;
+          const fetchMethod = meta.fetchMethod as string | undefined;
+          if (sourceFilter === "website") {
+            return fetchMethod === "rss" || fetchMethod === "rss_discovery"
+              || (!fetchMethod && s.source === "rss" && !s.sourceUrl?.includes("youtube") && !s.sourceUrl?.includes("reddit"));
+          }
+          if (sourceFilter === "youtube") {
+            return fetchMethod === "youtube_rss"
+              || (!fetchMethod && s.source === "rss" && s.sourceUrl?.includes("youtube"));
+          }
+          if (sourceFilter === "reddit") {
+            return fetchMethod === "reddit_rss"
+              || (!fetchMethod && (s.source === "reddit" || (s.source === "rss" && s.sourceUrl?.includes("reddit"))));
+          }
+          if (sourceFilter === "linkedin") {
+            return fetchMethod === "apify" && s.sourceUrl?.includes("linkedin")
+              || (!fetchMethod && s.source === "linkedin");
+          }
+          if (sourceFilter === "twitter") {
+            return fetchMethod === "google_news"
+              || (!fetchMethod && (s.source === "twitter" || s.source === "thought_leader"));
+          }
           return true;
         });
 
@@ -602,24 +613,120 @@ export function ProfileDetailPage({
               </div>
             )}
 
-            {/* Add platform link placeholder */}
-            <button
-              disabled
-              style={{
-                width: "100%",
-                marginTop: 8,
-                padding: "8px 12px",
-                fontSize: 11,
-                color: "var(--ink-tertiary)",
-                background: "transparent",
-                border: "1px dashed var(--border-default)",
-                borderRadius: 6,
-                cursor: "not-allowed",
-                opacity: 0.6,
-              }}
-            >
-              + Add platform link
-            </button>
+            {/* Add platform link */}
+            {!addLinkOpen ? (
+              <button
+                onClick={() => setAddLinkOpen(true)}
+                style={{
+                  width: "100%",
+                  marginTop: 8,
+                  padding: "8px 12px",
+                  fontSize: 11,
+                  color: "var(--ink-secondary)",
+                  background: "transparent",
+                  border: "1px dashed var(--border-default)",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                }}
+              >
+                + Add platform link
+              </button>
+            ) : (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: 10,
+                  borderRadius: 8,
+                  border: "1px solid var(--border-default)",
+                  background: "var(--bg-surface)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <select
+                  value={addLinkPlatform}
+                  onChange={(e) => setAddLinkPlatform(e.target.value)}
+                  style={{
+                    width: "100%",
+                    height: 30,
+                    fontSize: 12,
+                    padding: "0 8px",
+                    borderRadius: 6,
+                    border: "1px solid var(--border-subtle)",
+                    background: "var(--bg-canvas)",
+                    color: "var(--ink-primary)",
+                  }}
+                >
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <option key={p} value={p}>
+                      {PLATFORM_LABELS[p] ?? p}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="url"
+                  value={addLinkUrl}
+                  onChange={(e) => setAddLinkUrl(e.target.value)}
+                  placeholder="https://..."
+                  style={{
+                    width: "100%",
+                    height: 30,
+                    fontSize: 12,
+                    padding: "0 8px",
+                    borderRadius: 6,
+                    border: "1px solid var(--border-subtle)",
+                    background: "var(--bg-canvas)",
+                    color: "var(--ink-primary)",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    onClick={() => {
+                      if (!addLinkUrl.trim()) return;
+                      addLinkMut.mutate({
+                        profileId,
+                        platform: addLinkPlatform as typeof PLATFORM_OPTIONS[number],
+                        url: addLinkUrl.trim(),
+                      });
+                    }}
+                    disabled={!addLinkUrl.trim() || addLinkMut.isPending}
+                    style={{
+                      flex: 1,
+                      padding: "6px 12px",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#fff",
+                      background: addLinkMut.isPending ? "var(--ink-tertiary)" : "var(--accent)",
+                      border: "none",
+                      borderRadius: 6,
+                      cursor: !addLinkUrl.trim() || addLinkMut.isPending ? "not-allowed" : "pointer",
+                      opacity: !addLinkUrl.trim() ? 0.5 : 1,
+                    }}
+                  >
+                    {addLinkMut.isPending ? "Adding..." : "Add"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAddLinkOpen(false);
+                      setAddLinkUrl("");
+                    }}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: 11,
+                      color: "var(--ink-secondary)",
+                      background: "transparent",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -764,7 +871,7 @@ export function ProfileDetailPage({
                 hasSourceConfigs={sourceConfigs.length > 0}
               />
             )}
-            {activeTab === "ideas" && <IdeasTab />}
+            {activeTab === "ideas" && <IdeasTab profileId={profileId} />}
           </div>
         </div>
       </div>
@@ -972,45 +1079,197 @@ function ContentTab({
 }
 
 // ---------------------------------------------------------------------------
-// Your Ideas tab (placeholder)
+// Your Ideas tab — shows ideas generated from this profile's signals
 // ---------------------------------------------------------------------------
 
-function IdeasTab() {
-  return (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "60px 20px",
-        color: "var(--ink-tertiary)",
-      }}
-    >
-      <svg
-        width="40"
-        height="40"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--border-default)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ margin: "0 auto 12px" }}
+function IdeasTab({ profileId }: { profileId: string }) {
+  const { data: ideas, isLoading } = trpc.ideas.listByProfile.useQuery(
+    { profileId, limit: 50 },
+    { enabled: !!profileId },
+  );
+
+  if (isLoading) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              height: 72,
+              borderRadius: 8,
+              background: "var(--bg-muted)",
+              animation: "pulse 1.5s ease-in-out infinite",
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (!ideas || ideas.length === 0) {
+    return (
+      <div
+        style={{
+          textAlign: "center",
+          padding: "60px 20px",
+          color: "var(--ink-tertiary)",
+        }}
       >
-        <path d="M12 2v1" />
-        <path d="M12 21v1" />
-        <path d="M4.93 4.93l.7.7" />
-        <path d="M18.36 18.36l.7.7" />
-        <path d="M2 12h1" />
-        <path d="M21 12h1" />
-        <path d="M4.93 19.07l.7-.7" />
-        <path d="M18.36 5.64l.7-.7" />
-        <circle cx="12" cy="12" r="4" />
-      </svg>
-      <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: "var(--ink-secondary)" }}>
-        Coming soon
-      </p>
-      <p style={{ fontSize: 12, margin: 0 }}>
-        Ideas generated from this profile's signals will appear here.
-      </p>
+        <svg
+          width="40"
+          height="40"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--border-default)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ margin: "0 auto 12px" }}
+        >
+          <path d="M12 2v1" />
+          <path d="M12 21v1" />
+          <path d="M4.93 4.93l.7.7" />
+          <path d="M18.36 18.36l.7.7" />
+          <path d="M2 12h1" />
+          <path d="M21 12h1" />
+          <path d="M4.93 19.07l.7-.7" />
+          <path d="M18.36 5.64l.7-.7" />
+          <circle cx="12" cy="12" r="4" />
+        </svg>
+        <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: "var(--ink-secondary)" }}>
+          No ideas yet
+        </p>
+        <p style={{ fontSize: 12, margin: 0 }}>
+          Ideas generated from this profile&apos;s signals will appear here once signals are processed.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {ideas.map((idea) => {
+        const icpPct = Math.round(Number(idea.icpFit) * 100);
+        return (
+          <div
+            key={idea.id}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 8,
+              border: "1px solid var(--border-subtle)",
+              background: "var(--bg-surface)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+          >
+            {/* Top row: score + ICP + timestamp */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                  background: "rgba(99,102,241,0.1)",
+                  color: "#6366f1",
+                }}
+              >
+                Score: {idea.score}
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                  background: icpPct >= 60
+                    ? "rgba(34,197,94,0.1)"
+                    : icpPct >= 30
+                      ? "rgba(245,158,11,0.1)"
+                      : "var(--bg-muted)",
+                  color: icpPct >= 60
+                    ? "#22c55e"
+                    : icpPct >= 30
+                      ? "#f59e0b"
+                      : "var(--ink-tertiary)",
+                }}
+              >
+                ICP: {icpPct}%
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  color: "var(--ink-tertiary)",
+                  marginLeft: "auto",
+                }}
+              >
+                {relativeTime(idea.publishedAt ?? idea.createdAt)}
+              </span>
+            </div>
+
+            {/* Hook (bold) */}
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--ink-primary)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {idea.sourceUrl ? (
+                <a
+                  href={idea.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "none" }}
+                >
+                  {idea.hook}
+                </a>
+              ) : (
+                idea.hook
+              )}
+            </div>
+
+            {/* Angle */}
+            <div
+              style={{
+                fontSize: 12,
+                color: "var(--ink-secondary)",
+                lineHeight: 1.5,
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {idea.angle}
+            </div>
+
+            {/* Tags */}
+            {idea.tags.length > 0 && (
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {idea.tags.slice(0, 5).map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      fontSize: 10,
+                      padding: "1px 6px",
+                      borderRadius: 3,
+                      background: "var(--bg-muted)",
+                      color: "var(--ink-tertiary)",
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { protectedProcedure } from "../middleware";
 import { router } from "../trpc";
 import { brandBriefs, brands } from "@/db/schema";
 import { callLLM } from "@/lib/ai/llm-router";
+import { assertSafeUrl, SsrfError } from "@/lib/signals/url-safety";
 
 export const briefRouter = router({
   create: protectedProcedure
@@ -182,6 +183,22 @@ export const briefRouter = router({
         .limit(1);
       if (!brand) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Brand not found" });
+      }
+
+      // SSRF protection: validate URL doesn't resolve to internal/private IPs
+      try {
+        await assertSafeUrl(input.websiteUrl);
+      } catch (err) {
+        if (err instanceof SsrfError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Blocked URL: ${err.message}`,
+          });
+        }
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "URL validation failed",
+        });
       }
 
       let htmlText: string;

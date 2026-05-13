@@ -255,7 +255,7 @@ export const profilesRouter = router({
     .input(
       z
         .object({
-          type: profileTypeSchema.optional(),
+          type: z.union([profileTypeSchema, z.array(profileTypeSchema)]).optional(),
           includeArchived: z.boolean().default(false),
         })
         .optional(),
@@ -265,7 +265,11 @@ export const profilesRouter = router({
 
       const conditions = [];
       if (input?.type) {
-        conditions.push(eq(profiles.type, input.type));
+        if (Array.isArray(input.type)) {
+          conditions.push(inArray(profiles.type, input.type));
+        } else {
+          conditions.push(eq(profiles.type, input.type));
+        }
       }
       if (!input?.includeArchived) {
         conditions.push(isNull(profiles.archivedAt));
@@ -457,7 +461,8 @@ export const profilesRouter = router({
         // Skip Google News — it's a source_config only, not a platform_link
         if (result.platform === "google_news") {
           if (result.feedUrl) {
-            // Dedup: check if config already exists for this workspace+URL+profile
+            // Dedup: check if config already exists for this workspace+URL
+            // Don't check profileId — same feed URL should never be fetched twice
             const [existingNewsConfig] = await db
               .select({ id: signalSourceConfigs.id })
               .from(signalSourceConfigs)
@@ -465,7 +470,6 @@ export const profilesRouter = router({
                 and(
                   eq(signalSourceConfigs.workspaceId, workspaceId),
                   eq(signalSourceConfigs.configUrl, result.feedUrl),
-                  eq(signalSourceConfigs.profileId, profile.id),
                 ),
               )
               .limit(1);
@@ -583,7 +587,8 @@ export const profilesRouter = router({
                   : result.platform.charAt(0).toUpperCase() +
                     result.platform.slice(1);
 
-          // Dedup: check if config already exists for this workspace+URL+profile
+          // Dedup: check if config already exists for this workspace+URL
+          // Don't check profileId — same feed URL should never be fetched twice
           const [existingConfig] = await db
             .select({ id: signalSourceConfigs.id })
             .from(signalSourceConfigs)
@@ -591,7 +596,6 @@ export const profilesRouter = router({
               and(
                 eq(signalSourceConfigs.workspaceId, workspaceId),
                 eq(signalSourceConfigs.configUrl, result.feedUrl),
-                eq(signalSourceConfigs.profileId, profile.id),
               ),
             )
             .limit(1);
@@ -832,7 +836,8 @@ export const profilesRouter = router({
         const labelSuffix =
           input.platform.charAt(0).toUpperCase() + input.platform.slice(1);
 
-        // Dedup: check if config already exists for this workspace+URL+profile
+        // Dedup: check if config already exists for this workspace+URL
+        // Don't check profileId — same feed URL should never be fetched twice
         const [existingConfig] = await db
           .select({ id: signalSourceConfigs.id })
           .from(signalSourceConfigs)
@@ -840,7 +845,6 @@ export const profilesRouter = router({
             and(
               eq(signalSourceConfigs.workspaceId, workspaceId),
               eq(signalSourceConfigs.configUrl, platformResult.feedUrl),
-              eq(signalSourceConfigs.profileId, input.profileId),
             ),
           )
           .limit(1);

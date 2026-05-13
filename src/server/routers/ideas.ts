@@ -12,6 +12,7 @@ export const ideasRouter = router({
         .object({
           brandId: z.string().uuid().optional(),
           source: z.string().optional(),
+          profileType: z.enum(["competitor", "thought_leader", "content_creator"]).optional(),
           sort: z.enum(["relevance", "icp", "hot", "fresh"]).default("relevance"),
           limit: z.number().int().min(1).max(100).default(20),
           cursor: z.string().uuid().optional(),
@@ -27,6 +28,17 @@ export const ideasRouter = router({
       const conditions = [eq(ideas.workspaceId, workspaceId)];
       if (input?.brandId) conditions.push(eq(ideas.brandId, input.brandId));
       if (input?.source) conditions.push(eq(ideas.sourceKind, input.source));
+      // Filter by profile type (competitor/thought_leader/content_creator)
+      // via signal → profile join
+      if (input?.profileType) {
+        conditions.push(
+          sql`${ideas.signalId} IN (
+            SELECT s.id FROM signals s
+            INNER JOIN profiles p ON s.profile_id = p.id
+            WHERE p.type = ${input.profileType}
+          )`,
+        );
+      }
       if (input?.dateFrom) {
         conditions.push(
           sql`COALESCE(${ideas.publishedAt}, ${ideas.createdAt}) >= ${new Date(input.dateFrom).toISOString()}::timestamptz`,
@@ -175,6 +187,47 @@ export const ideasRouter = router({
         })
         .returning();
       return idea;
+    }),
+
+  listByProfile: protectedProcedure
+    .input(
+      z.object({
+        profileId: z.string().uuid(),
+        limit: z.number().int().min(1).max(100).default(20),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { db, workspaceId } = ctx.scoped;
+
+      const rows = await db
+        .select({
+          id: ideas.id,
+          hook: ideas.hook,
+          angle: ideas.angle,
+          sourceKind: ideas.sourceKind,
+          sourceLabel: ideas.sourceLabel,
+          sourceUrl: ideas.sourceUrl,
+          icpFit: ideas.icpFit,
+          hotScore: ideas.hotScore,
+          score: ideas.score,
+          formats: ideas.formats,
+          tags: ideas.tags,
+          publishedAt: ideas.publishedAt,
+          createdAt: ideas.createdAt,
+          brandId: ideas.brandId,
+        })
+        .from(ideas)
+        .innerJoin(signals, eq(ideas.signalId, signals.id))
+        .where(
+          and(
+            eq(signals.profileId, input.profileId),
+            eq(ideas.workspaceId, workspaceId),
+          ),
+        )
+        .orderBy(desc(ideas.createdAt))
+        .limit(input.limit);
+
+      return rows;
     }),
 
   countByStatus: protectedProcedure.query(async ({ ctx }) => {

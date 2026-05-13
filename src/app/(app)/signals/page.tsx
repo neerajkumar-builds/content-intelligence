@@ -169,7 +169,9 @@ export default function SignalExplorerPage() {
                   >
                     <td style={{ padding: "10px 12px", width: 80 }}>
                       <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--ink-tertiary)", background: "var(--bg-muted)", padding: "2px 6px", borderRadius: 3 }}>
-                        {sig.source}
+                        {(sig.metadata as Record<string, unknown> | null)?.fetchMethod
+                          ? String((sig.metadata as Record<string, unknown>).fetchMethod)
+                          : sig.source}
                       </span>
                     </td>
                     <td style={{ padding: "10px 12px" }}>

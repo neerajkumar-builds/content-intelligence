@@ -138,7 +138,6 @@ export async function POST(req: NextRequest) {
         SignalIngested.create({
           signalId,
           workspaceId: payload.workspaceId,
-          profileId: payload.profileId,
         }),
       )
       .catch((err) => {

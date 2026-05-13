@@ -7,7 +7,6 @@ export const SignalIngested = eventType(
     schema: z.object({
       signalId: z.string().uuid(),
       workspaceId: z.string().uuid(),
-      profileId: z.string().uuid().optional(),
     }),
   },
 );

@@ -121,19 +121,16 @@ export default function ThoughtLeadersPage() {
   const [filter, setFilter] = useState<LeaderFilter>("all");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  // Query all person-type profiles: thought_leader + content_creator
-  // When filter === "all", fetch both types (no type filter sent)
-  // When specific, filter to that type
+  // Query person-type profiles: thought_leader + content_creator
+  // Always pass type filter server-side — never fetch competitors here
   const thoughtLeaders = trpc.profiles.list.useQuery(
-    filter === "all" ? undefined : { type: filter },
+    filter === "all"
+      ? { type: ["thought_leader", "content_creator"] }
+      : { type: filter },
   );
 
-  // Filter client-side when "all" — only show people, not competitors
-  const profiles: ProfileListItem[] = (
-    (thoughtLeaders.data ?? []) as ProfileListItem[]
-  ).filter(
-    (p) => p.type === "thought_leader" || p.type === "content_creator",
-  );
+  const profiles: ProfileListItem[] =
+    (thoughtLeaders.data ?? []) as ProfileListItem[];
 
   const isLoading = thoughtLeaders.isLoading;
 
