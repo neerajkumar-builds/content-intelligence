@@ -124,12 +124,12 @@ export const exportDraftFn = inngest.createFunction(
     if (destination === "google_drive") {
       const result = await step.run("export-to-drive", async () => {
         const [existing] = await db
-          .select({ externalId: draftExports.externalId })
+          .select({ externalId: draftExports.externalId, completedAt: draftExports.completedAt })
           .from(draftExports)
           .where(eq(draftExports.id, exportId))
           .limit(1);
-        if (existing?.externalId) {
-          return { fileId: existing.externalId, webViewLink: "", skipped: true };
+        if (existing?.externalId || existing?.completedAt) {
+          return { fileId: existing.externalId ?? "already-processed", webViewLink: "", skipped: true };
         }
 
         const secret = integration.encryptedSecret
@@ -169,11 +169,11 @@ export const exportDraftFn = inngest.createFunction(
     if (destination === "slack") {
       const result = await step.run("send-to-slack", async () => {
         const [existing] = await db
-          .select({ externalId: draftExports.externalId })
+          .select({ externalId: draftExports.externalId, completedAt: draftExports.completedAt })
           .from(draftExports)
           .where(eq(draftExports.id, exportId))
           .limit(1);
-        if (existing?.externalId) {
+        if (existing?.externalId || existing?.completedAt) {
           return { ok: true, truncated: false, skipped: true };
         }
 
@@ -184,9 +184,8 @@ export const exportDraftFn = inngest.createFunction(
         if (!webhookUrl) {
           throw new Error("Slack webhook URL not configured — set SLACK_WEBHOOK_URL env var or configure per-workspace");
         }
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : "http://localhost:3000";
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL
+          || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
         return sendSlackNotification({
           webhookUrl,
@@ -200,12 +199,10 @@ export const exportDraftFn = inngest.createFunction(
       });
 
       if (!result.ok && !("skipped" in result && result.skipped)) {
+        const errorMsg = "error" in result && typeof result.error === "string"
+          ? result.error : "Unknown Slack error";
         await step.run("mark-slack-failed", async () => {
-          await markFailed(
-            exportId,
-            "SLACK_SEND_FAILED",
-            (result as { error?: string }).error ?? "Unknown Slack error",
-          );
+          await markFailed(exportId, "SLACK_SEND_FAILED", errorMsg);
         });
         return { exportId, destination, success: false };
       }
