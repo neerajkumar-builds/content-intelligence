@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { Readable } from "stream";
 
 interface CreateDocOptions {
   title: string;
@@ -22,92 +23,39 @@ function getAuth(serviceAccountJson: string) {
   const credentials = JSON.parse(serviceAccountJson);
   return new google.auth.GoogleAuth({
     credentials,
-    scopes: [
-      "https://www.googleapis.com/auth/drive",
-      "https://www.googleapis.com/auth/documents",
-    ],
+    scopes: ["https://www.googleapis.com/auth/drive"],
   });
-}
-
-function textToRequests(content: string) {
-  const requests: Array<Record<string, unknown>> = [];
-  let idx = 1;
-
-  const lines = content.split("\n");
-  for (const line of lines) {
-    const trimmed = line.trimStart();
-
-    if (trimmed.startsWith("# ")) {
-      const text = trimmed.slice(2) + "\n";
-      requests.push(
-        { insertText: { location: { index: idx }, text } },
-        {
-          updateParagraphStyle: {
-            range: { startIndex: idx, endIndex: idx + text.length },
-            paragraphStyle: { namedStyleType: "HEADING_1" },
-            fields: "namedStyleType",
-          },
-        },
-      );
-      idx += text.length;
-    } else if (trimmed.startsWith("## ")) {
-      const text = trimmed.slice(3) + "\n";
-      requests.push(
-        { insertText: { location: { index: idx }, text } },
-        {
-          updateParagraphStyle: {
-            range: { startIndex: idx, endIndex: idx + text.length },
-            paragraphStyle: { namedStyleType: "HEADING_2" },
-            fields: "namedStyleType",
-          },
-        },
-      );
-      idx += text.length;
-    } else {
-      const text = line + "\n";
-      requests.push({ insertText: { location: { index: idx }, text } });
-      idx += text.length;
-    }
-  }
-
-  return requests;
 }
 
 export async function createGoogleDoc(
   opts: CreateDocOptions,
 ): Promise<CreateDocResult> {
   const auth = getAuth(opts.serviceAccountJson);
-  const docs = google.docs({ version: "v1", auth });
   const drive = google.drive({ version: "v3", auth });
 
-  const doc = await docs.documents.create({
-    requestBody: { title: opts.title },
-  });
+  const stream = new Readable();
+  stream.push(opts.content);
+  stream.push(null);
 
-  const fileId = doc.data.documentId!;
-
-  const requests = textToRequests(opts.content);
-  if (requests.length > 0) {
-    await docs.documents.batchUpdate({
-      documentId: fileId,
-      requestBody: { requests },
-    });
-  }
-
-  await drive.files.update({
-    fileId,
-    addParents: opts.folderId,
+  const file = await drive.files.create({
+    requestBody: {
+      name: opts.title,
+      mimeType: "application/vnd.google-apps.document",
+      parents: [opts.folderId],
+    },
+    media: {
+      mimeType: "text/plain",
+      body: stream,
+    },
     fields: "id,webViewLink",
-  });
-
-  const file = await drive.files.get({
-    fileId,
-    fields: "webViewLink",
+    supportsAllDrives: true,
   });
 
   return {
-    fileId,
-    webViewLink: file.data.webViewLink ?? `https://docs.google.com/document/d/${fileId}/edit`,
+    fileId: file.data.id!,
+    webViewLink:
+      file.data.webViewLink ??
+      `https://docs.google.com/document/d/${file.data.id}/edit`,
   };
 }
 
@@ -122,10 +70,15 @@ export async function testDriveConnection(
     const folder = await drive.files.get({
       fileId: folderId,
       fields: "id,name,mimeType",
+      supportsAllDrives: true,
     });
 
-    if (folder.data.mimeType !== "application/vnd.google-apps.folder") {
-      return { ok: false, error: "ID does not point to a folder" };
+    const mime = folder.data.mimeType;
+    if (
+      mime !== "application/vnd.google-apps.folder" &&
+      mime !== "application/vnd.google-apps.shortcut"
+    ) {
+      return { ok: false, error: "ID does not point to a folder or shared drive" };
     }
 
     return { ok: true, folderName: folder.data.name ?? undefined };
@@ -134,8 +87,11 @@ export async function testDriveConnection(
     if (msg.includes("404") || msg.includes("notFound")) {
       return { ok: false, error: "Folder not found or service account lacks access" };
     }
+    if (msg.includes("storage quota")) {
+      return { ok: false, error: "Use a Shared Drive — service accounts cannot create files in personal folders" };
+    }
     if (msg.includes("401") || msg.includes("403")) {
-      return { ok: false, error: "Invalid service account credentials" };
+      return { ok: false, error: "Permission denied — check service account has Content Manager access" };
     }
     return { ok: false, error: `Connection failed: ${msg.slice(0, 200)}` };
   }
