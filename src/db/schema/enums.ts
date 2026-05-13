@@ -76,3 +76,38 @@ export const exportStatusEnum = pgEnum("export_status", [
   "completed",
   "failed",
 ]);
+
+export const profileTypeEnum = pgEnum("profile_type", [
+  "competitor",
+  "thought_leader",
+  "content_creator",
+]);
+
+export const profileImportanceEnum = pgEnum("profile_importance", [
+  "high",
+  "medium",
+  "low",
+]);
+
+export const profilePlatformEnum = pgEnum("profile_platform", [
+  "website",
+  "linkedin",
+  "twitter",
+  "youtube",
+  "instagram",
+  "tiktok",
+  "reddit",
+  "substack",
+  "medium",
+  "podcast",
+]);
+
+export const fetchMethodEnum = pgEnum("fetch_method", [
+  "rss",
+  "rss_discovery",
+  "youtube_rss",
+  "reddit_rss",
+  "google_news",
+  "apify",
+  "manual",
+]);

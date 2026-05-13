@@ -9,6 +9,10 @@ export {
   aiTaskTypeEnum,
   exportFormatEnum,
   exportStatusEnum,
+  profileTypeEnum,
+  profileImportanceEnum,
+  profilePlatformEnum,
+  fetchMethodEnum,
 } from "./enums";
 
 export { workspaces, members, featureFlags } from "./workspaces";
@@ -38,3 +42,5 @@ export {
 } from "./ops";
 
 export { workspaceIntegrations, draftExports } from "./integrations";
+
+export { profiles, profilePlatformLinks } from "./profiles";
