@@ -101,6 +101,16 @@ export const signalsRouter = router({
         label: z.string().min(1).max(200),
         configUrl: z.string().min(1).max(2000),
         metadata: z.record(z.string(), z.unknown()).optional(),
+        profileId: z.string().uuid().optional(),
+        fetchMethod: z.enum([
+          "rss",
+          "rss_discovery",
+          "youtube_rss",
+          "reddit_rss",
+          "google_news",
+          "apify",
+          "manual",
+        ]).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -136,6 +146,8 @@ export const signalsRouter = router({
           label: input.label,
           configUrl: input.configUrl,
           metadata: input.metadata ?? {},
+          profileId: input.profileId ?? null,
+          fetchMethod: input.fetchMethod ?? null,
         })
         .returning();
       return config;

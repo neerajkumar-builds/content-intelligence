@@ -12,6 +12,7 @@ import { onboardingRouter } from "./onboarding";
 import { signalsRouter } from "./signals";
 import { promptsRouter } from "./prompts";
 import { integrationsRouter } from "./integrations";
+import { profilesRouter } from "./profiles";
 
 export const appRouter = router({
   brand: brandRouter,
@@ -27,6 +28,7 @@ export const appRouter = router({
   signals: signalsRouter,
   prompts: promptsRouter,
   integrations: integrationsRouter,
+  profiles: profilesRouter,
 });
 
 export type AppRouter = typeof appRouter;
