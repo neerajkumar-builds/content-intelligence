@@ -4,6 +4,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { ProfileCard } from "@/components/profiles/profile-card";
 import type { ProfileListItem } from "@/components/profiles/profile-card";
+import { AddProfileDialog } from "@/components/profiles/add-profile-dialog";
 
 const IMPORTANCE_FILTERS = ["all", "high", "medium", "low"] as const;
 type ImportanceFilter = (typeof IMPORTANCE_FILTERS)[number];
@@ -229,75 +230,11 @@ export default function CompetitorsPage() {
         )}
       </div>
 
-      {/* Dialog placeholder — Task 11 will provide the actual AddProfileDialog */}
-      {addDialogOpen && (
-        <div
-          role="dialog"
-          aria-label="Add competitor"
-          onClick={() => setAddDialogOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setAddDialogOpen(false);
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 50,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: "var(--bg-surface)",
-              borderRadius: 12,
-              border: "1px solid var(--border-subtle)",
-              padding: 32,
-              maxWidth: 400,
-              width: "90%",
-              textAlign: "center",
-            }}
-          >
-            <h3
-              style={{
-                margin: "0 0 8px",
-                fontSize: 16,
-                fontWeight: 600,
-                color: "var(--ink-primary)",
-              }}
-            >
-              Add Competitor
-            </h3>
-            <p
-              style={{
-                fontSize: 13,
-                color: "var(--ink-tertiary)",
-                margin: "0 0 20px",
-                lineHeight: 1.5,
-              }}
-            >
-              The Add Competitor dialog is coming in the next update.
-            </p>
-            <button
-              onClick={() => setAddDialogOpen(false)}
-              style={{
-                padding: "8px 16px",
-                fontSize: 12,
-                fontWeight: 600,
-                background: "var(--bg-muted)",
-                color: "var(--ink-secondary)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 6,
-                cursor: "pointer",
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <AddProfileDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        defaultType="competitor"
+      />
     </div>
   );
 }

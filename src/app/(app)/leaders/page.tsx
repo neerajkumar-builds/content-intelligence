@@ -4,6 +4,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { ProfileCard } from "@/components/profiles/profile-card";
 import type { ProfileListItem } from "@/components/profiles/profile-card";
+import { AddProfileDialog } from "@/components/profiles/add-profile-dialog";
 
 // ---------------------------------------------------------------------------
 // Type filter chips
@@ -301,74 +302,11 @@ export default function ThoughtLeadersPage() {
         </div>
       )}
 
-      {/* Dialog placeholder — Task 11 will provide the actual dialog */}
-      {addDialogOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Add Thought Leader"
-          onClick={() => setAddDialogOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setAddDialogOpen(false);
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: "var(--bg-surface)",
-              borderRadius: 12,
-              padding: 32,
-              maxWidth: 420,
-              width: "90%",
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 15,
-                fontWeight: 600,
-                color: "var(--ink-primary)",
-                marginBottom: 8,
-              }}
-            >
-              Add Thought Leader
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                color: "var(--ink-secondary)",
-                marginBottom: 20,
-              }}
-            >
-              The full add-profile dialog is coming soon.
-            </div>
-            <button
-              onClick={() => setAddDialogOpen(false)}
-              style={{
-                padding: "8px 20px",
-                borderRadius: 6,
-                border: "1px solid var(--border-subtle)",
-                background: "var(--bg-surface)",
-                color: "var(--ink-primary)",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <AddProfileDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        defaultType="thought_leader"
+      />
     </div>
   );
 }
