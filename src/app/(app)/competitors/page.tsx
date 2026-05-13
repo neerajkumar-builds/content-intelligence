@@ -40,15 +40,67 @@ export default function CompetitorsPage() {
         minHeight: 0,
       }}
     >
-      {/* Top bar: filter chips + add button */}
+      {/* Page header */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          padding: "24px 24px 0",
+          flexWrap: "wrap",
+          gap: 12,
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              color: "var(--ink-primary)",
+              margin: 0,
+            }}
+          >
+            Competitors
+          </h1>
+          <p
+            style={{
+              fontSize: 13,
+              color: "var(--ink-secondary)",
+              margin: "4px 0 0",
+            }}
+          >
+            Track competitor content and stay ahead of the conversation
+          </p>
+        </div>
+        <button
+          onClick={() => setAddDialogOpen(true)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 16px",
+            borderRadius: 6,
+            border: "none",
+            background: "var(--accent, #6366f1)",
+            color: "#fff",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+          Add Competitor
+        </button>
+      </div>
+
+      {/* Filter chips */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
           padding: "16px 24px",
           borderBottom: "1px solid var(--border-subtle)",
-          gap: 12,
+          gap: 6,
           flexWrap: "wrap",
         }}
       >
@@ -96,21 +148,6 @@ export default function CompetitorsPage() {
           })}
         </div>
 
-        <button
-          onClick={() => setAddDialogOpen(true)}
-          style={{
-            padding: "8px 16px",
-            fontSize: 12,
-            fontWeight: 600,
-            background: "var(--accent)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-        >
-          + Add Competitor
-        </button>
       </div>
 
       {/* Content area */}

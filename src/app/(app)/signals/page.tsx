@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 
 const SOURCES = [
@@ -160,9 +160,8 @@ export default function SignalExplorerPage() {
             </thead>
             <tbody>
               {items.map((sig) => (
-                <>
+                <Fragment key={sig.id}>
                   <tr
-                    key={sig.id}
                     onClick={() => setExpandedId(expandedId === sig.id ? null : sig.id)}
                     style={{ borderBottom: "1px solid var(--border-subtle)", cursor: "pointer" }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-muted)"; }}
@@ -226,7 +225,7 @@ export default function SignalExplorerPage() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
