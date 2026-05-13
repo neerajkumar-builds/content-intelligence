@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -9,24 +9,19 @@ import { getCharLimit, getChannelLabel } from "@/lib/config";
 
 function DriveIcon({ size = 14 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M8.01 18.26L2 8.66l4-6.86h8l-5.99 10.46z" fill="#0066DA" />
-      <path d="M22 8.66l-4-6.86h-8l6 10.46 6-3.6z" fill="#00AC47" />
-      <path d="M8.01 18.26h12L22 8.66l-6 3.6-7.99 6z" fill="#EA4335" />
-      <path d="M8.01 18.26l2 3.46h8l2-3.46h-12z" fill="#00832D" />
-      <path d="M2 8.66l2 3.46 4.01 6.14L14 8.66H2z" fill="#2684FC" />
-      <path d="M14 8.66L8.01 18.26h12L22 8.66H14z" fill="#FFBA00" />
+    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z" fill="#4285F4" />
     </svg>
   );
 }
 
 function SlackIcon({ size = 14 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M5.042 15.166a2.126 2.126 0 0 1-2.126 2.125A2.126 2.126 0 0 1 .79 15.166a2.126 2.126 0 0 1 2.126-2.125h2.126v2.125zm1.063 0a2.126 2.126 0 0 1 2.125-2.125 2.126 2.126 0 0 1 2.126 2.125v5.315A2.126 2.126 0 0 1 8.23 22.61a2.126 2.126 0 0 1-2.125-2.129v-5.315z" fill="#E01E5A" />
-      <path d="M8.23 5.042a2.126 2.126 0 0 1-2.125-2.126A2.126 2.126 0 0 1 8.23.79a2.126 2.126 0 0 1 2.126 2.126v2.126H8.23zm0 1.078a2.126 2.126 0 0 1 2.126 2.11 2.126 2.126 0 0 1-2.126 2.126H2.916A2.126 2.126 0 0 1 .79 8.23a2.126 2.126 0 0 1 2.126-2.11H8.23z" fill="#36C5F0" />
-      <path d="M18.958 8.23a2.126 2.126 0 0 1 2.126-2.11A2.126 2.126 0 0 1 23.21 8.23a2.126 2.126 0 0 1-2.126 2.126h-2.126V8.23zm-1.063 0a2.126 2.126 0 0 1-2.125 2.126 2.126 2.126 0 0 1-2.126-2.126V2.916A2.126 2.126 0 0 1 15.77.79a2.126 2.126 0 0 1 2.125 2.126V8.23z" fill="#2EB67D" />
-      <path d="M15.77 18.958a2.126 2.126 0 0 1 2.125 2.126A2.126 2.126 0 0 1 15.77 23.21a2.126 2.126 0 0 1-2.126-2.126v-2.126h2.126zm0-1.063a2.126 2.126 0 0 1-2.126-2.125 2.126 2.126 0 0 1 2.126-2.126h5.314A2.126 2.126 0 0 1 23.21 15.77a2.126 2.126 0 0 1-2.126 2.125H15.77z" fill="#ECB22E" />
+    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" fill="#E01E5A" />
+      <path d="M8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z" fill="#36C5F0" />
+      <path d="M18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312z" fill="#2EB67D" />
+      <path d="M15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" fill="#ECB22E" />
     </svg>
   );
 }
@@ -75,6 +70,21 @@ export default function DraftEditorPage() {
   const [instructions, setInstructions] = useState("");
   const [showInstructions, setShowInstructions] = useState(false);
   const [expandedSnapshotId, setExpandedSnapshotId] = useState<string | null>(null);
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    if (!exportDropdownOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setExportDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [exportDropdownOpen]);
+
   useEffect(() => {
     const saved = localStorage.getItem("cia.preferredModel");
     if (saved) {
@@ -664,161 +674,279 @@ export default function DraftEditorPage() {
           </div>
         )}
 
-        {/* Bottom action bar */}
+        {/* Bottom action bar — 3 groups: editing | primary | output */}
         <div
           style={{
-            padding: "12px 24px",
+            padding: "10px 24px",
             borderTop: "1px solid var(--border-subtle)",
             display: "flex",
             alignItems: "center",
-            gap: 10,
+            justifyContent: "space-between",
             flexShrink: 0,
             background: "var(--bg-canvas)",
+            minHeight: 48,
           }}
         >
-          <button
-            onClick={handleSave}
-            disabled={!dirty || updateMut.isPending}
-            style={{
-              padding: "7px 16px",
-              fontSize: 12,
-              fontWeight: 600,
-              borderRadius: 6,
-              border: "1px solid var(--border-subtle)",
-              background: dirty ? "var(--bg-surface)" : "var(--bg-muted)",
-              color: dirty ? "var(--ink-primary)" : "var(--ink-tertiary)",
-              cursor: dirty ? "pointer" : "default",
-              opacity: dirty ? 1 : 0.5,
-            }}
-          >
-            {updateMut.isPending ? "Saving..." : "Save"}
-          </button>
-
-          {status === "draft" && !generating && draft.ideaId && (
-            <>
-              <ModelSelect
-                value={regenModelId}
-                onChange={(m) => {
-                  setRegenModelId(m);
-                  if (typeof window !== "undefined") localStorage.setItem("cia.preferredModel", m);
-                }}
-                compact
-                dropUp
-              />
-              <button
-                onClick={() => {
-                  regenerateMut.mutate({
-                    draftId: id,
-                    modelId: regenModelId,
-                    customInstructions: instructions || undefined,
-                  });
-                }}
-                disabled={regenerateMut.isPending}
-                style={{
-                  padding: "7px 16px",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  borderRadius: 6,
-                  border: "1px solid var(--border-subtle)",
-                  background: "var(--bg-surface)",
-                  color: "var(--ink-secondary)",
-                  cursor: "pointer",
-                }}
-              >
-                {regenerateMut.isPending ? "Regenerating..." : "Regenerate"}
-              </button>
-            </>
-          )}
-
-          {status === "draft" && !generating && content.trim() !== "" && (
+          {/* Left group: editing controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <button
-              onClick={handleApprove}
-              disabled={approveMut.isPending}
+              onClick={handleSave}
+              disabled={!dirty || updateMut.isPending}
               style={{
-                padding: "7px 16px",
+                minWidth: 60,
+                padding: "7px 14px",
                 fontSize: 12,
                 fontWeight: 600,
                 borderRadius: 6,
-                border: "none",
-                background: "#22c55e",
-                color: "#fff",
-                cursor: "pointer",
+                border: "1px solid var(--border-subtle)",
+                background: dirty ? "var(--bg-surface)" : "var(--bg-muted)",
+                color: dirty ? "var(--ink-primary)" : "var(--ink-tertiary)",
+                cursor: dirty ? "pointer" : "default",
+                opacity: dirty ? 1 : 0.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
               }}
             >
-              {approveMut.isPending ? "Approving..." : "Approve"}
+              {updateMut.isPending ? (
+                <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid var(--border-subtle)", borderTopColor: "var(--ink-secondary)", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+              ) : "Save"}
             </button>
-          )}
 
-          {content.trim() !== "" && !generating && (
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {status === "draft" && !generating && draft.ideaId && (
+              <>
+                <ModelSelect
+                  value={regenModelId}
+                  onChange={(m) => {
+                    setRegenModelId(m);
+                    if (typeof window !== "undefined") localStorage.setItem("cia.preferredModel", m);
+                  }}
+                  compact
+                  dropUp
+                />
+                <button
+                  onClick={() => {
+                    regenerateMut.mutate({
+                      draftId: id,
+                      modelId: regenModelId,
+                      customInstructions: instructions || undefined,
+                    });
+                  }}
+                  disabled={regenerateMut.isPending}
+                  style={{
+                    minWidth: 90,
+                    padding: "7px 14px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    border: "1px solid var(--border-subtle)",
+                    background: "var(--bg-surface)",
+                    color: "var(--ink-secondary)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  {regenerateMut.isPending ? (
+                    <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid var(--border-subtle)", borderTopColor: "var(--ink-secondary)", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                  ) : "Regenerate"}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Center group: primary action */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {status === "draft" && !generating && content.trim() !== "" && (
               <button
-                onClick={() => exportDriveMut.mutate({ draftId: id })}
-                disabled={!driveReady || exportDriveMut.isPending}
-                title={!driveReady ? "Configure Google Drive in Settings" : "Export to Google Drive"}
+                onClick={handleApprove}
+                disabled={approveMut.isPending}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "7px 14px",
+                  minWidth: 80,
+                  padding: "7px 18px",
                   fontSize: 12,
                   fontWeight: 600,
                   borderRadius: 6,
                   border: "none",
-                  background: driveReady ? "#1a73e8" : "#6b7280",
+                  background: "#22c55e",
                   color: "#fff",
-                  cursor: driveReady ? "pointer" : "not-allowed",
-                  opacity: driveReady ? 1 : 0.6,
-                }}
-              >
-                {exportDriveMut.isPending ? (
-                  <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                ) : (
-                  <DriveIcon size={14} />
-                )}
-                {exportDriveMut.isPending ? "Exporting..." : "Export to Drive"}
-              </button>
-              <button
-                onClick={() => sendSlackMut.mutate({ draftId: id })}
-                disabled={!slackReady || sendSlackMut.isPending}
-                title={!slackReady ? "Configure Slack in Settings" : "Send to Slack"}
-                style={{
+                  cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: 6,
-                  padding: "7px 14px",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  borderRadius: 6,
-                  border: "none",
-                  background: slackReady ? "#4a154b" : "#6b7280",
-                  color: "#fff",
-                  cursor: slackReady ? "pointer" : "not-allowed",
-                  opacity: slackReady ? 1 : 0.6,
                 }}
               >
-                {sendSlackMut.isPending ? (
+                {approveMut.isPending ? (
                   <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                ) : (
-                  <SlackIcon size={14} />
-                )}
-                {sendSlackMut.isPending ? "Sending..." : "Send to Slack"}
+                ) : "Approve"}
               </button>
-            </div>
-          )}
+            )}
 
-          {/* Content actions */}
+            {pendingExportId && exportStatus && (exportStatus.status === "pending" || exportStatus.status === "processing") && (
+              <span style={{ fontSize: 11, color: "#f59e0b", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ display: "inline-block", width: 10, height: 10, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                {exportStatus.destination === "google_drive" ? "Exporting..." : "Sending..."}
+              </span>
+            )}
+          </div>
+
+          {/* Right group: export dropdown + icon actions */}
           {!generating && content && (
-            <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+              {/* Export dropdown */}
+              <div ref={exportDropdownRef} style={{ position: "relative" }}>
+                <button
+                  onClick={() => setExportDropdownOpen((v) => !v)}
+                  style={{
+                    minWidth: 80,
+                    padding: "7px 12px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    border: "1px solid var(--border-subtle)",
+                    background: "var(--bg-surface)",
+                    color: "var(--ink-secondary)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  {(exportDriveMut.isPending || sendSlackMut.isPending) ? (
+                    <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid var(--border-subtle)", borderTopColor: "var(--ink-secondary)", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                  ) : (
+                    <>
+                      Export
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+
+                {exportDropdownOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "100%",
+                      right: 0,
+                      marginBottom: 6,
+                      background: "var(--bg-surface)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: 8,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                      minWidth: 200,
+                      padding: "4px 0",
+                      zIndex: 50,
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        if (driveReady) {
+                          exportDriveMut.mutate({ draftId: id });
+                          setExportDropdownOpen(false);
+                        }
+                      }}
+                      disabled={!driveReady || exportDriveMut.isPending}
+                      title={!driveReady ? "Configure Google Drive in Settings > Integrations" : undefined}
+                      style={{
+                        width: "100%",
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        fontWeight: 500,
+                        background: "transparent",
+                        border: "none",
+                        cursor: driveReady ? "pointer" : "not-allowed",
+                        opacity: driveReady ? 1 : 0.45,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        color: "var(--ink-primary)",
+                        textAlign: "left",
+                      }}
+                      onMouseEnter={(e) => { if (driveReady) e.currentTarget.style.background = "var(--bg-muted)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <DriveIcon size={16} />
+                      <span style={{ flex: 1 }}>Export to Google Drive</span>
+                      {!driveReady && (
+                        <span style={{ fontSize: 9, color: "var(--ink-tertiary)", fontWeight: 400 }}>Not configured</span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (slackReady) {
+                          sendSlackMut.mutate({ draftId: id });
+                          setExportDropdownOpen(false);
+                        }
+                      }}
+                      disabled={!slackReady || sendSlackMut.isPending}
+                      title={!slackReady ? "Configure Slack in Settings > Integrations" : undefined}
+                      style={{
+                        width: "100%",
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        fontWeight: 500,
+                        background: "transparent",
+                        border: "none",
+                        cursor: slackReady ? "pointer" : "not-allowed",
+                        opacity: slackReady ? 1 : 0.45,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        color: "var(--ink-primary)",
+                        textAlign: "left",
+                      }}
+                      onMouseEnter={(e) => { if (slackReady) e.currentTarget.style.background = "var(--bg-muted)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <SlackIcon size={16} />
+                      <span style={{ flex: 1 }}>Send to Slack</span>
+                      {!slackReady && (
+                        <span style={{ fontSize: 9, color: "var(--ink-tertiary)", fontWeight: 400 }}>Not configured</span>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div style={{ width: 1, height: 20, background: "var(--border-subtle)", margin: "0 2px" }} />
+
+              {/* Copy icon button */}
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(`${title}\n\n${content}`);
                   toast.success("Copied to clipboard");
                 }}
                 title="Copy content"
-                style={{ padding: "7px 14px", fontSize: 12, fontWeight: 500, borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 6,
+                  border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-surface)",
+                  color: "var(--ink-secondary)",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
               >
-                Copy
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
               </button>
+
+              {/* Download icon button */}
               <button
                 onClick={() => {
                   const blob = new Blob([`${title}\n\n${content}`], { type: "text/plain" });
@@ -831,28 +959,59 @@ export default function DraftEditorPage() {
                   toast.success("Downloaded");
                 }}
                 title="Download as text"
-                style={{ padding: "7px 14px", fontSize: 12, fontWeight: 500, borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 6,
+                  border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-surface)",
+                  color: "var(--ink-secondary)",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
               >
-                Download
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
               </button>
+
+              {/* Share icon button */}
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
                   toast.success("Link copied");
                 }}
                 title="Copy link to this draft"
-                style={{ padding: "7px 14px", fontSize: 12, fontWeight: 500, borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "var(--ink-secondary)", cursor: "pointer" }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 6,
+                  border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-surface)",
+                  color: "var(--ink-secondary)",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
               >
-                Share
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
               </button>
             </div>
-          )}
-
-          {pendingExportId && exportStatus && (exportStatus.status === "pending" || exportStatus.status === "processing") && (
-            <span style={{ fontSize: 12, color: "#f59e0b", display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ display: "inline-block", width: 10, height: 10, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-              {exportStatus.destination === "google_drive" ? "Exporting to Drive..." : "Sending to Slack..."}
-            </span>
           )}
         </div>
       </div>
