@@ -636,8 +636,8 @@ export const draftsRouter = router({
         .limit(1);
 
       if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
-      if (draft.status !== "approved") {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Draft must be approved before exporting" });
+      if (!draft.content || draft.content.trim() === "") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Draft has no content to export" });
       }
 
       const [integration] = await db
@@ -696,8 +696,8 @@ export const draftsRouter = router({
         .limit(1);
 
       if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
-      if (draft.status !== "approved") {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Draft must be approved before sending to Slack" });
+      if (!draft.content || draft.content.trim() === "") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Draft has no content to send" });
       }
 
       const [integration] = await db

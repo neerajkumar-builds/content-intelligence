@@ -749,7 +749,7 @@ export default function DraftEditorPage() {
             </button>
           )}
 
-          {status === "approved" && (
+          {content.trim() !== "" && !generating && (
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <button
                 onClick={() => exportDriveMut.mutate({ draftId: id })}

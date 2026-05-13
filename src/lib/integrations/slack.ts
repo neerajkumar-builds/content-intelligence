@@ -38,7 +38,7 @@ function formatBlocks(opts: SlackNotificationOptions): Record<string, unknown> {
   const blocks: Array<Record<string, unknown>> = [
     {
       type: "header",
-      text: { type: "plain_text", text: `Draft approved: ${opts.title}`, emoji: true },
+      text: { type: "plain_text", text: opts.title, emoji: true },
     },
   ];
 
