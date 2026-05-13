@@ -5,6 +5,8 @@ const SOURCES = [
   { id: "rss", label: "RSS" },
   { id: "reddit", label: "Reddit" },
   { id: "linkedin", label: "LinkedIn" },
+  { id: "competitor", label: "Competitor" },
+  { id: "thought_leader", label: "Leader" },
   { id: "apify", label: "Apify" },
   { id: "manual", label: "Manual" },
 ];

@@ -28,6 +28,48 @@ const SOURCE_COLORS: Record<string, string> = {
   manual: "var(--ink-secondary)",
 };
 
+/**
+ * Renders sourceLabel with profile type badge when the label follows
+ * the "ProfileName (Type)" pattern (e.g. "HubSpot (Competitor)").
+ */
+function SourceLabel({ label }: { label: string }) {
+  const match = label.match(/^(.+?)\s*\(([^)]+)\)$/);
+  if (!match) {
+    return (
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
+        {label}
+      </span>
+    );
+  }
+  const [, name, type] = match;
+  const typeColors: Record<string, string> = {
+    Competitor: "#8B5CF6",
+    Leader: "#059669",
+    "Thought Leader": "#059669",
+    Creator: "#0EA5E9",
+  };
+  const badgeColor = typeColors[type] ?? "var(--ink-tertiary)";
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, overflow: "hidden", maxWidth: 200 }}>
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {name}
+      </span>
+      <span style={{
+        fontSize: 8.5,
+        fontWeight: 600,
+        padding: "1px 4px",
+        borderRadius: 3,
+        background: `color-mix(in srgb, ${badgeColor} 15%, transparent)`,
+        color: badgeColor,
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+      }}>
+        {type}
+      </span>
+    </span>
+  );
+}
+
 export function IdeaCard({
   idea,
   latestDraft,
@@ -79,9 +121,7 @@ export function IdeaCard({
             }}
           >
             <span style={{ width: 5, height: 5, borderRadius: 50, background: sourceColor }} />
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
-              {idea.sourceLabel}
-            </span>
+            <SourceLabel label={idea.sourceLabel} />
             {idea.sourceUrl && (
               <a
                 href={idea.sourceUrl}

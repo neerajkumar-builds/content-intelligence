@@ -27,14 +27,19 @@ function relativeTime(date: string | Date): string {
 export default function SignalExplorerPage() {
   const [sourceFilter, setSourceFilter] = useState("all");
   const [processedFilter, setProcessedFilter] = useState<"all" | "yes" | "no">("all");
+  const [profileFilter, setProfileFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const limit = 50;
+
+  const { data: profilesList } = trpc.profiles.list.useQuery({});
 
   type SourceType = "rss" | "reddit" | "linkedin" | "twitter" | "apify" | "manual" | "competitor" | "thought_leader";
   const { data, isLoading } = trpc.signals.listSignals.useQuery({
     source: sourceFilter === "all" ? undefined : (sourceFilter as SourceType),
     processed: processedFilter === "all" ? undefined : processedFilter === "yes",
+    profileId: profileFilter !== "all" && profileFilter !== "none" ? profileFilter : undefined,
+    noProfile: profileFilter === "none" ? true : undefined,
     limit,
     offset: page * limit,
   });
@@ -97,6 +102,30 @@ export default function SignalExplorerPage() {
           <option value="all">Status: All</option>
           <option value="yes">Processed</option>
           <option value="no">Unprocessed</option>
+        </select>
+
+        {/* Profile filter */}
+        <select
+          value={profileFilter}
+          onChange={(e) => { setProfileFilter(e.target.value); setPage(0); }}
+          style={{
+            height: 30,
+            fontSize: 11.5,
+            padding: "0 26px 0 8px",
+            borderRadius: 6,
+            border: "1px solid var(--border-subtle)",
+            background: "var(--bg-surface)",
+            color: "var(--ink-primary)",
+            cursor: "pointer",
+          }}
+        >
+          <option value="all">Profile: All</option>
+          <option value="none">No profile</option>
+          {(profilesList ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </select>
       </div>
 

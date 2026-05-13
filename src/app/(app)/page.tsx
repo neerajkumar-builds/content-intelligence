@@ -131,6 +131,7 @@ export default function HomePage() {
   const { data: recentDrafts, isLoading: draftsLoading } = trpc.drafts.listRecent.useQuery({ limit: 20 });
   const { data: signalCount, isLoading: signalsLoading } = trpc.signals.countRecent.useQuery();
   const { data: exports, isLoading: exportsLoading } = trpc.integrations.listExports.useQuery({ limit: 5 });
+  const { data: profilesList, isLoading: profilesLoading } = trpc.profiles.list.useQuery({});
 
   const syncMut = trpc.signals.triggerSync.useMutation({
     onSuccess: () => toast.success("Signal sync triggered"),
@@ -164,7 +165,8 @@ export default function HomePage() {
     return exports.slice(0, 5);
   }, [exports]);
 
-  const statsLoading = ideasLoading || draftsLoading || signalsLoading || exportsLoading;
+  const profileCount = profilesList?.length ?? 0;
+  const statsLoading = ideasLoading || draftsLoading || signalsLoading || exportsLoading || profilesLoading;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
@@ -199,6 +201,7 @@ export default function HomePage() {
           <StatCard label="Approved" value={approvedCount} loading={statsLoading} />
           <StatCard label="Exports" value={exportCount} loading={statsLoading} />
           <StatCard label="Signals (7d)" value={signalCount ?? 0} loading={statsLoading} />
+          <StatCard label="Profiles" value={profileCount} loading={statsLoading} />
         </div>
 
         {/* Pending Approvals */}

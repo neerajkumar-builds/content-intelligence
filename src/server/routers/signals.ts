@@ -159,14 +159,16 @@ export const signalsRouter = router({
         sourceId: z.string().uuid(),
         label: z.string().min(1).max(200).optional(),
         configUrl: z.string().min(1).max(2000).optional(),
+        profileId: z.string().uuid().nullish(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const { db, workspaceId } = ctx.scoped;
 
-      const updates: Record<string, string> = {};
+      const updates: Record<string, unknown> = {};
       if (input.label) updates.label = input.label;
       if (input.configUrl) updates.configUrl = input.configUrl;
+      if (input.profileId !== undefined) updates.profileId = input.profileId ?? null;
 
       if (Object.keys(updates).length === 0) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Nothing to update" });
@@ -266,6 +268,8 @@ export const signalsRouter = router({
         .object({
           source: z.enum(["rss", "reddit", "linkedin", "twitter", "apify", "manual", "competitor", "thought_leader"]).optional(),
           processed: z.boolean().optional(),
+          profileId: z.string().uuid().optional(),
+          noProfile: z.boolean().optional(),
           limit: z.number().int().min(1).max(200).default(50),
           offset: z.number().int().min(0).default(0),
         })
@@ -280,6 +284,8 @@ export const signalsRouter = router({
       if (input?.source) conditions.push(eq(signals.source, input.source));
       if (input?.processed !== undefined)
         conditions.push(eq(signals.processed, input.processed));
+      if (input?.profileId) conditions.push(eq(signals.profileId, input.profileId));
+      if (input?.noProfile) conditions.push(sql`${signals.profileId} IS NULL`);
 
       const rows = await db
         .select({

@@ -16,7 +16,9 @@ export function SourceRail() {
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<EditingState | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
+  const [linkingSourceId, setLinkingSourceId] = useState<string | null>(null);
   const { data: sources } = trpc.signals.listSources.useQuery();
+  const { data: profilesList } = trpc.profiles.list.useQuery({});
   const utils = trpc.useUtils();
 
   const toggleMut = trpc.signals.toggleSource.useMutation({
@@ -37,6 +39,15 @@ export function SourceRail() {
     onSuccess: () => {
       toast.success("Source updated");
       setEditing(null);
+      void utils.signals.listSources.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const linkProfileMut = trpc.signals.updateSource.useMutation({
+    onSuccess: () => {
+      toast.success("Profile linked");
+      setLinkingSourceId(null);
       void utils.signals.listSources.invalidate();
     },
     onError: (err) => toast.error(err.message),
@@ -240,7 +251,7 @@ export function SourceRail() {
                           {s.configUrl.replace(/^https?:\/\//, "").slice(0, 40)}
                         </span>
                       </div>
-                      <div style={{ display: "flex", gap: 2 }}>
+                      <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
                         <button
                           onClick={() => setEditing({ id: s.id, label: s.label, configUrl: s.configUrl })}
                           title="Edit source"
@@ -262,6 +273,89 @@ export function SourceRail() {
                             <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                           </svg>
                         </button>
+                        {!s.profileId && (profilesList ?? []).length > 0 && (
+                          <div style={{ position: "relative", marginLeft: 4 }}>
+                            <button
+                              onClick={() => setLinkingSourceId(linkingSourceId === s.id ? null : s.id)}
+                              title="Link to a profile"
+                              style={{
+                                padding: "2px 6px",
+                                fontSize: 9.5,
+                                fontWeight: 500,
+                                borderRadius: 3,
+                                border: "1px dashed var(--border-subtle)",
+                                background: "transparent",
+                                color: "var(--ink-tertiary)",
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              Link profile
+                            </button>
+                            {linkingSourceId === s.id && (
+                              <div style={{
+                                position: "absolute",
+                                top: "100%",
+                                left: 0,
+                                marginTop: 4,
+                                zIndex: 20,
+                                minWidth: 180,
+                                maxHeight: 200,
+                                overflowY: "auto",
+                                background: "var(--bg-surface)",
+                                border: "1px solid var(--border-subtle)",
+                                borderRadius: 6,
+                                boxShadow: "var(--shadow-md)",
+                                padding: 4,
+                              }}>
+                                {(profilesList ?? []).map((p) => (
+                                  <button
+                                    key={p.id}
+                                    onClick={() => linkProfileMut.mutate({ sourceId: s.id, profileId: p.id })}
+                                    disabled={linkProfileMut.isPending}
+                                    style={{
+                                      display: "block",
+                                      width: "100%",
+                                      textAlign: "left",
+                                      padding: "5px 8px",
+                                      fontSize: 11,
+                                      fontWeight: 500,
+                                      border: "none",
+                                      borderRadius: 4,
+                                      background: "transparent",
+                                      color: "var(--ink-primary)",
+                                      cursor: "pointer",
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-muted)"; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                                  >
+                                    <span>{p.name}</span>
+                                    <span style={{ fontSize: 9, marginLeft: 6, color: "var(--ink-tertiary)" }}>
+                                      {p.type === "competitor" ? "Competitor" : p.type === "thought_leader" ? "Leader" : "Creator"}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {s.profileId && (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              padding: "1px 5px",
+                              borderRadius: 3,
+                              background: "rgba(139,92,246,0.1)",
+                              color: "#8B5CF6",
+                              fontWeight: 500,
+                              marginLeft: 4,
+                              whiteSpace: "nowrap",
+                            }}
+                            title="Linked to a profile"
+                          >
+                            Linked
+                          </span>
+                        )}
                       </div>
                     </>
                   )}
