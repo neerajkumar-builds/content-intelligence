@@ -15,6 +15,8 @@ export const signalPayloadSchema = z.object({
   title: z.string().min(1).max(500),
   body: z.string().min(1).max(50000),
   sourceUrl: z.string().url().optional(),
+  profileId: z.string().uuid().optional(),
+  publishedAt: z.string().datetime().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { signals, webhookDeliveries } from "@/db/schema";
+import { signals, webhookDeliveries, signalSourceConfigs } from "@/db/schema";
 import { verifyHmac, payloadHash } from "@/lib/webhooks/verify-hmac";
 import { batchPayloadSchema, signalPayloadSchema } from "@/lib/webhooks/schemas";
 import { inngest } from "@/server/inngest/client";
 import { SignalIngested } from "@/server/inngest/events";
-import { sql } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 
 function isUniqueViolation(err: unknown): boolean {
   if (typeof err === "object" && err !== null && "code" in err) {
@@ -34,6 +34,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  // Handle error payloads from n8n (source fetch failures)
+  if (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    "error" in parsed &&
+    (parsed as Record<string, unknown>).error === true
+  ) {
+    const errPayload = parsed as Record<string, unknown>;
+    const sourceConfigId = errPayload.sourceConfigId as string | undefined;
+    if (sourceConfigId) {
+      await db
+        .update(signalSourceConfigs)
+        .set({
+          lastErrorAt: new Date(),
+          lastErrorMessage:
+            (errPayload.errorMessage as string) ?? "Unknown error",
+        })
+        .where(eq(signalSourceConfigs.id, sourceConfigId));
+    }
+    return NextResponse.json({ handled: "error" }, { status: 200 });
+  }
+
   const isBatch =
     typeof parsed === "object" && parsed !== null && "signals" in parsed;
   const payloads = isBatch
@@ -44,6 +66,24 @@ export async function POST(req: NextRequest) {
   const skipped: string[] = [];
 
   for (const payload of payloads) {
+    // sourceUrl-based dedup: skip if this URL already exists in the workspace
+    if (payload.sourceUrl) {
+      const [existing] = await db
+        .select({ id: signals.id })
+        .from(signals)
+        .where(
+          and(
+            eq(signals.workspaceId, payload.workspaceId),
+            eq(signals.sourceUrl, payload.sourceUrl),
+          ),
+        )
+        .limit(1);
+      if (existing) {
+        skipped.push(payload.sourceUrl);
+        continue;
+      }
+    }
+
     const hash = payloadHash(JSON.stringify(payload));
 
     let signalId: string;
@@ -56,14 +96,16 @@ export async function POST(req: NextRequest) {
           RETURNING id
         ),
         sig AS (
-          INSERT INTO signals (workspace_id, source, source_url, title, body, metadata)
+          INSERT INTO signals (workspace_id, source, source_url, title, body, metadata, profile_id, published_at)
           SELECT
             ${payload.workspaceId}::uuid,
             ${payload.source}::signal_source,
             ${payload.sourceUrl ?? null},
             ${payload.title},
             ${payload.body},
-            ${JSON.stringify(payload.metadata ?? {})}::jsonb
+            ${JSON.stringify(payload.metadata ?? {})}::jsonb,
+            ${payload.profileId ?? null}::uuid,
+            ${payload.publishedAt ? new Date(payload.publishedAt).toISOString() : null}::timestamptz
           WHERE EXISTS (SELECT 1 FROM delivery)
           RETURNING id
         )
@@ -89,6 +131,7 @@ export async function POST(req: NextRequest) {
         SignalIngested.create({
           signalId,
           workspaceId: payload.workspaceId,
+          profileId: payload.profileId,
         }),
       )
       .catch((err) => {
