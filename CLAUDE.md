@@ -2,20 +2,20 @@
 
 ## What This Is
 
-Voice-faithful B2B content automation platform. Ingests signals (RSS, competitors, thought leaders), surfaces ranked ideas, generates drafts in the operator's voice with anti-AI guardrails, grades on 7 dimensions, publishes to 15 channels with idempotency + audit trails. Glass-box AI: every prompt, model, cost, latency visible to operator.
+Voice-faithful B2B content automation platform. Ingests signals (RSS, competitors, thought leaders), surfaces ranked ideas, generates drafts in the operator's voice with anti-AI guardrails, exports to Google Drive + Slack. Glass-box AI: every prompt, model, cost, latency visible to operator.
 
 ## Tech Stack
 
 | Layer | Choice |
 |---|---|
-| Framework | Next.js 15 (App Router) |
-| UI | React 19 + Tailwind CSS 4 + shadcn/ui + Recharts |
+| Framework | Next.js 16.2.6 (App Router) |
+| UI | React 19.2.4 + Tailwind CSS 4 + shadcn/ui + Recharts |
 | Auth | Clerk Organizations |
-| DB | Postgres + Drizzle ORM + pgvector (Supabase) |
-| API | tRPC v11 |
-| Background | Inngest |
-| LLM | Vercel AI SDK + custom router |
-| Connectors | Custom OAuth adapters (12 direct, 2 n8n, 1 hybrid) |
+| DB | Postgres + Drizzle ORM 0.45.2 + pgvector (Supabase) |
+| API | tRPC v11.13.0 |
+| Background | Inngest 4.3.0 |
+| LLM | Custom multi-model router (Google AI + Anthropic + OpenRouter) |
+| Output | Google Drive (googleapis) + Slack (incoming webhooks) |
 | Fonts | Montserrat (UI), Lora (drafts), JetBrains Mono (IDs) |
 | Hosting | Vercel |
 
@@ -60,7 +60,7 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Session 11 — MODULE 1 COMPLETE (6 commits, +2,200 lines):** Core Loop done. Approved drafts export to Google Drive + Slack. New: workspace_integrations table (encrypted secrets), draft_exports table (idempotency keys), export-draft Inngest function (replaces verify-post), integrations router (13th), Settings > Integrations page, Home dashboard (stats + approvals + exports + actions), export buttons on draft editor, export badges on drafts list.
 - **Next:** Module 2 (signal intelligence: multi-platform, competitors, leaders) → Module 3 (content excellence + positioning guide upgrade) → Module 4 (SEO/AEO) → Module 5 (polish)
 - **Full roadmap:** See plan file `~/.claude/plans/unified-sniffing-island.md` — 5 modules, depth-first
-- **Schema now:** 31 tables. 13 routers. 30+ routes. 6 Inngest functions (export-draft replaced verify-post).
+- **Schema now:** 31 tables. 13 routers. 70 procedures. 6 Inngest functions (export-draft replaced verify-post). 10 functional pages + 9 placeholders.
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
