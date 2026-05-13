@@ -651,16 +651,22 @@ export const draftsRouter = router({
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Configure Google Drive in Settings first" });
       }
 
-      const idempotencyKey = `export_${input.draftId}_google_drive_${ctx.userId}`;
-      const [existing] = await db
-        .select({ id: draftExports.id, status: draftExports.status })
+      const [inflight] = await db
+        .select({ id: draftExports.id })
         .from(draftExports)
-        .where(eq(draftExports.idempotencyKey, idempotencyKey))
+        .where(and(
+          eq(draftExports.draftId, input.draftId),
+          eq(draftExports.destination, "google_drive"),
+          eq(draftExports.exportedBy, ctx.userId),
+          sql`${draftExports.status} IN ('pending', 'processing')`,
+        ))
         .limit(1);
 
-      if (existing && (existing.status === "pending" || existing.status === "processing")) {
-        return { exportId: existing.id, skipped: true };
+      if (inflight) {
+        return { exportId: inflight.id, skipped: true };
       }
+
+      const idempotencyKey = `export_${input.draftId}_google_drive_${ctx.userId}_${Date.now()}`;
 
       const [exportRow] = await db
         .insert(draftExports)
@@ -712,16 +718,22 @@ export const draftsRouter = router({
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Configure Slack in Settings first" });
       }
 
-      const idempotencyKey = `export_${input.draftId}_slack_${ctx.userId}`;
-      const [existing] = await db
-        .select({ id: draftExports.id, status: draftExports.status })
+      const [inflight] = await db
+        .select({ id: draftExports.id })
         .from(draftExports)
-        .where(eq(draftExports.idempotencyKey, idempotencyKey))
+        .where(and(
+          eq(draftExports.draftId, input.draftId),
+          eq(draftExports.destination, "slack"),
+          eq(draftExports.exportedBy, ctx.userId),
+          sql`${draftExports.status} IN ('pending', 'processing')`,
+        ))
         .limit(1);
 
-      if (existing && (existing.status === "pending" || existing.status === "processing")) {
-        return { exportId: existing.id, skipped: true };
+      if (inflight) {
+        return { exportId: inflight.id, skipped: true };
       }
+
+      const idempotencyKey = `export_${input.draftId}_slack_${ctx.userId}_${Date.now()}`;
 
       const [exportRow] = await db
         .insert(draftExports)
