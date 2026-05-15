@@ -11,6 +11,7 @@ export function encryptToken(plaintext: string): {
   iv: string;
   tag: string;
 } {
+  if (!ENCRYPTION_KEY) throw new Error("OAUTH_ENCRYPTION_KEY not set");
   const salt = randomBytes(16);
   const key = deriveKey(salt);
   const iv = randomBytes(12);
@@ -32,6 +33,7 @@ export function encryptToken(plaintext: string): {
 }
 
 export function decryptToken(ciphertext: string): string {
+  if (!ENCRYPTION_KEY) throw new Error("OAUTH_ENCRYPTION_KEY not set");
   const parts = ciphertext.split(":");
 
   let saltB64: string, ivB64: string, tagB64: string, encrypted: string;

@@ -90,11 +90,11 @@ async function callGoogleAI(
   opts: LLMCallOptions,
   startMs: number,
 ): Promise<LLMResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${config.id}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${config.id}:generateContent`;
 
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify({
       system_instruction: { parts: [{ text: opts.systemPrompt }] },
       contents: [{ parts: [{ text: opts.userPrompt }] }],

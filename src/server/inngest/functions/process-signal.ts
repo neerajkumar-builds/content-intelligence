@@ -84,7 +84,7 @@ export const processSignalFn = inngest.createFunction(
       const [row] = await db
         .select()
         .from(signals)
-        .where(eq(signals.id, signalId))
+        .where(and(eq(signals.id, signalId), eq(signals.workspaceId, workspaceId)))
         .limit(1);
       return row;
     });

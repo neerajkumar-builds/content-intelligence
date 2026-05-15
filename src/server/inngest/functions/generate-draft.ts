@@ -38,7 +38,7 @@ export const generateDraftFn = inngest.createFunction(
       const [idea] = await db
         .select()
         .from(ideas)
-        .where(eq(ideas.id, ideaId))
+        .where(and(eq(ideas.id, ideaId), eq(ideas.workspaceId, workspaceId)))
         .limit(1);
 
       if (!idea) throw new Error(`Idea ${ideaId} not found`);
@@ -46,7 +46,7 @@ export const generateDraftFn = inngest.createFunction(
       const [brand] = await db
         .select()
         .from(brands)
-        .where(eq(brands.id, brandId))
+        .where(and(eq(brands.id, brandId), eq(brands.workspaceId, workspaceId)))
         .limit(1);
 
       if (!brand) throw new Error(`Brand ${brandId} not found`);

@@ -6,6 +6,7 @@ import { router } from "../trpc";
 import { signalSourceConfigs, brands, signals } from "@/db/schema";
 import { inngest } from "@/server/inngest/client";
 import { CorpusBackfill } from "@/server/inngest/events";
+import { assertSafeUrl } from "@/lib/signals/url-safety";
 
 async function probeUrl(url: string): Promise<{
   reachable: boolean;
@@ -14,6 +15,17 @@ async function probeUrl(url: string): Promise<{
   statusCode: number | null;
   error: string | null;
 }> {
+  try {
+    await assertSafeUrl(url);
+  } catch {
+    return {
+      reachable: false,
+      isRss: false,
+      contentType: null,
+      statusCode: null,
+      error: "URL blocked: private/internal network",
+    };
+  }
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -116,6 +128,25 @@ export const signalsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { db, workspaceId } = ctx.scoped;
+
+      // Dedup: prevent duplicate source configs by URL within a workspace
+      const [existing] = await db
+        .select({ id: signalSourceConfigs.id })
+        .from(signalSourceConfigs)
+        .where(
+          and(
+            eq(signalSourceConfigs.workspaceId, workspaceId),
+            eq(signalSourceConfigs.configUrl, input.configUrl),
+          ),
+        )
+        .limit(1);
+
+      if (existing) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A source with this URL already exists.",
+        });
+      }
 
       if (input.source === "rss") {
         const probe = await probeUrl(input.configUrl);
