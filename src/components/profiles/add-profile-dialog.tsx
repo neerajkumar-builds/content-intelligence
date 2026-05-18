@@ -17,6 +17,7 @@ interface DiscoveryResult {
   fetchMethod: string;
   status: "active" | "apify_needed" | "manual" | "failed";
   message: string;
+  discoveredUrl?: string;
 }
 
 interface Props {
@@ -53,6 +54,8 @@ function DiscoveryBadge({ result }: { result: DiscoveryResult }) {
         ? "Website"
         : result.platform.charAt(0).toUpperCase() + result.platform.slice(1);
 
+  const isAutoDiscovered = !!result.discoveredUrl;
+
   let color: string;
   let bg: string;
   let text: string;
@@ -63,12 +66,16 @@ function DiscoveryBadge({ result }: { result: DiscoveryResult }) {
       bg = "rgba(22, 163, 74, 0.08)";
       text = result.feedUrl
         ? `RSS Found: ${truncateUrl(result.feedUrl)}`
-        : result.message;
+        : isAutoDiscovered
+          ? truncateUrl(result.discoveredUrl!)
+          : result.message;
       break;
     case "apify_needed":
       color = "#d97706";
       bg = "rgba(217, 119, 6, 0.08)";
-      text = "Apify required";
+      text = isAutoDiscovered
+        ? `Found: ${truncateUrl(result.discoveredUrl!)} (Apify needed)`
+        : "Apify required";
       break;
     case "manual":
       color = "#ef4444";
@@ -330,27 +337,77 @@ export function AddProfileDialog({ open, onClose, defaultType }: Props) {
         {showResults ? (
           /* Discovery results view */
           <div style={{ padding: 20 }}>
-            <div
-              style={{
-                fontSize: 13,
-                color: "var(--ink-secondary)",
-                marginBottom: 16,
-              }}
-            >
-              Auto-discovery found{" "}
-              {discoveryResults.filter((r) => r.status === "active").length}{" "}
-              active source
-              {discoveryResults.filter((r) => r.status === "active").length !== 1
-                ? "s"
-                : ""}{" "}
-              for <strong>{name}</strong>.
-            </div>
+            {(() => {
+              const activeCount = discoveryResults.filter((r) => r.status === "active").length;
+              const socialDiscovered = discoveryResults.filter((r) => !!r.discoveredUrl);
+              const feedResults = discoveryResults.filter((r) => !r.discoveredUrl);
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {discoveryResults.map((result, i) => (
-                <DiscoveryBadge key={`${result.platform}-${i}`} result={result} />
-              ))}
-            </div>
+              return (
+                <>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: "var(--ink-secondary)",
+                      marginBottom: 16,
+                    }}
+                  >
+                    Auto-discovery found{" "}
+                    {activeCount} active source
+                    {activeCount !== 1 ? "s" : ""}
+                    {socialDiscovered.length > 0
+                      ? ` and ${socialDiscovered.length} social profile${socialDiscovered.length !== 1 ? "s" : ""}`
+                      : ""}{" "}
+                    for <strong>{name}</strong>.
+                  </div>
+
+                  {socialDiscovered.length > 0 && (
+                    <>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          color: "var(--ink-tertiary)",
+                          marginBottom: 6,
+                        }}
+                      >
+                        Social profiles found on website
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+                        {socialDiscovered.map((result, i) => (
+                          <DiscoveryBadge key={`social-${result.platform}-${i}`} result={result} />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {feedResults.length > 0 && (
+                    <>
+                      {socialDiscovered.length > 0 && (
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            color: "var(--ink-tertiary)",
+                            marginBottom: 6,
+                          }}
+                        >
+                          Feed sources
+                        </div>
+                      )}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {feedResults.map((result, i) => (
+                          <DiscoveryBadge key={`feed-${result.platform}-${i}`} result={result} />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              );
+            })()}
 
             <div
               style={{

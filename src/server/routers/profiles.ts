@@ -12,6 +12,10 @@ import {
 import { discoverRssFeeds } from "@/lib/signals/rss-discovery";
 import { resolveYouTubeRss } from "@/lib/signals/youtube-utils";
 import { buildGoogleNewsUrl } from "@/lib/signals/google-news";
+import {
+  discoverSocialLinks,
+  type DiscoveredSocialLink,
+} from "@/lib/signals/social-discovery";
 
 // ---------------------------------------------------------------------------
 // Zod enum schemas (must match DB enums exactly)
@@ -58,6 +62,8 @@ type DiscoveryResult = {
   fetchMethod: string;
   status: "active" | "apify_needed" | "manual" | "failed";
   message: string;
+  /** URL auto-discovered from website HTML (social discovery) */
+  discoveredUrl?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -70,6 +76,73 @@ async function runAutoDiscovery(
   platformUrls: Array<{ platform: string; url: string }>,
 ): Promise<DiscoveryResult[]> {
   const results: DiscoveryResult[] = [];
+
+  // Step 0: Discover social links from website
+  let socialLinks: DiscoveredSocialLink[] = [];
+  if (websiteUrl) {
+    const socialResult = await discoverSocialLinks(websiteUrl);
+    socialLinks = socialResult.links;
+  }
+
+  // Merge discovered social links with user-provided URLs.
+  // User-provided URLs take priority — only add discovered links
+  // for platforms the user didn't manually provide.
+  const userPlatforms = new Set(platformUrls.map((p) => p.platform));
+  const mergedPlatformUrls = [...platformUrls];
+
+  for (const social of socialLinks) {
+    if (!userPlatforms.has(social.platform)) {
+      mergedPlatformUrls.push({
+        platform: social.platform,
+        url: social.url,
+      });
+    }
+  }
+
+  // Add social discovery results to the output so the UI can show
+  // "Found: LinkedIn, YouTube, Twitter" etc.
+  for (const social of socialLinks) {
+    // Determine the fetch method based on platform
+    let fetchMethod: string;
+    switch (social.platform) {
+      case "youtube":
+        fetchMethod = "youtube_rss";
+        break;
+      case "reddit":
+        fetchMethod = "reddit_rss";
+        break;
+      case "substack":
+      case "medium":
+      case "podcast":
+        fetchMethod = "rss_discovery";
+        break;
+      case "linkedin":
+      case "twitter":
+      case "instagram":
+      case "tiktok":
+      case "facebook":
+        fetchMethod = "apify";
+        break;
+      default:
+        fetchMethod = "manual";
+    }
+
+    // Only add to results if the user didn't provide this platform
+    // (platforms the user provided will get their own discovery results below)
+    if (!userPlatforms.has(social.platform)) {
+      const needsApify = ["linkedin", "twitter", "instagram", "tiktok", "facebook"].includes(
+        social.platform,
+      );
+      results.push({
+        platform: social.platform,
+        feedUrl: null,
+        fetchMethod,
+        status: needsApify ? "apify_needed" : "active",
+        message: `Auto-discovered from website (${social.confidence} confidence)`,
+        discoveredUrl: social.url,
+      });
+    }
+  }
 
   // Build all discovery promises
   const tasks: Array<Promise<DiscoveryResult[]>> = [];
@@ -116,8 +189,8 @@ async function runAutoDiscovery(
     ]),
   );
 
-  // 3. Per-platform discovery
-  for (const { platform, url } of platformUrls) {
+  // 3. Per-platform discovery (uses merged list: user-provided + auto-discovered)
+  for (const { platform, url } of mergedPlatformUrls) {
     switch (platform) {
       case "youtube":
         tasks.push(
@@ -527,9 +600,10 @@ export const profilesRouter = router({
           | "medium"
           | "podcast";
 
-        // Find the user-provided URL for this platform (or use website URL)
+        // Find the URL for this platform: user-provided > auto-discovered > website > feedUrl
         const platformUrl =
           input.platformUrls.find((p) => p.platform === result.platform)?.url ??
+          result.discoveredUrl ??
           input.website ??
           result.feedUrl ??
           "";
