@@ -16,6 +16,9 @@ import {
   discoverSocialLinks,
   type DiscoveredSocialLink,
 } from "@/lib/signals/social-discovery";
+import { fetchFeedSignals } from "@/lib/signals/feed-fetcher";
+import { inngest } from "@/server/inngest/client";
+import { SignalIngested } from "@/server/inngest/events";
 
 // ---------------------------------------------------------------------------
 // Zod enum schemas (must match DB enums exactly)
@@ -1056,7 +1059,168 @@ export const profilesRouter = router({
     }),
 
   /**
-   * 10. getProfileSignals — paginated signals by profileId.
+   * 10. refreshProfile — server-side feed fetch for YouTube RSS + Google News.
+   *     Standard RSS is left for n8n. Fetches, deduplicates, inserts signals,
+   *     fires Inngest events for processing, updates lastFetchedAt.
+   */
+  refreshProfile: protectedProcedure
+    .input(z.object({ profileId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, workspaceId, scopeAnd } = ctx.scoped;
+
+      // 1. Verify profile belongs to workspace
+      const [profile] = await db
+        .select({ id: profiles.id, name: profiles.name })
+        .from(profiles)
+        .where(
+          scopeAnd(profiles.workspaceId, eq(profiles.id, input.profileId)),
+        )
+        .limit(1);
+
+      if (!profile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Profile not found",
+        });
+      }
+
+      // 2. Get all enabled source configs for this profile
+      const configs = await db
+        .select()
+        .from(signalSourceConfigs)
+        .where(
+          and(
+            eq(signalSourceConfigs.workspaceId, workspaceId),
+            eq(signalSourceConfigs.profileId, input.profileId),
+            eq(signalSourceConfigs.enabled, true),
+          ),
+        );
+
+      // 3. Filter to server-fetchable methods only (YouTube RSS + Google News)
+      const serverFetchable = configs.filter(
+        (c) =>
+          c.fetchMethod === "youtube_rss" || c.fetchMethod === "google_news",
+      );
+
+      if (serverFetchable.length === 0) {
+        return { fetched: 0, skipped: 0, errors: ["No YouTube RSS or Google News sources configured for this profile"] };
+      }
+
+      let totalFetched = 0;
+      let totalSkipped = 0;
+      const allErrors: string[] = [];
+
+      // 4. Fetch each source in parallel
+      const fetchResults = await Promise.allSettled(
+        serverFetchable.map(async (config) => {
+          const result = await fetchFeedSignals(config.configUrl, {
+            maxItems: 15,
+            fetchMethod: config.fetchMethod ?? "rss",
+          });
+
+          let fetched = 0;
+          let skipped = 0;
+          const configErrors = [...result.errors];
+
+          // Insert each signal with dedup
+          for (const signal of result.signals) {
+            // sourceUrl dedup: skip if already exists in workspace
+            if (signal.sourceUrl) {
+              const [existing] = await db
+                .select({ id: signals.id })
+                .from(signals)
+                .where(
+                  and(
+                    eq(signals.workspaceId, workspaceId),
+                    eq(signals.sourceUrl, signal.sourceUrl),
+                  ),
+                )
+                .limit(1);
+              if (existing) {
+                skipped++;
+                continue;
+              }
+            }
+
+            // Insert signal
+            const [inserted] = await db
+              .insert(signals)
+              .values({
+                workspaceId,
+                source: "rss",
+                title: signal.title,
+                body: signal.body,
+                sourceUrl: signal.sourceUrl ?? null,
+                profileId: input.profileId,
+                publishedAt: signal.publishedAt
+                  ? new Date(signal.publishedAt)
+                  : null,
+                metadata: signal.metadata,
+              })
+              .returning({ id: signals.id });
+
+            if (inserted) {
+              fetched++;
+
+              // Fire Inngest event for processing (embed, classify, create idea)
+              await inngest
+                .send(
+                  SignalIngested.create({
+                    signalId: inserted.id,
+                    workspaceId,
+                  }),
+                )
+                .catch((err) => {
+                  console.error(
+                    "Inngest send failed for signal",
+                    inserted.id,
+                    err,
+                  );
+                });
+            }
+          }
+
+          // Update lastFetchedAt on the source config
+          await db
+            .update(signalSourceConfigs)
+            .set({
+              lastFetchedAt: new Date(),
+              // Clear previous error on successful fetch
+              ...(result.errors.length === 0
+                ? { lastErrorAt: null, lastErrorMessage: null }
+                : {
+                    lastErrorAt: new Date(),
+                    lastErrorMessage: result.errors.join("; "),
+                  }),
+            })
+            .where(eq(signalSourceConfigs.id, config.id));
+
+          return { fetched, skipped, errors: configErrors };
+        }),
+      );
+
+      // Aggregate results
+      for (const result of fetchResults) {
+        if (result.status === "fulfilled") {
+          totalFetched += result.value.fetched;
+          totalSkipped += result.value.skipped;
+          allErrors.push(...result.value.errors);
+        } else {
+          allErrors.push(
+            `Source fetch failed: ${result.reason instanceof Error ? result.reason.message : "unknown error"}`,
+          );
+        }
+      }
+
+      return {
+        fetched: totalFetched,
+        skipped: totalSkipped,
+        errors: allErrors,
+      };
+    }),
+
+  /**
+   * 11. getProfileSignals — paginated signals by profileId.
    */
   getProfileSignals: protectedProcedure
     .input(

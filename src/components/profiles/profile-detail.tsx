@@ -239,6 +239,23 @@ export function ProfileDetailPage({
     onError: (err) => toast.error(err.message),
   });
 
+  const refreshMut = trpc.profiles.refreshProfile.useMutation({
+    onSuccess: (data) => {
+      if (data.fetched > 0) {
+        toast.success(`Fetched ${data.fetched} new signal${data.fetched !== 1 ? "s" : ""}${data.skipped ? ` (${data.skipped} duplicates skipped)` : ""}`);
+      } else if (data.skipped > 0) {
+        toast.info(`No new signals (${data.skipped} duplicates skipped)`);
+      } else if (data.errors.length > 0) {
+        toast.error(data.errors[0]);
+      } else {
+        toast.info("No new signals found");
+      }
+      void utils.profiles.getById.invalidate({ id: profileId });
+      void utils.profiles.getProfileSignals.invalidate({ profileId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const addLinkMut = trpc.profiles.addPlatformLink.useMutation({
     onSuccess: (data) => {
       setAddLinkOpen(false);
@@ -478,10 +495,53 @@ export function ProfileDetailPage({
           </a>
         )}
 
+        {/* Refresh Sources button */}
+        <button
+          onClick={() => refreshMut.mutate({ profileId })}
+          disabled={refreshMut.isPending}
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "5px 12px",
+            fontSize: 12,
+            fontWeight: 500,
+            color: refreshMut.isPending ? "var(--ink-tertiary)" : "var(--accent)",
+            background: "transparent",
+            border: `1px solid ${refreshMut.isPending ? "var(--border-subtle)" : "var(--accent)"}`,
+            borderRadius: 6,
+            cursor: refreshMut.isPending ? "not-allowed" : "pointer",
+            opacity: refreshMut.isPending ? 0.7 : 1,
+            transition: "all 0.15s",
+          }}
+        >
+          {refreshMut.isPending ? (
+            <span
+              style={{
+                display: "inline-block",
+                width: 12,
+                height: 12,
+                border: "2px solid var(--border-subtle)",
+                borderTopColor: "var(--accent)",
+                borderRadius: "50%",
+                animation: "spin 0.6s linear infinite",
+              }}
+            />
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 2v6h-6" />
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+              <path d="M3 22v-6h6" />
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+            </svg>
+          )}
+          {refreshMut.isPending ? "Refreshing..." : "Refresh Sources"}
+        </button>
+
         {/* Signal count */}
         <span
           style={{
-            marginLeft: "auto",
             fontSize: 12,
             color: "var(--ink-tertiary)",
             fontFamily: "var(--font-mono)",
