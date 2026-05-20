@@ -58,10 +58,11 @@ Voice-faithful B2B content automation platform. Ingests signals (RSS, competitor
 - **Luke's Positioning Agent (May 13):** Brand Brief must evolve into 11-section Positioning Guide (pillars, benefits, tone, phrases, audience language). Signals → Market Analysis → Positioning Statement → Guide → feeds ALL content. See `memory/reference_positioning_agent.md`.
 - **Existing n8n workflows analyzed:** Social Listening V2 (8 Sheets tabs, 5 audience segments) + Blog Generator (topics → Gemini Pro → Google Docs → Slack). See `memory/reference_existing_workflows.md`.
 - **Session 11 — MODULE 1 COMPLETE (6 commits, +2,200 lines):** Core Loop done. Approved drafts export to Google Drive + Slack. New: workspace_integrations table (encrypted secrets), draft_exports table (idempotency keys), export-draft Inngest function (replaces verify-post), integrations router (13th), Settings > Integrations page, Home dashboard (stats + approvals + exports + actions), export buttons on draft editor, export badges on drafts list.
-- **Module 2A — Signal Intelligence (Session 12):** profiles table, profile_platform_links table, 4 new enums (profileTypeEnum, profileImportanceEnum, profilePlatformEnum, fetchMethodEnum), profiles router (14th, 10 procedures), RSS/YouTube/Google News auto-discovery utilities, LLM signal classification step in process-signal (Gemini Flash), /competitors + /leaders pages + detail views, AddProfileDialog, Idea Wall/Signal Explorer/Home/SourceRail enhancements, n8n Signal Harvester workflow updated (profileId, publishedAt, fetchMethod in payload, date filtering). 13 commits, +4,782 lines.
-- **Next:** Module 2B (Apify scrapers for LinkedIn/Twitter/Instagram profiles) → Module 3 (content excellence + positioning guide upgrade) → Module 4 (SEO/AEO) → Module 5 (polish)
-- **Full roadmap:** See plan file `~/.claude/plans/unified-sniffing-island.md` — 5 modules, depth-first
-- **Schema now:** 33 tables. 14 routers. 80 procedures. 6 Inngest functions (export-draft replaced verify-post). 14 functional pages + 5 placeholders.
+- **Module 2A — Signal Intelligence (Session 12, 22 commits, +6,700 lines):** profiles + profile_platform_links tables, 4 new enums, profiles router (14th, 12 procedures), RSS/YouTube/Google News auto-discovery, social link auto-discovery from website HTML, LLM signal classification (Gemini Flash), /competitors + /leaders pages + detail views, AddProfileDialog with discovery results, Idea Wall/Signal Explorer/Home/SourceRail enhancements, server-side feed fetcher for YouTube Atom + Google News (bypasses n8n), n8n workflow updated (profileId, error handling, Atom body fallbacks). Security: SSRF protection, workspace filters in Inngest, API key headers, encryption guard, cross-tenant fixes. Phase 0: 9 YELLOW fixes (data leak, dedup, type casts, wiring). UI: icon standardization, heading consistency.
+- **Module 3 spec DONE:** `docs/superpowers/specs/2026-05-13-positioning-guide-design.md` — 11-section Positioning Guide replacing 4-field Brand Brief. JSONB column, backward compat. NOT YET IMPLEMENTED.
+- **Next:** Module 3 (Positioning Guide) → Module 2B (Apify) → Module 4 (SEO/AEO) → Module 5 (polish)
+- **Full roadmap:** See plan file `~/.claude/plans/unified-sniffing-island.md`
+- **Schema now:** 33 tables. 14 routers. 82 procedures. 6 Inngest functions. 14 functional pages + 5 placeholders. 26,493 lines.
 - **Production URL:** https://content-intelligence-eight.vercel.app
 - **GitHub:** https://github.com/neerajkumar-builds/content-intelligence
 - **n8n:** https://full-funnel.app.n8n.cloud/ (connected via MCP)
@@ -230,7 +231,12 @@ A proper first pass avoids 5+ fix commits. Measure twice, cut once.
 | Profile detail page | `src/app/(app)/competitors/[id]/page.tsx`, `src/app/(app)/leaders/[id]/page.tsx` |
 | AddProfileDialog | `src/components/profiles/add-profile-dialog.tsx` |
 | ProfileCard | `src/components/profiles/profile-card.tsx` |
-| ProfileDetailPage | `src/components/profiles/profile-detail-page.tsx` (shared detail view component) |
+| ProfileDetailPage | `src/components/profiles/profile-detail.tsx` (shared detail view component) |
+| Social discovery | `src/lib/signals/social-discovery.ts` (scrape website HTML for social profile links) |
+| URL safety (SSRF) | `src/lib/signals/url-safety.ts` (assertSafeUrl — blocks private IPs) |
+| Feed fetcher | `src/lib/signals/feed-fetcher.ts` (server-side YouTube Atom + Google News RSS parser) |
+| Module 3 spec | `docs/superpowers/specs/2026-05-13-positioning-guide-design.md` (11-section Positioning Guide) |
+| n8n Normalize code | `ultra-plan/n8n-normalize-code.js` (reference for n8n Code node with Atom body fallbacks) |
 
 ## Platform API Gotchas (Top 10 — verified May 2026)
 
